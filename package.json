@@ -11,6 +11,7 @@
     "lint:swift:fix": "./scripts/lint-swift.sh --fix",
     "test:swift": "./scripts/test-swift.sh",
     "check:swift": "npm run lint:swift && npm run test:swift",
+    "commit:swift": "./scripts/commit-swift-checked.sh",
     "sass": "node ./js-build/sass.js",
     "js": "node ./js-build/js.js",
     "clean": "node ./js-build/clean.js",
