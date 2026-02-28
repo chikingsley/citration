@@ -4,3 +4,9 @@ build/
 .signatures.json
 tmp
 app/win/codesign
+.swiftlint_cache
+**/.build/
+**/.swiftpm/
+DerivedData/
+*.xcuserstate
+BetterCite.xcworkspace/xcuserdata/

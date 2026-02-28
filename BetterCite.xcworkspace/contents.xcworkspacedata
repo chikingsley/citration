@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Workspace version="1.0">
+  <FileRef location="group:Apps/BetterCiteMac/BetterCiteMac.xcodeproj"/>
+  <FileRef location="group:Packages/BCStorage"/>
+  <FileRef location="group:Packages/BCMetadataProviders"/>
+  <FileRef location="group:Packages/BCCitationEngine"/>
+  <FileRef location="group:Packages/BCDomain"/>
+  <FileRef location="group:Packages/BCDesignSystem"/>
+  <FileRef location="group:Packages/BCCommon"/>
+</Workspace>

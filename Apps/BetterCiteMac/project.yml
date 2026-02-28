@@ -1,0 +1,65 @@
+name: BetterCiteMac
+options:
+  minimumXcodeGenVersion: 2.44.0
+  deploymentTarget:
+    macOS: "14.0"
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    MACOSX_DEPLOYMENT_TARGET: "14.0"
+    PRODUCT_BUNDLE_IDENTIFIER: com.bettercite.app
+    CODE_SIGN_STYLE: Automatic
+    GENERATE_INFOPLIST_FILE: NO
+packages:
+  BCCommon:
+    path: ../../Packages/BCCommon
+  BCStorage:
+    path: ../../Packages/BCStorage
+  BCMetadataProviders:
+    path: ../../Packages/BCMetadataProviders
+  BCCitationEngine:
+    path: ../../Packages/BCCitationEngine
+  BCDomain:
+    path: ../../Packages/BCDomain
+  BCDesignSystem:
+    path: ../../Packages/BCDesignSystem
+  Inject:
+    url: https://github.com/krzysztofzablocki/Inject.git
+    from: 1.5.2
+targets:
+  BetterCiteMac:
+    type: application
+    platform: macOS
+    info:
+      path: Config/BetterCiteMac-Info.plist
+    sources:
+      - path: ../BetterCiteApp/Sources/BetterCiteApp
+    dependencies:
+      - package: BCCommon
+      - package: BCStorage
+      - package: BCMetadataProviders
+      - package: BCCitationEngine
+      - package: BCDomain
+      - package: BCDesignSystem
+      - package: Inject
+    settings:
+      base:
+        PRODUCT_NAME: BetterCite
+      configs:
+        Debug:
+          OTHER_LDFLAGS:
+            - "$(inherited)"
+            - -Xlinker
+            - -interposable
+          EMIT_FRONTEND_COMMAND_LINES: YES
+schemes:
+  BetterCiteMac:
+    build:
+      targets:
+        BetterCiteMac: all
+    run:
+      config: Debug
+    profile:
+      config: Release
+    archive:
+      config: Release

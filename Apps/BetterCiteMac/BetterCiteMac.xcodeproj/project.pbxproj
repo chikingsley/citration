@@ -1,0 +1,445 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		0FDBEED53052A0704B7DAB5D /* BCStorage in Frameworks */ = {isa = PBXBuildFile; productRef = AFC1839207914FE6FF60AFEB /* BCStorage */; };
+		4FA9E3393B3A7D37186868AD /* BCDomain in Frameworks */ = {isa = PBXBuildFile; productRef = 4D4DAFA9BFFCF583C2339D02 /* BCDomain */; };
+		6D22E84FE9FFEEBA44FE5AD4 /* MockDOIProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = D01048290A25A700D986BD44 /* MockDOIProvider.swift */; };
+		95035DB65BDF20D942A82FA1 /* BetterCiteApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC373D8810C0EB194A72520B /* BetterCiteApp.swift */; };
+		A6E35284D1AE390629030632 /* BCDesignSystem in Frameworks */ = {isa = PBXBuildFile; productRef = EA10BD36ABC1AE8399B4A29C /* BCDesignSystem */; };
+		B5CBDE767254F12CBBEE6BEF /* Inject in Frameworks */ = {isa = PBXBuildFile; productRef = 46790A0F818023D0CFF466A3 /* Inject */; };
+		C074A2AD6BD3C20670D5C898 /* BCCitationEngine in Frameworks */ = {isa = PBXBuildFile; productRef = 0403D4A00F6E68A08A016F3D /* BCCitationEngine */; };
+		C2AAB8D6EAA7CE1A8A411FA0 /* BCCommon in Frameworks */ = {isa = PBXBuildFile; productRef = C57F984D24669924D63E525C /* BCCommon */; };
+		D3E666812D20ACFAAF344ED1 /* BCMetadataProviders in Frameworks */ = {isa = PBXBuildFile; productRef = 2F3CB347600B3781B9D9754E /* BCMetadataProviders */; };
+		F24DF2EB869113AD39FD44CE /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 253D7E0BBF476EF949D6BEE0 /* RootView.swift */; };
+		F81A76E397708294ACB54C31 /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 348D76089F631805831DCE50 /* AppModel.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		118A198909D866291933DF7B /* BCCitationEngine */ = {isa = PBXFileReference; lastKnownFileType = folder; name = BCCitationEngine; path = ../../Packages/BCCitationEngine; sourceTree = SOURCE_ROOT; };
+		253D7E0BBF476EF949D6BEE0 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
+		32BA92B6C62AD14A37347BBF /* BCMetadataProviders */ = {isa = PBXFileReference; lastKnownFileType = folder; name = BCMetadataProviders; path = ../../Packages/BCMetadataProviders; sourceTree = SOURCE_ROOT; };
+		348D76089F631805831DCE50 /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
+		468E2AE2BF2AA9AEBDCB66F4 /* BetterCiteMac.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BetterCiteMac.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		5B1E344C82DABFB7D4C13961 /* BCDesignSystem */ = {isa = PBXFileReference; lastKnownFileType = folder; name = BCDesignSystem; path = ../../Packages/BCDesignSystem; sourceTree = SOURCE_ROOT; };
+		6ED331C9FE6B8C33F72BF9C8 /* BCStorage */ = {isa = PBXFileReference; lastKnownFileType = folder; name = BCStorage; path = ../../Packages/BCStorage; sourceTree = SOURCE_ROOT; };
+		84CE9F45E073EA73C41E6E78 /* BCCommon */ = {isa = PBXFileReference; lastKnownFileType = folder; name = BCCommon; path = ../../Packages/BCCommon; sourceTree = SOURCE_ROOT; };
+		B52EBDB88DD4EDC8F3CB5FE4 /* BCDomain */ = {isa = PBXFileReference; lastKnownFileType = folder; name = BCDomain; path = ../../Packages/BCDomain; sourceTree = SOURCE_ROOT; };
+		CC373D8810C0EB194A72520B /* BetterCiteApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BetterCiteApp.swift; sourceTree = "<group>"; };
+		D01048290A25A700D986BD44 /* MockDOIProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockDOIProvider.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		D3D40557FA3C27D8E53E0F74 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C2AAB8D6EAA7CE1A8A411FA0 /* BCCommon in Frameworks */,
+				0FDBEED53052A0704B7DAB5D /* BCStorage in Frameworks */,
+				D3E666812D20ACFAAF344ED1 /* BCMetadataProviders in Frameworks */,
+				C074A2AD6BD3C20670D5C898 /* BCCitationEngine in Frameworks */,
+				4FA9E3393B3A7D37186868AD /* BCDomain in Frameworks */,
+				A6E35284D1AE390629030632 /* BCDesignSystem in Frameworks */,
+				B5CBDE767254F12CBBEE6BEF /* Inject in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		2588DED4D169928374EAB3D9 /* BetterCiteApp */ = {
+			isa = PBXGroup;
+			children = (
+				348D76089F631805831DCE50 /* AppModel.swift */,
+				CC373D8810C0EB194A72520B /* BetterCiteApp.swift */,
+				D01048290A25A700D986BD44 /* MockDOIProvider.swift */,
+				612BB18B6148E458701AC7C9 /* Views */,
+			);
+			name = BetterCiteApp;
+			path = ../BetterCiteApp/Sources/BetterCiteApp;
+			sourceTree = "<group>";
+		};
+		4AB85E440E9A45C88FA36D40 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				468E2AE2BF2AA9AEBDCB66F4 /* BetterCiteMac.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		612BB18B6148E458701AC7C9 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				253D7E0BBF476EF949D6BEE0 /* RootView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		639EB35954D692F93EDDD368 /* Packages */ = {
+			isa = PBXGroup;
+			children = (
+				118A198909D866291933DF7B /* BCCitationEngine */,
+				84CE9F45E073EA73C41E6E78 /* BCCommon */,
+				5B1E344C82DABFB7D4C13961 /* BCDesignSystem */,
+				B52EBDB88DD4EDC8F3CB5FE4 /* BCDomain */,
+				32BA92B6C62AD14A37347BBF /* BCMetadataProviders */,
+				6ED331C9FE6B8C33F72BF9C8 /* BCStorage */,
+			);
+			name = Packages;
+			sourceTree = "<group>";
+		};
+		7D13F554407BEF764C094A5B = {
+			isa = PBXGroup;
+			children = (
+				2588DED4D169928374EAB3D9 /* BetterCiteApp */,
+				639EB35954D692F93EDDD368 /* Packages */,
+				4AB85E440E9A45C88FA36D40 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		849FAE9BF358921232630D61 /* BetterCiteMac */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 0078718E89F2848F9C446FA2 /* Build configuration list for PBXNativeTarget "BetterCiteMac" */;
+			buildPhases = (
+				5E4D0ABC4AA002297E5798EE /* Sources */,
+				D3D40557FA3C27D8E53E0F74 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = BetterCiteMac;
+			packageProductDependencies = (
+				C57F984D24669924D63E525C /* BCCommon */,
+				AFC1839207914FE6FF60AFEB /* BCStorage */,
+				2F3CB347600B3781B9D9754E /* BCMetadataProviders */,
+				0403D4A00F6E68A08A016F3D /* BCCitationEngine */,
+				4D4DAFA9BFFCF583C2339D02 /* BCDomain */,
+				EA10BD36ABC1AE8399B4A29C /* BCDesignSystem */,
+				46790A0F818023D0CFF466A3 /* Inject */,
+			);
+			productName = BetterCiteMac;
+			productReference = 468E2AE2BF2AA9AEBDCB66F4 /* BetterCiteMac.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		8A7FFCCD48310A0924D88925 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					849FAE9BF358921232630D61 = {
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = 927DF26D1E94B3A92D5DAF73 /* Build configuration list for PBXProject "BetterCiteMac" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 7D13F554407BEF764C094A5B;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				871FC2F33C73E9209D17DAE4 /* XCRemoteSwiftPackageReference "Inject" */,
+				7DA3023D7DCBDF949284FABE /* XCLocalSwiftPackageReference "../../Packages/BCCitationEngine" */,
+				9BECF9BF582472FE53E3B7FD /* XCLocalSwiftPackageReference "../../Packages/BCCommon" */,
+				B7A8F6DE0ADF9D8B84F87559 /* XCLocalSwiftPackageReference "../../Packages/BCDesignSystem" */,
+				834AE8C14E93F0468A9D6EDB /* XCLocalSwiftPackageReference "../../Packages/BCDomain" */,
+				75A37B6A984E2AC5A999D4F6 /* XCLocalSwiftPackageReference "../../Packages/BCMetadataProviders" */,
+				23CCA68AD3D43C60BB759CC1 /* XCLocalSwiftPackageReference "../../Packages/BCStorage" */,
+			);
+			preferredProjectObjectVersion = 77;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				849FAE9BF358921232630D61 /* BetterCiteMac */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		5E4D0ABC4AA002297E5798EE /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F81A76E397708294ACB54C31 /* AppModel.swift in Sources */,
+				95035DB65BDF20D942A82FA1 /* BetterCiteApp.swift in Sources */,
+				6D22E84FE9FFEEBA44FE5AD4 /* MockDOIProvider.swift in Sources */,
+				F24DF2EB869113AD39FD44CE /* RootView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		4C1A5FC00D6C79986A1B5518 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.bettercite.app;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 6.0;
+			};
+			name = Debug;
+		};
+		B3F418A8042B4FD8D0D1BA90 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				COMBINE_HIDPI_IMAGES = YES;
+				INFOPLIST_FILE = "Config/BetterCiteMac-Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_NAME = BetterCite;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		DC0FAD24529E0E735B975345 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				COMBINE_HIDPI_IMAGES = YES;
+				EMIT_FRONTEND_COMMAND_LINES = YES;
+				INFOPLIST_FILE = "Config/BetterCiteMac-Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					"-Xlinker",
+					"-interposable",
+				);
+				PRODUCT_NAME = BetterCite;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		DF1B38C0C323361BB5C26D7E /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.bettercite.app;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 6.0;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		0078718E89F2848F9C446FA2 /* Build configuration list for PBXNativeTarget "BetterCiteMac" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				DC0FAD24529E0E735B975345 /* Debug */,
+				B3F418A8042B4FD8D0D1BA90 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		927DF26D1E94B3A92D5DAF73 /* Build configuration list for PBXProject "BetterCiteMac" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				4C1A5FC00D6C79986A1B5518 /* Debug */,
+				DF1B38C0C323361BB5C26D7E /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		23CCA68AD3D43C60BB759CC1 /* XCLocalSwiftPackageReference "../../Packages/BCStorage" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ../../Packages/BCStorage;
+		};
+		75A37B6A984E2AC5A999D4F6 /* XCLocalSwiftPackageReference "../../Packages/BCMetadataProviders" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ../../Packages/BCMetadataProviders;
+		};
+		7DA3023D7DCBDF949284FABE /* XCLocalSwiftPackageReference "../../Packages/BCCitationEngine" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ../../Packages/BCCitationEngine;
+		};
+		834AE8C14E93F0468A9D6EDB /* XCLocalSwiftPackageReference "../../Packages/BCDomain" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ../../Packages/BCDomain;
+		};
+		9BECF9BF582472FE53E3B7FD /* XCLocalSwiftPackageReference "../../Packages/BCCommon" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ../../Packages/BCCommon;
+		};
+		B7A8F6DE0ADF9D8B84F87559 /* XCLocalSwiftPackageReference "../../Packages/BCDesignSystem" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ../../Packages/BCDesignSystem;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		871FC2F33C73E9209D17DAE4 /* XCRemoteSwiftPackageReference "Inject" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/krzysztofzablocki/Inject.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.5.2;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		0403D4A00F6E68A08A016F3D /* BCCitationEngine */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = BCCitationEngine;
+		};
+		2F3CB347600B3781B9D9754E /* BCMetadataProviders */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = BCMetadataProviders;
+		};
+		46790A0F818023D0CFF466A3 /* Inject */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 871FC2F33C73E9209D17DAE4 /* XCRemoteSwiftPackageReference "Inject" */;
+			productName = Inject;
+		};
+		4D4DAFA9BFFCF583C2339D02 /* BCDomain */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = BCDomain;
+		};
+		AFC1839207914FE6FF60AFEB /* BCStorage */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = BCStorage;
+		};
+		C57F984D24669924D63E525C /* BCCommon */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = BCCommon;
+		};
+		EA10BD36ABC1AE8399B4A29C /* BCDesignSystem */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = BCDesignSystem;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = 8A7FFCCD48310A0924D88925 /* Project object */;
+}

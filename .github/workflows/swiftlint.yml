@@ -1,0 +1,29 @@
+name: SwiftLint
+
+on:
+  push:
+    paths:
+      - "Apps/**"
+      - "Packages/**"
+      - ".swiftlint.yml"
+      - "scripts/lint-swift.sh"
+  pull_request:
+    paths:
+      - "Apps/**"
+      - "Packages/**"
+      - ".swiftlint.yml"
+      - "scripts/lint-swift.sh"
+
+jobs:
+  lint:
+    name: Run SwiftLint
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install SwiftLint
+        run: brew install swiftlint
+
+      - name: Run SwiftLint
+        run: ./scripts/lint-swift.sh
+

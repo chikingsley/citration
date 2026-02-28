@@ -50,6 +50,17 @@ npx eslint <file>        # Lint a specific file
 
 ESLint v9 flat config is in `eslint.config.mjs`. Uses `@zotero/eslint-config`, Babel parser, and React plugin. Currently, the code base is not fully linted, so only worry about issues with new or modified code lines.
 
+For Swift packages (`Apps/` and `Packages/`), use SwiftLint:
+
+```bash
+./scripts/lint-swift.sh        # Run SwiftLint in check mode
+./scripts/lint-swift.sh --fix  # Auto-fix safe formatting issues where possible
+./scripts/lint-swift.sh        # Runs in strict mode by default
+```
+
+SwiftLint config lives in `.swiftlint.yml`.
+CI also runs a dedicated SwiftLint workflow under `.github/workflows/swiftlint.yml`.
+
 ## Architecture
 
 ### Core Layers
