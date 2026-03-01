@@ -13,6 +13,10 @@ settings:
 packages:
   BCCommon:
     path: ../../Packages/BCCommon
+  BCDataLocal:
+    path: ../../Packages/BCDataLocal
+  BCDataRemote:
+    path: ../../Packages/BCDataRemote
   BCStorage:
     path: ../../Packages/BCStorage
   BCMetadataProviders:
@@ -33,9 +37,11 @@ targets:
     info:
       path: Config/BetterCiteMac-Info.plist
     sources:
-      - path: ../BetterCiteApp/Sources/BetterCiteApp
+      - path: Sources/BetterCiteMac
     dependencies:
       - package: BCCommon
+      - package: BCDataLocal
+      - package: BCDataRemote
       - package: BCStorage
       - package: BCMetadataProviders
       - package: BCCitationEngine

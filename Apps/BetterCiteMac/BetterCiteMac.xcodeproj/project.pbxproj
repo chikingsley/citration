@@ -7,31 +7,39 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		0FDBEED53052A0704B7DAB5D /* BCStorage in Frameworks */ = {isa = PBXBuildFile; productRef = AFC1839207914FE6FF60AFEB /* BCStorage */; };
-		4FA9E3393B3A7D37186868AD /* BCDomain in Frameworks */ = {isa = PBXBuildFile; productRef = 4D4DAFA9BFFCF583C2339D02 /* BCDomain */; };
-		6D22E84FE9FFEEBA44FE5AD4 /* MockDOIProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = D01048290A25A700D986BD44 /* MockDOIProvider.swift */; };
-		95035DB65BDF20D942A82FA1 /* BetterCiteApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC373D8810C0EB194A72520B /* BetterCiteApp.swift */; };
-		A6E35284D1AE390629030632 /* BCDesignSystem in Frameworks */ = {isa = PBXBuildFile; productRef = EA10BD36ABC1AE8399B4A29C /* BCDesignSystem */; };
-		B5CBDE767254F12CBBEE6BEF /* Inject in Frameworks */ = {isa = PBXBuildFile; productRef = 46790A0F818023D0CFF466A3 /* Inject */; };
-		C074A2AD6BD3C20670D5C898 /* BCCitationEngine in Frameworks */ = {isa = PBXBuildFile; productRef = 0403D4A00F6E68A08A016F3D /* BCCitationEngine */; };
+		0FDBEED53052A0704B7DAB5D /* BCDataLocal in Frameworks */ = {isa = PBXBuildFile; productRef = 10DFB75F02BBB139230B3B28 /* BCDataLocal */; };
+		2067E420536B25B49BD2CDA3 /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = E4010BDD99440F9D9629945C /* AppModel.swift */; };
+		45E463BC3BBA06BE3390BBDD /* SignInView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F82794029099226F8F790F31 /* SignInView.swift */; };
+		4FA9E3393B3A7D37186868AD /* BCMetadataProviders in Frameworks */ = {isa = PBXBuildFile; productRef = 2F3CB347600B3781B9D9754E /* BCMetadataProviders */; };
+		9281E8A8BB676A703B9F7EBF /* Inject in Frameworks */ = {isa = PBXBuildFile; productRef = 46790A0F818023D0CFF466A3 /* Inject */; };
+		92FED3A324D8EB6775CA03DA /* BCDesignSystem in Frameworks */ = {isa = PBXBuildFile; productRef = EA10BD36ABC1AE8399B4A29C /* BCDesignSystem */; };
+		A6E35284D1AE390629030632 /* BCCitationEngine in Frameworks */ = {isa = PBXBuildFile; productRef = 0403D4A00F6E68A08A016F3D /* BCCitationEngine */; };
+		B5CBDE767254F12CBBEE6BEF /* BCDomain in Frameworks */ = {isa = PBXBuildFile; productRef = 4D4DAFA9BFFCF583C2339D02 /* BCDomain */; };
+		C074A2AD6BD3C20670D5C898 /* BCStorage in Frameworks */ = {isa = PBXBuildFile; productRef = AFC1839207914FE6FF60AFEB /* BCStorage */; };
 		C2AAB8D6EAA7CE1A8A411FA0 /* BCCommon in Frameworks */ = {isa = PBXBuildFile; productRef = C57F984D24669924D63E525C /* BCCommon */; };
-		D3E666812D20ACFAAF344ED1 /* BCMetadataProviders in Frameworks */ = {isa = PBXBuildFile; productRef = 2F3CB347600B3781B9D9754E /* BCMetadataProviders */; };
-		F24DF2EB869113AD39FD44CE /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 253D7E0BBF476EF949D6BEE0 /* RootView.swift */; };
-		F81A76E397708294ACB54C31 /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 348D76089F631805831DCE50 /* AppModel.swift */; };
+		C53E72DDE432E523DA5EA2AC /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88021F7C091110D06E66C734 /* RootView.swift */; };
+		CA15ABEF9D10726B2CD43613 /* MockDOIProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7B12EBFCE54FE2F5F1F5F8E /* MockDOIProvider.swift */; };
+		D3E666812D20ACFAAF344ED1 /* BCDataRemote in Frameworks */ = {isa = PBXBuildFile; productRef = 3CB4F3297C9DDFA9251E32E4 /* BCDataRemote */; };
+		DDB9DB333B558A72468ECB5C /* AttachmentStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1579D700B0BC8CD0DCA09FD9 /* AttachmentStore.swift */; };
+		E8BB126F329764160DB13431 /* BetterCiteApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 614BAFD29D048E6DF8192AF8 /* BetterCiteApp.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		118A198909D866291933DF7B /* BCCitationEngine */ = {isa = PBXFileReference; lastKnownFileType = folder; name = BCCitationEngine; path = ../../Packages/BCCitationEngine; sourceTree = SOURCE_ROOT; };
-		253D7E0BBF476EF949D6BEE0 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
+		1579D700B0BC8CD0DCA09FD9 /* AttachmentStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AttachmentStore.swift; sourceTree = "<group>"; };
 		32BA92B6C62AD14A37347BBF /* BCMetadataProviders */ = {isa = PBXFileReference; lastKnownFileType = folder; name = BCMetadataProviders; path = ../../Packages/BCMetadataProviders; sourceTree = SOURCE_ROOT; };
-		348D76089F631805831DCE50 /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
 		468E2AE2BF2AA9AEBDCB66F4 /* BetterCiteMac.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BetterCiteMac.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		5B1E344C82DABFB7D4C13961 /* BCDesignSystem */ = {isa = PBXFileReference; lastKnownFileType = folder; name = BCDesignSystem; path = ../../Packages/BCDesignSystem; sourceTree = SOURCE_ROOT; };
+		614BAFD29D048E6DF8192AF8 /* BetterCiteApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BetterCiteApp.swift; sourceTree = "<group>"; };
+		69A3CEAAFB92A1A25C6EF4E8 /* BCDataLocal */ = {isa = PBXFileReference; lastKnownFileType = folder; name = BCDataLocal; path = ../../Packages/BCDataLocal; sourceTree = SOURCE_ROOT; };
 		6ED331C9FE6B8C33F72BF9C8 /* BCStorage */ = {isa = PBXFileReference; lastKnownFileType = folder; name = BCStorage; path = ../../Packages/BCStorage; sourceTree = SOURCE_ROOT; };
 		84CE9F45E073EA73C41E6E78 /* BCCommon */ = {isa = PBXFileReference; lastKnownFileType = folder; name = BCCommon; path = ../../Packages/BCCommon; sourceTree = SOURCE_ROOT; };
+		88021F7C091110D06E66C734 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
+		9ECC52745163C2BEFFD1A8B6 /* BCDataRemote */ = {isa = PBXFileReference; lastKnownFileType = folder; name = BCDataRemote; path = ../../Packages/BCDataRemote; sourceTree = SOURCE_ROOT; };
 		B52EBDB88DD4EDC8F3CB5FE4 /* BCDomain */ = {isa = PBXFileReference; lastKnownFileType = folder; name = BCDomain; path = ../../Packages/BCDomain; sourceTree = SOURCE_ROOT; };
-		CC373D8810C0EB194A72520B /* BetterCiteApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BetterCiteApp.swift; sourceTree = "<group>"; };
-		D01048290A25A700D986BD44 /* MockDOIProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockDOIProvider.swift; sourceTree = "<group>"; };
+		C7B12EBFCE54FE2F5F1F5F8E /* MockDOIProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockDOIProvider.swift; sourceTree = "<group>"; };
+		E4010BDD99440F9D9629945C /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
+		F82794029099226F8F790F31 /* SignInView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignInView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -40,30 +48,20 @@
 			buildActionMask = 2147483647;
 			files = (
 				C2AAB8D6EAA7CE1A8A411FA0 /* BCCommon in Frameworks */,
-				0FDBEED53052A0704B7DAB5D /* BCStorage in Frameworks */,
-				D3E666812D20ACFAAF344ED1 /* BCMetadataProviders in Frameworks */,
-				C074A2AD6BD3C20670D5C898 /* BCCitationEngine in Frameworks */,
-				4FA9E3393B3A7D37186868AD /* BCDomain in Frameworks */,
-				A6E35284D1AE390629030632 /* BCDesignSystem in Frameworks */,
-				B5CBDE767254F12CBBEE6BEF /* Inject in Frameworks */,
+				0FDBEED53052A0704B7DAB5D /* BCDataLocal in Frameworks */,
+				D3E666812D20ACFAAF344ED1 /* BCDataRemote in Frameworks */,
+				C074A2AD6BD3C20670D5C898 /* BCStorage in Frameworks */,
+				4FA9E3393B3A7D37186868AD /* BCMetadataProviders in Frameworks */,
+				A6E35284D1AE390629030632 /* BCCitationEngine in Frameworks */,
+				B5CBDE767254F12CBBEE6BEF /* BCDomain in Frameworks */,
+				92FED3A324D8EB6775CA03DA /* BCDesignSystem in Frameworks */,
+				9281E8A8BB676A703B9F7EBF /* Inject in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		2588DED4D169928374EAB3D9 /* BetterCiteApp */ = {
-			isa = PBXGroup;
-			children = (
-				348D76089F631805831DCE50 /* AppModel.swift */,
-				CC373D8810C0EB194A72520B /* BetterCiteApp.swift */,
-				D01048290A25A700D986BD44 /* MockDOIProvider.swift */,
-				612BB18B6148E458701AC7C9 /* Views */,
-			);
-			name = BetterCiteApp;
-			path = ../BetterCiteApp/Sources/BetterCiteApp;
-			sourceTree = "<group>";
-		};
 		4AB85E440E9A45C88FA36D40 /* Products */ = {
 			isa = PBXGroup;
 			children = (
@@ -72,19 +70,13 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
-		612BB18B6148E458701AC7C9 /* Views */ = {
-			isa = PBXGroup;
-			children = (
-				253D7E0BBF476EF949D6BEE0 /* RootView.swift */,
-			);
-			path = Views;
-			sourceTree = "<group>";
-		};
 		639EB35954D692F93EDDD368 /* Packages */ = {
 			isa = PBXGroup;
 			children = (
 				118A198909D866291933DF7B /* BCCitationEngine */,
 				84CE9F45E073EA73C41E6E78 /* BCCommon */,
+				69A3CEAAFB92A1A25C6EF4E8 /* BCDataLocal */,
+				9ECC52745163C2BEFFD1A8B6 /* BCDataRemote */,
 				5B1E344C82DABFB7D4C13961 /* BCDesignSystem */,
 				B52EBDB88DD4EDC8F3CB5FE4 /* BCDomain */,
 				32BA92B6C62AD14A37347BBF /* BCMetadataProviders */,
@@ -93,13 +85,35 @@
 			name = Packages;
 			sourceTree = "<group>";
 		};
+		719019080C081110274ADC7C /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				88021F7C091110D06E66C734 /* RootView.swift */,
+				F82794029099226F8F790F31 /* SignInView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
 		7D13F554407BEF764C094A5B = {
 			isa = PBXGroup;
 			children = (
-				2588DED4D169928374EAB3D9 /* BetterCiteApp */,
+				8A2D917EC6EF11367EC321D7 /* BetterCiteMac */,
 				639EB35954D692F93EDDD368 /* Packages */,
 				4AB85E440E9A45C88FA36D40 /* Products */,
 			);
+			sourceTree = "<group>";
+		};
+		8A2D917EC6EF11367EC321D7 /* BetterCiteMac */ = {
+			isa = PBXGroup;
+			children = (
+				E4010BDD99440F9D9629945C /* AppModel.swift */,
+				1579D700B0BC8CD0DCA09FD9 /* AttachmentStore.swift */,
+				614BAFD29D048E6DF8192AF8 /* BetterCiteApp.swift */,
+				C7B12EBFCE54FE2F5F1F5F8E /* MockDOIProvider.swift */,
+				719019080C081110274ADC7C /* Views */,
+			);
+			name = BetterCiteMac;
+			path = Sources/BetterCiteMac;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -119,6 +133,8 @@
 			name = BetterCiteMac;
 			packageProductDependencies = (
 				C57F984D24669924D63E525C /* BCCommon */,
+				10DFB75F02BBB139230B3B28 /* BCDataLocal */,
+				3CB4F3297C9DDFA9251E32E4 /* BCDataRemote */,
 				AFC1839207914FE6FF60AFEB /* BCStorage */,
 				2F3CB347600B3781B9D9754E /* BCMetadataProviders */,
 				0403D4A00F6E68A08A016F3D /* BCCitationEngine */,
@@ -158,6 +174,8 @@
 				871FC2F33C73E9209D17DAE4 /* XCRemoteSwiftPackageReference "Inject" */,
 				7DA3023D7DCBDF949284FABE /* XCLocalSwiftPackageReference "../../Packages/BCCitationEngine" */,
 				9BECF9BF582472FE53E3B7FD /* XCLocalSwiftPackageReference "../../Packages/BCCommon" */,
+				41120E6C2FD036E36792D5BB /* XCLocalSwiftPackageReference "../../Packages/BCDataLocal" */,
+				5D80390B6E80A925536C79BA /* XCLocalSwiftPackageReference "../../Packages/BCDataRemote" */,
 				B7A8F6DE0ADF9D8B84F87559 /* XCLocalSwiftPackageReference "../../Packages/BCDesignSystem" */,
 				834AE8C14E93F0468A9D6EDB /* XCLocalSwiftPackageReference "../../Packages/BCDomain" */,
 				75A37B6A984E2AC5A999D4F6 /* XCLocalSwiftPackageReference "../../Packages/BCMetadataProviders" */,
@@ -177,10 +195,12 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				F81A76E397708294ACB54C31 /* AppModel.swift in Sources */,
-				95035DB65BDF20D942A82FA1 /* BetterCiteApp.swift in Sources */,
-				6D22E84FE9FFEEBA44FE5AD4 /* MockDOIProvider.swift in Sources */,
-				F24DF2EB869113AD39FD44CE /* RootView.swift in Sources */,
+				2067E420536B25B49BD2CDA3 /* AppModel.swift in Sources */,
+				DDB9DB333B558A72468ECB5C /* AttachmentStore.swift in Sources */,
+				E8BB126F329764160DB13431 /* BetterCiteApp.swift in Sources */,
+				CA15ABEF9D10726B2CD43613 /* MockDOIProvider.swift in Sources */,
+				C53E72DDE432E523DA5EA2AC /* RootView.swift in Sources */,
+				45E463BC3BBA06BE3390BBDD /* SignInView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -376,6 +396,14 @@
 			isa = XCLocalSwiftPackageReference;
 			relativePath = ../../Packages/BCStorage;
 		};
+		41120E6C2FD036E36792D5BB /* XCLocalSwiftPackageReference "../../Packages/BCDataLocal" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ../../Packages/BCDataLocal;
+		};
+		5D80390B6E80A925536C79BA /* XCLocalSwiftPackageReference "../../Packages/BCDataRemote" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ../../Packages/BCDataRemote;
+		};
 		75A37B6A984E2AC5A999D4F6 /* XCLocalSwiftPackageReference "../../Packages/BCMetadataProviders" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = ../../Packages/BCMetadataProviders;
@@ -414,9 +442,17 @@
 			isa = XCSwiftPackageProductDependency;
 			productName = BCCitationEngine;
 		};
+		10DFB75F02BBB139230B3B28 /* BCDataLocal */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = BCDataLocal;
+		};
 		2F3CB347600B3781B9D9754E /* BCMetadataProviders */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = BCMetadataProviders;
+		};
+		3CB4F3297C9DDFA9251E32E4 /* BCDataRemote */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = BCDataRemote;
 		};
 		46790A0F818023D0CFF466A3 /* Inject */ = {
 			isa = XCSwiftPackageProductDependency;

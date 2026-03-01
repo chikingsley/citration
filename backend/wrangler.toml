@@ -1,0 +1,14 @@
+name = "bettercite-api"
+compatibility_date = "2026-02-01"
+main = "src/index.ts"
+minify = true
+
+[[d1_databases]]
+binding = "DB"
+database_name = "bettercite"
+database_id = ""
+
+[vars]
+APPLE_TEAM_ID = ""
+APPLE_SERVICE_ID = ""
+JWT_ISSUER = "https://api.bettercite.app"

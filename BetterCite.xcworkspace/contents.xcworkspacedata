@@ -7,4 +7,6 @@
   <FileRef location="group:Packages/BCDomain"/>
   <FileRef location="group:Packages/BCDesignSystem"/>
   <FileRef location="group:Packages/BCCommon"/>
+  <FileRef location="group:Packages/BCDataLocal"/>
+  <FileRef location="group:Packages/BCDataRemote"/>
 </Workspace>

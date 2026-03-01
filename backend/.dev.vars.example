@@ -1,0 +1,2 @@
+# Copy to .dev.vars and fill in values for local development
+JWT_SECRET=your-dev-secret-at-least-32-chars-long

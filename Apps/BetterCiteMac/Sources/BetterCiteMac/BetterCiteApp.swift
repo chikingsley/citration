@@ -1,5 +1,6 @@
 import SwiftUI
 import AppKit
+import BCDataRemote
 
 final class BetterCiteAppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {

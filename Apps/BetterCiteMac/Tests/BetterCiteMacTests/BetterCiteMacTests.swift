@@ -1,15 +1,15 @@
 import Testing
 import Foundation
-@testable import BetterCiteApp
+@testable import BetterCiteMac
 import BCCitationEngine
 import BCDomain
 import BCMetadataProviders
 import BCStorage
 import BCCommon
 
-@Suite("BetterCiteApp")
+@Suite("BetterCiteMac")
 @MainActor
-struct BetterCiteAppTests {
+struct BetterCiteMacTests {
 	@Test("MockDOIProvider returns record for known DOI")
 	func mockDOIProviderReturnsRecordForDOI() async throws {
 		let provider = MockDOIMetadataProvider()
@@ -90,7 +90,7 @@ struct BetterCiteAppTests {
 
 // MARK: - Helpers
 
-private extension BetterCiteAppTests {
+private extension BetterCiteMacTests {
 	func makeModel(providers: [any MetadataProvider]) -> AppModel {
 		AppModel(
 			store: InMemoryItemStore(),

@@ -1,4 +1,5 @@
 import SwiftUI
+import UniformTypeIdentifiers
 import Inject
 import BCDomain
 
@@ -22,6 +23,7 @@ struct RootView: View {
     @State private var searchScope = SearchScope.allFields
     @State private var selectedCollection: String? = "library"
     @State private var libraryExpanded = true
+    @State private var attachmentImporterPresented = false
 
     var filteredItems: [BCItem] {
         guard !searchText.isEmpty else { return model.items }
@@ -121,9 +123,8 @@ struct RootView: View {
                 }
 
                 Button("Attach", systemImage: "paperclip") {
-                    model.statusMessage = "Attachments are not implemented yet"
+                    attachmentImporterPresented = true
                 }
-                .disabled(model.selectedItem == nil)
             }
             ToolbarItem(placement: .status) {
                 Text(model.statusMessage)
@@ -142,6 +143,22 @@ struct RootView: View {
         .inspector(isPresented: $inspectorPresented) {
             inspectorContent
                 .inspectorColumnWidth(min: 240, ideal: 310, max: 450)
+        }
+        .fileImporter(
+            isPresented: $attachmentImporterPresented,
+            allowedContentTypes: [.pdf],
+            allowsMultipleSelection: true
+        ) { result in
+            switch result {
+            case .success(let urls):
+                model.importAttachments(urls: urls)
+            case .failure(let error):
+                model.statusMessage = "Import failed: \(error.localizedDescription)"
+            }
+        }
+        .dropDestination(for: URL.self) { urls, _ in
+            model.importAttachments(urls: urls)
+            return true
         }
         .enableInjection()
     }
@@ -194,6 +211,25 @@ struct RootView: View {
                         Text(model.citationPreview)
                             .font(.system(.caption, design: .monospaced))
                             .textSelection(.enabled)
+                    }
+                    Section("Attachments") {
+                        if model.selectedItemAttachments.isEmpty {
+                            Text("No attachments yet. Use Attach or drag a PDF into the window.")
+                                .foregroundStyle(.secondary)
+                        } else {
+                            ForEach(model.selectedItemAttachments) { attachment in
+                                HStack {
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text(attachment.fileName)
+                                        Text(ByteCountFormatter.string(fromByteCount: attachment.size, countStyle: .file))
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+                                    }
+                                    Spacer()
+                                    Link("Open", destination: attachment.localURL)
+                                }
+                            }
+                        }
                     }
                 }
                 .formStyle(.grouped)

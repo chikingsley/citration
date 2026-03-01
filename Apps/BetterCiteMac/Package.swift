@@ -2,15 +2,17 @@
 import PackageDescription
 
 let package = Package(
-    name: "BetterCiteApp",
+    name: "BetterCiteMac",
     platforms: [
         .macOS(.v14)
     ],
     products: [
-        .executable(name: "BetterCiteApp", targets: ["BetterCiteApp"])
+        .executable(name: "BetterCiteMac", targets: ["BetterCiteMac"])
     ],
     dependencies: [
         .package(path: "../../Packages/BCCommon"),
+        .package(path: "../../Packages/BCDataLocal"),
+        .package(path: "../../Packages/BCDataRemote"),
         .package(path: "../../Packages/BCStorage"),
         .package(path: "../../Packages/BCMetadataProviders"),
         .package(path: "../../Packages/BCCitationEngine"),
@@ -20,9 +22,11 @@ let package = Package(
     ],
     targets: [
         .executableTarget(
-            name: "BetterCiteApp",
+            name: "BetterCiteMac",
             dependencies: [
                 "BCCommon",
+                "BCDataLocal",
+                "BCDataRemote",
                 "BCStorage",
                 "BCMetadataProviders",
                 "BCCitationEngine",
@@ -35,15 +39,15 @@ let package = Package(
                     "-Xlinker", "-sectcreate",
                     "-Xlinker", "__TEXT",
                     "-Xlinker", "__info_plist",
-                    "-Xlinker", "Config/BetterCiteApp-Info.plist"
+                    "-Xlinker", "Config/BetterCiteMac-Info.plist"
                 ]),
                 .unsafeFlags(["-Xlinker", "-interposable"], .when(configuration: .debug))
             ]
         ),
         .testTarget(
-            name: "BetterCiteAppTests",
+            name: "BetterCiteMacTests",
             dependencies: [
-                "BetterCiteApp",
+                "BetterCiteMac",
                 "BCMetadataProviders",
                 "BCCommon"
             ]
