@@ -27,9 +27,18 @@ final class AppModel {
         }
     }
 
+    enum AttachmentImportMode {
+        case auto
+        case attachToSelectedItem
+        case createNewItemPerFile
+    }
+
     var route: Route = .workspace
     var doiInput: String = ""
     var isResolvingDOI: Bool = false
+    var isImportingAttachments: Bool = false
+    var reprocessingItemID: UUID?
+    var isReprocessingAttachments: Bool { reprocessingItemID != nil }
     var statusMessage: String = "Ready"
 
     var items: [BCItem] = []
@@ -50,20 +59,24 @@ final class AppModel {
     private let metadataRegistry: MetadataProviderRegistry
     private let citationFormatter: any CitationFormattingEngine
     private let attachmentStore: LocalAttachmentStore
+    private let pdfDOIExtractor: any PDFDOIExtracting
 
     init(
         store: any BCItemStore,
         metadataRegistry: MetadataProviderRegistry,
         citationFormatter: any CitationFormattingEngine,
         storageConnectors: [StorageConnector],
-        sessionStore: AuthSessionStore = InMemoryAuthSessionStore()
+        sessionStore: AuthSessionStore = InMemoryAuthSessionStore(),
+        pdfDOIExtractor: any PDFDOIExtracting = NullPDFDOIExtractor(),
+        attachmentStore: LocalAttachmentStore? = nil
     ) {
         self.store = store
         self.metadataRegistry = metadataRegistry
         self.citationFormatter = citationFormatter
         self.storageConnectors = storageConnectors
         self.sessionStore = sessionStore
-        self.attachmentStore = AppModel.makeAttachmentStore()
+        self.attachmentStore = attachmentStore ?? AppModel.makeAttachmentStore()
+        self.pdfDOIExtractor = pdfDOIExtractor
 
         Task {
             await setupAuthServices()
@@ -82,9 +95,14 @@ final class AppModel {
             store = InMemoryItemStore()
         }
 
-        let providers: [any MetadataProvider] = [MockDOIMetadataProvider()]
+        let providers: [any MetadataProvider] = [
+            ArXivMetadataProvider(),
+            CrossrefDOIMetadataProvider(),
+            OpenLibraryISBNMetadataProvider()
+        ]
         let metadataRegistry = MetadataProviderRegistry(providers: providers)
         let citationFormatter = StubCitationFormatter()
+        let pdfDOIExtractor = MuPDFDOIExtractor()
         let storageConnectors = [
             StorageConnector(name: "Local Files", type: .local, bucket: "local", isDefault: true)
         ]
@@ -95,7 +113,8 @@ final class AppModel {
             metadataRegistry: metadataRegistry,
             citationFormatter: citationFormatter,
             storageConnectors: storageConnectors,
-            sessionStore: sessionStore
+            sessionStore: sessionStore,
+            pdfDOIExtractor: pdfDOIExtractor
         )
     }
 
@@ -160,9 +179,13 @@ final class AppModel {
     }
 
     func addByDOI() {
-        let doi = doiInput.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !doi.isEmpty else {
+        let rawInput = doiInput
+        guard let trimmed = rawInput.bcTrimmedNonEmpty else {
             statusMessage = "Enter a DOI first"
+            return
+        }
+        guard let doi = DOIParsing.normalizeCandidate(trimmed) else {
+            statusMessage = "Enter a valid DOI"
             return
         }
 
@@ -182,10 +205,10 @@ final class AppModel {
             }
 
             let item = BCItem(
-                title: best.title,
-                identifiers: best.identifiers,
+                title: normalizedTitle(best.title) ?? "Untitled Item",
+                identifiers: mergeIdentifiers(best.identifiers + [Identifier(type: .doi, value: doi)], into: BCItem(title: "Untitled Item")).identifiers,
                 itemType: best.itemType,
-                creators: best.creators,
+                creators: normalizedCreators(best.creators),
                 publicationYear: best.publicationYear
             )
 
@@ -202,10 +225,24 @@ final class AppModel {
     func removeSelectedItem() {
         guard let selectedItemID else { return }
 
-        Task {
-            await store.removeItem(id: selectedItemID)
+        removeItems(ids: [selectedItemID])
+    }
+
+    func removeItems(ids: [UUID]) {
+        let uniqueIDs = Array(Set(ids))
+        guard !uniqueIDs.isEmpty else { return }
+
+        Task { @MainActor in
+            for id in uniqueIDs {
+                await store.removeItem(id: id)
+            }
             await refreshItems()
-            statusMessage = "Removed item"
+
+            if uniqueIDs.count == 1 {
+                statusMessage = "Removed item"
+            } else {
+                statusMessage = "Removed \(uniqueIDs.count) items"
+            }
         }
     }
 
@@ -217,21 +254,54 @@ final class AppModel {
         }
     }
 
-    func importAttachments(urls: [URL]) {
+    func importAttachments(urls: [URL], mode: AttachmentImportMode = .auto) {
         let fileURLs = urls.filter(\.isFileURL)
         guard !fileURLs.isEmpty else {
             statusMessage = "No valid files to import"
             return
         }
 
-        Task {
+        let selectedItemAtDrop = selectedItem
+        let targetItem: BCItem? = switch mode {
+        case .attachToSelectedItem:
+            selectedItemAtDrop
+        case .auto:
+            selectedItemAtDrop
+        case .createNewItemPerFile:
+            nil
+        }
+
+        if mode == .attachToSelectedItem, targetItem == nil {
+            statusMessage = "Select an item to attach files"
+            return
+        }
+
+        let noun = fileURLs.count == 1 ? "file" : "files"
+        statusMessage = "Importing \(fileURLs.count) \(noun)..."
+        isImportingAttachments = true
+
+        Task { @MainActor in
+            defer {
+                isImportingAttachments = false
+            }
+
             var importedCount = 0
             var failedFiles = [String]()
+            var detectedDOIs = Set<String>()
 
-            if let selectedItem {
+            if let targetItem {
+                var currentItem = targetItem
                 for url in fileURLs {
                     do {
-                        _ = try await attachmentStore.importFile(from: url, for: selectedItem)
+                        let attachment = try await attachmentStore.importFile(from: url, for: currentItem)
+                        if currentItem.id == selectedItemID {
+                            await refreshSelectedItemAttachments()
+                        }
+                        let enrichment = await enrichImportedAttachment(item: currentItem, attachment: attachment)
+                        currentItem = enrichment.item
+                        if let doi = enrichment.detectedDOI {
+                            detectedDOIs.insert(doi)
+                        }
                         importedCount += 1
                     }
                     catch {
@@ -240,15 +310,30 @@ final class AppModel {
                 }
             } else {
                 for url in fileURLs {
+                    let title = inferredTitle(from: url)
+                    var item = BCItem(title: title)
+                    await store.upsert(item)
+                    selectedItemID = item.id
+                    await refreshItems()
+
                     do {
-                        let title = inferredTitle(from: url)
-                        let item = BCItem(title: title)
-                        await store.upsert(item)
-                        _ = try await attachmentStore.importFile(from: url, for: item)
+                        let attachment = try await attachmentStore.importFile(from: url, for: item)
+                        if item.id == selectedItemID {
+                            await refreshSelectedItemAttachments()
+                        }
+                        await refreshItems()
+                        let enrichment = await enrichImportedAttachment(item: item, attachment: attachment)
+                        item = enrichment.item
+                        if let doi = enrichment.detectedDOI {
+                            detectedDOIs.insert(doi)
+                        }
                         selectedItemID = item.id
                         importedCount += 1
                     }
                     catch {
+                        // Avoid leaving behind orphan items when file copy/import fails.
+                        await store.removeItem(id: item.id)
+                        await refreshItems()
                         failedFiles.append(url.lastPathComponent)
                     }
                 }
@@ -257,12 +342,82 @@ final class AppModel {
             await refreshItems()
 
             if importedCount > 0, failedFiles.isEmpty {
-                let noun = importedCount == 1 ? "file" : "files"
-                statusMessage = "Imported \(importedCount) \(noun)"
+                let importedNoun = importedCount == 1 ? "file" : "files"
+                statusMessage = "Imported \(importedCount) \(importedNoun)"
             } else if importedCount > 0 {
                 statusMessage = "Imported \(importedCount), failed \(failedFiles.count)"
             } else {
                 statusMessage = "Import failed"
+            }
+
+            if !detectedDOIs.isEmpty {
+                let noun = detectedDOIs.count == 1 ? "DOI" : "DOIs"
+                statusMessage += " · detected \(detectedDOIs.count) \(noun)"
+            }
+        }
+    }
+
+    func reprocessSelectedItemAttachments() {
+        guard let selectedItem else {
+            statusMessage = "Select an item first"
+            return
+        }
+
+        let targetItemID = selectedItem.id
+        reprocessingItemID = targetItemID
+        statusMessage = "Processing attachments..."
+
+        Task { @MainActor in
+            defer {
+                if reprocessingItemID == targetItemID {
+                    reprocessingItemID = nil
+                }
+            }
+
+            await refreshSelectedItemAttachments()
+
+            var currentItem = selectedItem
+            var processedCount = 0
+            var detectedDOIs = Set<String>()
+
+            for attachment in selectedItemAttachments {
+                guard shouldAttemptDOIExtraction(for: attachment) else {
+                    continue
+                }
+                let enrichment = await enrichImportedAttachment(item: currentItem, attachment: attachment)
+                currentItem = enrichment.item
+                if let doi = enrichment.detectedDOI {
+                    detectedDOIs.insert(doi)
+                }
+                processedCount += 1
+            }
+
+            await refreshItems()
+            selectedItemID = currentItem.id
+
+            if processedCount == 0 {
+                statusMessage = "No PDF attachments to process"
+                return
+            }
+
+            let noun = processedCount == 1 ? "attachment" : "attachments"
+            statusMessage = "Processed \(processedCount) \(noun)"
+            if !detectedDOIs.isEmpty {
+                let doiNoun = detectedDOIs.count == 1 ? "DOI" : "DOIs"
+                statusMessage += " · detected \(detectedDOIs.count) \(doiNoun)"
+            }
+        }
+    }
+
+    func removeAttachment(_ attachment: LocalAttachment) {
+        Task {
+            do {
+                try await attachmentStore.removeAttachment(attachment)
+                await refreshSelectedItemAttachments()
+                statusMessage = "Removed attachment"
+            }
+            catch {
+                statusMessage = "Failed to remove attachment"
             }
         }
     }
@@ -287,7 +442,7 @@ final class AppModel {
         let replaced = stem
             .replacingOccurrences(of: "_", with: " ")
             .replacingOccurrences(of: "-", with: " ")
-            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .bcCollapsedWhitespace()
         return replaced.isEmpty ? "Untitled Item" : replaced
     }
 
@@ -309,6 +464,164 @@ final class AppModel {
         }
     }
 
+    private struct AttachmentEnrichment {
+        var item: BCItem
+        var detectedDOI: String?
+    }
+
+    private func enrichImportedAttachment(item: BCItem, attachment: LocalAttachment) async -> AttachmentEnrichment {
+        guard shouldAttemptDOIExtraction(for: attachment) else {
+            return AttachmentEnrichment(item: item, detectedDOI: nil)
+        }
+
+        if item.doi != nil {
+            return AttachmentEnrichment(item: item, detectedDOI: nil)
+        }
+
+        let candidates = await pdfDOIExtractor.extractCandidates(from: attachment.localURL)
+        guard !candidates.isEmpty else {
+            return AttachmentEnrichment(item: item, detectedDOI: nil)
+        }
+
+        if let best = await resolveMetadataForPDFCandidates(candidates) {
+            let enriched = mergeMetadata(best, into: item, fallbackDOI: candidates.detectedDOI)
+            await store.upsert(enriched)
+            return AttachmentEnrichment(item: enriched, detectedDOI: candidates.detectedDOI)
+        }
+
+        let withDetectedIdentifiers = mergeIdentifiers(candidates.identifiers, into: item)
+        await store.upsert(withDetectedIdentifiers)
+        return AttachmentEnrichment(item: withDetectedIdentifiers, detectedDOI: candidates.detectedDOI)
+    }
+
+    private func shouldAttemptDOIExtraction(for attachment: LocalAttachment) -> Bool {
+        if attachment.contentType == "application/pdf" {
+            return true
+        }
+        return attachment.localURL.pathExtension.lowercased() == "pdf"
+    }
+
+    private func resolveMetadataForPDFCandidates(_ candidates: PDFMetadataCandidates) async -> CanonicalMetadataRecord? {
+        let arXivIdentifiers = candidates.identifiers.filter { $0.type == .arxiv }
+        for arXiv in arXivIdentifiers {
+            if let record = await resolveMetadata(
+                identifiers: [Identifier(type: .arxiv, value: arXiv.value)],
+                freeTextQuery: nil
+            ) {
+                return record
+            }
+        }
+
+        let doiIdentifiers = candidates.identifiers.filter { $0.type == .doi }
+        for doi in doiIdentifiers {
+            if let record = await resolveMetadata(
+                identifiers: [Identifier(type: .doi, value: doi.value)],
+                freeTextQuery: nil
+            ) {
+                return record
+            }
+        }
+
+        let isbnIdentifiers = candidates.identifiers.filter { $0.type == .isbn }
+        for isbn in isbnIdentifiers {
+            if let record = await resolveMetadata(
+                identifiers: [Identifier(type: .isbn, value: isbn.value)],
+                freeTextQuery: nil
+            ) {
+                return record
+            }
+        }
+
+        for title in candidates.titleHints {
+            if let record = await resolveMetadata(
+                identifiers: [],
+                freeTextQuery: title
+            ) {
+                return record
+            }
+        }
+
+        return nil
+    }
+
+    private func resolveMetadata(
+        identifiers: [Identifier],
+        freeTextQuery: String?
+    ) async -> CanonicalMetadataRecord? {
+        let request = MetadataResolutionRequest(
+            identifiers: identifiers,
+            freeTextQuery: freeTextQuery
+        )
+        let result = await metadataRegistry.resolveAll(request)
+        return result.bestMatch
+    }
+
+    private func mergeMetadata(_ record: CanonicalMetadataRecord, into item: BCItem, fallbackDOI: String?) -> BCItem {
+        let fallbackIdentifiers: [Identifier]
+        if let fallbackDOI {
+            fallbackIdentifiers = [Identifier(type: .doi, value: fallbackDOI)]
+        }
+        else {
+            fallbackIdentifiers = []
+        }
+
+        let mergedIdentifiers = mergeIdentifiers(record.identifiers + fallbackIdentifiers, into: item).identifiers
+        let nextTitle = normalizedTitle(record.title) ?? normalizedTitle(item.title) ?? "Untitled Item"
+        let cleanedRecordCreators = normalizedCreators(record.creators)
+        let cleanedItemCreators = normalizedCreators(item.creators)
+        let nextCreators = cleanedRecordCreators.isEmpty ? cleanedItemCreators : cleanedRecordCreators
+        let nextType = record.itemType == .unknown ? item.itemType : record.itemType
+        let nextYear = record.publicationYear ?? item.publicationYear
+
+        return BCItem(
+            id: item.id,
+            title: nextTitle,
+            identifiers: mergedIdentifiers,
+            itemType: nextType,
+            creators: nextCreators,
+            publicationYear: nextYear,
+            createdAt: item.createdAt,
+            updatedAt: item.updatedAt
+        )
+    }
+
+    private func mergeIdentifiers(_ incoming: [Identifier], into item: BCItem) -> BCItem {
+        var merged = item.identifiers
+        var seen = Set<String>(merged.map(identifierDedupeKey(for:)))
+
+        for identifier in incoming {
+            var normalized = identifier
+            if normalized.type == .doi {
+                if let normalizedDOI = DOIParsing.normalizeCandidate(normalized.value) {
+                    normalized.value = normalizedDOI
+                } else {
+                    continue
+                }
+            }
+
+            normalized.value = normalized.value.bcCollapsedWhitespace()
+            guard !normalized.value.isEmpty else {
+                continue
+            }
+
+            let key = identifierDedupeKey(for: normalized)
+            if seen.insert(key).inserted {
+                merged.append(normalized)
+            }
+        }
+
+        return BCItem(
+            id: item.id,
+            title: item.title,
+            identifiers: merged,
+            itemType: item.itemType,
+            creators: item.creators,
+            publicationYear: item.publicationYear,
+            createdAt: item.createdAt,
+            updatedAt: item.updatedAt
+        )
+    }
+
     private func renderCitationPreviewForSelection() async {
         guard let selectedItem else {
             citationPreview = "Select an item to preview citation output"
@@ -328,5 +641,35 @@ final class AppModel {
         catch {
             citationPreview = "Citation preview failed: \(error.localizedDescription)"
         }
+    }
+
+    private func normalizedTitle(_ raw: String) -> String? {
+        raw.bcTrimmedNonEmpty
+    }
+
+    private func normalizedCreators(_ creators: [Creator]) -> [Creator] {
+        creators.compactMap { creator in
+            let literal = creator.literalName?.bcTrimmedNonEmpty
+            let given = creator.givenName?.bcTrimmedNonEmpty
+            let family = creator.familyName?.bcTrimmedNonEmpty
+
+            if literal == nil, given == nil, family == nil {
+                return nil
+            }
+
+            return Creator(
+                id: creator.id,
+                givenName: given,
+                familyName: family,
+                literalName: literal
+            )
+        }
+    }
+
+    private func identifierDedupeKey(for identifier: Identifier) -> String {
+        if identifier.type == .doi, let normalizedDOI = DOIParsing.normalizeCandidate(identifier.value) {
+            return "\(identifier.type.rawValue):\(normalizedDOI.lowercased())"
+        }
+        return "\(identifier.type.rawValue):\(identifier.value.lowercased())"
     }
 }
