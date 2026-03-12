@@ -13,12 +13,15 @@
 		4FA9E3393B3A7D37186868AD /* BCMetadataProviders in Frameworks */ = {isa = PBXBuildFile; productRef = 2F3CB347600B3781B9D9754E /* BCMetadataProviders */; };
 		9281E8A8BB676A703B9F7EBF /* Inject in Frameworks */ = {isa = PBXBuildFile; productRef = 46790A0F818023D0CFF466A3 /* Inject */; };
 		92FED3A324D8EB6775CA03DA /* BCDesignSystem in Frameworks */ = {isa = PBXBuildFile; productRef = EA10BD36ABC1AE8399B4A29C /* BCDesignSystem */; };
+		9A96C02FD98965B26715E9B6 /* PDFDOIExtractor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B7797942DDDBA693ECDFF07 /* PDFDOIExtractor.swift */; };
 		A6E35284D1AE390629030632 /* BCCitationEngine in Frameworks */ = {isa = PBXBuildFile; productRef = 0403D4A00F6E68A08A016F3D /* BCCitationEngine */; };
+		ACA8A098717C678AEA860652 /* CrossrefDOIMetadataProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8103573758FDC71F249672D4 /* CrossrefDOIMetadataProvider.swift */; };
 		B5CBDE767254F12CBBEE6BEF /* BCDomain in Frameworks */ = {isa = PBXBuildFile; productRef = 4D4DAFA9BFFCF583C2339D02 /* BCDomain */; };
 		C074A2AD6BD3C20670D5C898 /* BCStorage in Frameworks */ = {isa = PBXBuildFile; productRef = AFC1839207914FE6FF60AFEB /* BCStorage */; };
 		C2AAB8D6EAA7CE1A8A411FA0 /* BCCommon in Frameworks */ = {isa = PBXBuildFile; productRef = C57F984D24669924D63E525C /* BCCommon */; };
 		C53E72DDE432E523DA5EA2AC /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88021F7C091110D06E66C734 /* RootView.swift */; };
 		CA15ABEF9D10726B2CD43613 /* MockDOIProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7B12EBFCE54FE2F5F1F5F8E /* MockDOIProvider.swift */; };
+		CA674BE723E0A4FE419454B2 /* TextNormalization.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B88FF30E9C4793440D90A7C /* TextNormalization.swift */; };
 		D3E666812D20ACFAAF344ED1 /* BCDataRemote in Frameworks */ = {isa = PBXBuildFile; productRef = 3CB4F3297C9DDFA9251E32E4 /* BCDataRemote */; };
 		DDB9DB333B558A72468ECB5C /* AttachmentStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1579D700B0BC8CD0DCA09FD9 /* AttachmentStore.swift */; };
 		E8BB126F329764160DB13431 /* BetterCiteApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 614BAFD29D048E6DF8192AF8 /* BetterCiteApp.swift */; };
@@ -27,12 +30,15 @@
 /* Begin PBXFileReference section */
 		118A198909D866291933DF7B /* BCCitationEngine */ = {isa = PBXFileReference; lastKnownFileType = folder; name = BCCitationEngine; path = ../../Packages/BCCitationEngine; sourceTree = SOURCE_ROOT; };
 		1579D700B0BC8CD0DCA09FD9 /* AttachmentStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AttachmentStore.swift; sourceTree = "<group>"; };
+		2B7797942DDDBA693ECDFF07 /* PDFDOIExtractor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PDFDOIExtractor.swift; sourceTree = "<group>"; };
 		32BA92B6C62AD14A37347BBF /* BCMetadataProviders */ = {isa = PBXFileReference; lastKnownFileType = folder; name = BCMetadataProviders; path = ../../Packages/BCMetadataProviders; sourceTree = SOURCE_ROOT; };
 		468E2AE2BF2AA9AEBDCB66F4 /* BetterCiteMac.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BetterCiteMac.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		5B1E344C82DABFB7D4C13961 /* BCDesignSystem */ = {isa = PBXFileReference; lastKnownFileType = folder; name = BCDesignSystem; path = ../../Packages/BCDesignSystem; sourceTree = SOURCE_ROOT; };
 		614BAFD29D048E6DF8192AF8 /* BetterCiteApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BetterCiteApp.swift; sourceTree = "<group>"; };
 		69A3CEAAFB92A1A25C6EF4E8 /* BCDataLocal */ = {isa = PBXFileReference; lastKnownFileType = folder; name = BCDataLocal; path = ../../Packages/BCDataLocal; sourceTree = SOURCE_ROOT; };
 		6ED331C9FE6B8C33F72BF9C8 /* BCStorage */ = {isa = PBXFileReference; lastKnownFileType = folder; name = BCStorage; path = ../../Packages/BCStorage; sourceTree = SOURCE_ROOT; };
+		7B88FF30E9C4793440D90A7C /* TextNormalization.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TextNormalization.swift; sourceTree = "<group>"; };
+		8103573758FDC71F249672D4 /* CrossrefDOIMetadataProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CrossrefDOIMetadataProvider.swift; sourceTree = "<group>"; };
 		84CE9F45E073EA73C41E6E78 /* BCCommon */ = {isa = PBXFileReference; lastKnownFileType = folder; name = BCCommon; path = ../../Packages/BCCommon; sourceTree = SOURCE_ROOT; };
 		88021F7C091110D06E66C734 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		9ECC52745163C2BEFFD1A8B6 /* BCDataRemote */ = {isa = PBXFileReference; lastKnownFileType = folder; name = BCDataRemote; path = ../../Packages/BCDataRemote; sourceTree = SOURCE_ROOT; };
@@ -109,7 +115,10 @@
 				E4010BDD99440F9D9629945C /* AppModel.swift */,
 				1579D700B0BC8CD0DCA09FD9 /* AttachmentStore.swift */,
 				614BAFD29D048E6DF8192AF8 /* BetterCiteApp.swift */,
+				8103573758FDC71F249672D4 /* CrossrefDOIMetadataProvider.swift */,
 				C7B12EBFCE54FE2F5F1F5F8E /* MockDOIProvider.swift */,
+				2B7797942DDDBA693ECDFF07 /* PDFDOIExtractor.swift */,
+				7B88FF30E9C4793440D90A7C /* TextNormalization.swift */,
 				719019080C081110274ADC7C /* Views */,
 			);
 			name = BetterCiteMac;
@@ -198,9 +207,12 @@
 				2067E420536B25B49BD2CDA3 /* AppModel.swift in Sources */,
 				DDB9DB333B558A72468ECB5C /* AttachmentStore.swift in Sources */,
 				E8BB126F329764160DB13431 /* BetterCiteApp.swift in Sources */,
+				ACA8A098717C678AEA860652 /* CrossrefDOIMetadataProvider.swift in Sources */,
 				CA15ABEF9D10726B2CD43613 /* MockDOIProvider.swift in Sources */,
+				9A96C02FD98965B26715E9B6 /* PDFDOIExtractor.swift in Sources */,
 				C53E72DDE432E523DA5EA2AC /* RootView.swift in Sources */,
 				45E463BC3BBA06BE3390BBDD /* SignInView.swift in Sources */,
+				CA674BE723E0A4FE419454B2 /* TextNormalization.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -292,6 +304,8 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGNING_ALLOWED = NO;
+				CODE_SIGNING_REQUIRED = NO;
 				COMBINE_HIDPI_IMAGES = YES;
 				EMIT_FRONTEND_COMMAND_LINES = YES;
 				INFOPLIST_FILE = "Config/BetterCiteMac-Info.plist";

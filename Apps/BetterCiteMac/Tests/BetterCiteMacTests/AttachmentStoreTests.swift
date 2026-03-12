@@ -60,6 +60,24 @@ struct AttachmentStoreTests {
         #expect(attachments.count == 1)
         #expect(attachments.first?.fileName == "persistent-item.pdf")
     }
+
+    @Test("removeAttachment deletes persisted file")
+    func removeAttachmentDeletesPersistedFile() async throws {
+        let baseDirectory = makeTempDirectory()
+        defer { cleanupDirectory(baseDirectory) }
+
+        let sourceURL = try makeFile(named: "paper.pdf", contents: Data("hello".utf8), in: baseDirectory)
+        let attachmentsDirectory = baseDirectory.appendingPathComponent("attachments", isDirectory: true)
+        let store = try LocalAttachmentStore(baseDirectory: attachmentsDirectory)
+        let item = BCItem(title: "Delete Test")
+
+        let attachment = try await store.importFile(from: sourceURL, for: item)
+        try await store.removeAttachment(attachment)
+        let attachments = try await store.listAttachments(for: item.id)
+
+        #expect(attachments.isEmpty)
+        #expect(!FileManager.default.fileExists(atPath: attachment.localURL.path))
+    }
 }
 
 private extension AttachmentStoreTests {

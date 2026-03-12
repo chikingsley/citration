@@ -53,6 +53,8 @@ targets:
         PRODUCT_NAME: BetterCite
       configs:
         Debug:
+          CODE_SIGNING_ALLOWED: NO
+          CODE_SIGNING_REQUIRED: NO
           OTHER_LDFLAGS:
             - "$(inherited)"
             - -Xlinker

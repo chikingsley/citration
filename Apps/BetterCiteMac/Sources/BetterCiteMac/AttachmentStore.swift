@@ -99,6 +99,12 @@ actor LocalAttachmentStore {
             }
     }
 
+    func removeAttachment(_ attachment: LocalAttachment) throws {
+        if fileManager.fileExists(atPath: attachment.localURL.path) {
+            try fileManager.removeItem(at: attachment.localURL)
+        }
+    }
+
     private func directoryURL(for item: BCItem) -> URL {
         let titleSlug = slugComponent(item.title)
         let safeTitle = titleSlug.isEmpty ? "item" : titleSlug
