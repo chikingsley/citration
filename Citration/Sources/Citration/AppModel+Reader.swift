@@ -7,7 +7,7 @@ extension AppModel {
             activeReaderProgress = nil
         }
 
-        guard attachment.documentFormat == .pdf else {
+        guard attachment.documentFormat == .pdf || attachment.documentFormat == .epub else {
             activeReaderAttachment = attachment
             selectedItemID = attachment.itemID
             statusMessage = "\(attachment.documentFormat.displayName) reader is not implemented yet"

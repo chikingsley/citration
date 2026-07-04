@@ -30,6 +30,8 @@ The current app already has a good starting point:
 - PDF import can extract DOI/arXiv/ISBN candidates and resolve metadata, with
   title-search fallback from extracted hints or filename-derived titles.
 - Metadata providers already cover Crossref, arXiv, and OpenLibrary ISBN.
+- EPUB attachments open in-app through an initial WebKit-backed spine reader;
+  deeper Readium-style navigation and CFI persistence still need follow-up work.
 - The UI already follows the broad Xcode/Zotero shape: sidebar, table, toolbar,
   right inspector, and status text.
 

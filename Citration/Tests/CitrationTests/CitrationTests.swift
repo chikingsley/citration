@@ -258,8 +258,8 @@ struct CitrationTests {
 		#expect(model.statusMessage == "Reading reader.pdf")
 	}
 
-	@Test("opening EPUB reader reports pending implementation")
-	func openingEPUBReaderReportsPendingImplementation() async {
+	@Test("opening EPUB reader starts in-app reading")
+	func openingEPUBReaderStartsInAppReading() async {
 		let attachment = makeAttachment(
 			itemID: UUID(),
 			fileName: "book.epub",
@@ -270,7 +270,7 @@ struct CitrationTests {
 		model.openReader(for: attachment)
 
 		#expect(model.activeReaderAttachment == attachment)
-		#expect(model.statusMessage == "EPUB reader is not implemented yet")
+		#expect(model.statusMessage == "Reading book.epub")
 	}
 
 	@Test("selecting a different item clears active reader")
