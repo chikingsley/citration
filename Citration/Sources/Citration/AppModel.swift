@@ -32,6 +32,8 @@ final class AppModel {
     var selectedItemCollectionIDs = Set<UUID>()
     var libraryRelationships: [LibraryRelationship] = []
     var selectedItemRelationships: [LibraryRelationship] = []
+    var selectedItemDiscoverySuggestions: [WorkDiscoverySuggestion] = []
+    var isLoadingDiscoverySuggestions: Bool = false
     var relatedItemTargetID: UUID?
     var relatedItemKind: LibraryRelationshipKind = .userLinked
     var relatedItemNoteDraft: String = ""
@@ -54,6 +56,7 @@ final class AppModel {
     let relationshipStore: LocalRelationshipStore
     let readerProgressStore: LocalReaderProgressStore
     let pdfDOIExtractor: any PDFDOIExtracting
+    let relatedWorkDiscoveryProvider: any RelatedWorkDiscoveryProvider
 
     init(
         store: any BCItemStore,
@@ -67,7 +70,8 @@ final class AppModel {
         collectionStore: LocalCollectionStore? = nil,
         noteStore: LocalNoteStore? = nil,
         relationshipStore: LocalRelationshipStore? = nil,
-        readerProgressStore: LocalReaderProgressStore? = nil
+        readerProgressStore: LocalReaderProgressStore? = nil,
+        relatedWorkDiscoveryProvider: any RelatedWorkDiscoveryProvider = NoopRelatedWorkDiscoveryProvider()
     ) {
         self.store = store
         self.metadataRegistry = metadataRegistry
@@ -81,6 +85,7 @@ final class AppModel {
         self.relationshipStore = relationshipStore ?? AppModel.makeRelationshipStore()
         self.readerProgressStore = readerProgressStore ?? AppModel.makeReaderProgressStore()
         self.pdfDOIExtractor = pdfDOIExtractor
+        self.relatedWorkDiscoveryProvider = relatedWorkDiscoveryProvider
 
         Task {
             await setupAuthServices()
@@ -141,6 +146,7 @@ final class AppModel {
         await refreshSelectedItemAttachments()
         await refreshSelectedItemNotes()
         await refreshSelectedItemRelationships()
+        await refreshSelectedItemDiscoverySuggestions()
     }
 
     func addEmptyItem() {
@@ -189,6 +195,7 @@ final class AppModel {
             citationExportText = ""
             relatedItemTargetID = nil
             relatedItemNoteDraft = ""
+            selectedItemDiscoverySuggestions = []
         }
         if activeReaderAttachment?.itemID != id {
             activeReaderAttachment = nil
@@ -203,6 +210,7 @@ final class AppModel {
             await refreshSelectedItemCollections()
             await refreshSelectedItemNotes()
             await refreshSelectedItemRelationships()
+            await refreshSelectedItemDiscoverySuggestions()
         }
     }
 

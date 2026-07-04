@@ -106,6 +106,80 @@ public struct LibraryRecommendation: Identifiable, Hashable, Codable, Sendable {
     }
 }
 
+public struct WorkDiscoverySuggestion: Identifiable, Hashable, Codable, Sendable {
+    public var id: String { providerRecordID }
+    public var providerName: String
+    public var providerRecordID: String
+    public var title: String
+    public var creators: [Creator]
+    public var publicationYear: Int?
+    public var itemType: ItemType
+    public var identifiers: [Identifier]
+    public var sourceURL: URL?
+    public var confidence: Double
+    public var reasons: [RecommendationReason]
+
+    public init(
+        providerName: String,
+        providerRecordID: String,
+        title: String,
+        creators: [Creator] = [],
+        publicationYear: Int? = nil,
+        itemType: ItemType = .unknown,
+        identifiers: [Identifier] = [],
+        sourceURL: URL? = nil,
+        confidence: Double,
+        reasons: [RecommendationReason]
+    ) {
+        self.providerName = providerName
+        self.providerRecordID = providerRecordID
+        self.title = Self.collapsedWhitespace(title)
+        self.creators = creators
+        self.publicationYear = publicationYear
+        self.itemType = itemType
+        self.identifiers = identifiers
+        self.sourceURL = sourceURL
+        self.confidence = min(max(confidence, 0), 1)
+        self.reasons = reasons
+    }
+
+    public func makeLibraryItem(createdAt: Date = .now) -> BCItem {
+        BCItem(
+            title: title,
+            identifiers: identifiers,
+            itemType: itemType,
+            creators: creators,
+            publicationYear: publicationYear,
+            createdAt: createdAt,
+            updatedAt: createdAt
+        )
+    }
+
+    private static func collapsedWhitespace(_ value: String) -> String {
+        value
+            .components(separatedBy: .whitespacesAndNewlines)
+            .filter { !$0.isEmpty }
+            .joined(separator: " ")
+    }
+}
+
+public protocol RelatedWorkDiscoveryProvider: Sendable {
+    var name: String { get }
+    func suggestions(for item: BCItem, limit: Int) async throws -> [WorkDiscoverySuggestion]
+}
+
+public struct NoopRelatedWorkDiscoveryProvider: RelatedWorkDiscoveryProvider {
+    public let name = "none"
+
+    public init() {}
+
+    public func suggestions(for item: BCItem, limit: Int) async throws -> [WorkDiscoverySuggestion] {
+        _ = item
+        _ = limit
+        return []
+    }
+}
+
 public struct LibraryInsightEngine: Sendable {
     public init() {}
 

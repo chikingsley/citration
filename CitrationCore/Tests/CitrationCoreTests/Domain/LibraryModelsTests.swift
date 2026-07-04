@@ -144,6 +144,32 @@ struct LibraryModelsTests {
         #expect(LibraryRelationshipKind.sameCreator.displayLabel == "Same author")
     }
 
+    @Test("work discovery suggestion creates library item")
+    func workDiscoverySuggestionCreatesLibraryItem() {
+        let suggestion = WorkDiscoverySuggestion(
+            providerName: "openalex",
+            providerRecordID: "https://openalex.org/W1",
+            title: "  Related   Work  ",
+            creators: [Creator(givenName: "Ada", familyName: "Lovelace")],
+            publicationYear: 1843,
+            itemType: .article,
+            identifiers: [Identifier(type: .doi, value: "10.5555/example")],
+            sourceURL: URL(string: "https://openalex.org/W1"),
+            confidence: 1.4,
+            reasons: [.openAlexRelatedWork("W0")]
+        )
+
+        let item = suggestion.makeLibraryItem(createdAt: Date(timeIntervalSince1970: 1))
+
+        #expect(suggestion.id == "https://openalex.org/W1")
+        #expect(suggestion.title == "Related Work")
+        #expect(suggestion.confidence == 1)
+        #expect(item.title == "Related Work")
+        #expect(item.identifiers == [Identifier(type: .doi, value: "10.5555/example")])
+        #expect(item.publicationYear == 1843)
+        #expect(item.itemType == .article)
+    }
+
     @Test("annotation trims note text and reports empty state")
     func annotationTrimsNoteTextAndReportsEmptyState() {
         let annotation = LibraryAnnotation(

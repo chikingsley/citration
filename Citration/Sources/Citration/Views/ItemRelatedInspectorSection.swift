@@ -53,6 +53,21 @@ struct ItemRelatedInspectorSection: View {
                     }
                 }
             }
+
+            Divider()
+            Text("OpenAlex")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.secondary)
+            if model.isLoadingDiscoverySuggestions {
+                ProgressView("Loading related works...")
+            } else if model.selectedItemDiscoverySuggestions.isEmpty {
+                Text("No OpenAlex suggestions yet.")
+                    .foregroundStyle(.secondary)
+            } else {
+                ForEach(model.selectedItemDiscoverySuggestions) { suggestion in
+                    discoverySuggestionRow(suggestion)
+                }
+            }
         }
     }
 
@@ -97,5 +112,36 @@ struct ItemRelatedInspectorSection: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
+    }
+
+    @ViewBuilder
+    private func discoverySuggestionRow(_ suggestion: WorkDiscoverySuggestion) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack {
+                Text(suggestion.title.bcCollapsedWhitespace())
+                    .font(.subheadline.weight(.medium))
+                Spacer()
+                Button("Import", systemImage: "square.and.arrow.down") {
+                    model.importDiscoverySuggestion(suggestion)
+                }
+                .buttonStyle(.borderless)
+            }
+
+            Text(discoverySubtitle(for: suggestion))
+                .font(.caption)
+                .foregroundStyle(.secondary)
+
+            Text(suggestion.reasons.map(\.displayLabel).joined(separator: " · "))
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+        .padding(.vertical, 4)
+    }
+
+    private func discoverySubtitle(for suggestion: WorkDiscoverySuggestion) -> String {
+        let creator = suggestion.creators.first?.displayName
+        let year = suggestion.publicationYear.map(String.init)
+        let pieces = [creator, year].compactMap { $0?.bcTrimmedNonEmpty }
+        return pieces.isEmpty ? suggestion.providerName : pieces.joined(separator: " · ")
     }
 }

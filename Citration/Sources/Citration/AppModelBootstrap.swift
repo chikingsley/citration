@@ -1,3 +1,4 @@
+import Foundation
 import CitrationCore
 
 extension AppModel {
@@ -20,6 +21,12 @@ extension AppModel {
         let metadataRegistry = MetadataProviderRegistry(providers: providers)
         let citationFormatter = StubCitationFormatter()
         let pdfDOIExtractor = MuPDFDOIExtractor()
+        let relatedWorkDiscoveryProvider: any RelatedWorkDiscoveryProvider
+        if let openAlexAPIKey = ProcessInfo.processInfo.environment["OPENALEX_API_KEY"]?.bcTrimmedNonEmpty {
+            relatedWorkDiscoveryProvider = OpenAlexRelatedWorkProvider(apiKey: openAlexAPIKey)
+        } else {
+            relatedWorkDiscoveryProvider = NoopRelatedWorkDiscoveryProvider()
+        }
         let storageConnectors = [
             StorageConnector(name: "Local Files", type: .local, bucket: "local", isDefault: true)
         ]
@@ -31,7 +38,8 @@ extension AppModel {
             citationFormatter: citationFormatter,
             storageConnectors: storageConnectors,
             sessionStore: sessionStore,
-            pdfDOIExtractor: pdfDOIExtractor
+            pdfDOIExtractor: pdfDOIExtractor,
+            relatedWorkDiscoveryProvider: relatedWorkDiscoveryProvider
         )
     }
 }
