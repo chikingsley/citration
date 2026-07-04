@@ -43,6 +43,10 @@ final class AppModel {
     var activeReaderAnnotations: [LibraryAnnotation] = []
     var readerNoteDraft: String = ""
     var tagDraft: String = ""
+    var collections: [LibraryCollection] = []
+    var collectionMemberships: [LibraryCollectionMembership] = []
+    var selectedCollectionID: UUID?
+    var selectedItemCollectionIDs = Set<UUID>()
     var storageConnectors: [StorageConnector]
 
     // Auth state
@@ -57,6 +61,7 @@ final class AppModel {
     private let citationFormatter: any CitationFormattingEngine
     private let attachmentStore: LocalAttachmentStore
     let annotationStore: LocalAnnotationStore
+    let collectionStore: LocalCollectionStore
     private let pdfDOIExtractor: any PDFDOIExtracting
 
     init(
@@ -67,7 +72,8 @@ final class AppModel {
         sessionStore: AuthSessionStore = InMemoryAuthSessionStore(),
         pdfDOIExtractor: any PDFDOIExtracting = NullPDFDOIExtractor(),
         attachmentStore: LocalAttachmentStore? = nil,
-        annotationStore: LocalAnnotationStore? = nil
+        annotationStore: LocalAnnotationStore? = nil,
+        collectionStore: LocalCollectionStore? = nil
     ) {
         self.store = store
         self.metadataRegistry = metadataRegistry
@@ -76,10 +82,12 @@ final class AppModel {
         self.sessionStore = sessionStore
         self.attachmentStore = attachmentStore ?? AppModel.makeAttachmentStore()
         self.annotationStore = annotationStore ?? AppModel.makeAnnotationStore()
+        self.collectionStore = collectionStore ?? AppModel.makeCollectionStore()
         self.pdfDOIExtractor = pdfDOIExtractor
 
         Task {
             await setupAuthServices()
+            await refreshCollections()
             await refreshItems()
         }
     }
@@ -236,6 +244,8 @@ final class AppModel {
             for id in uniqueIDs {
                 await store.removeItem(id: id)
             }
+            try? await collectionStore.removeItems(ids: uniqueIDs)
+            await refreshCollections()
             await refreshItems()
 
             if uniqueIDs.count == 1 {
@@ -256,6 +266,7 @@ final class AppModel {
         Task {
             await renderCitationPreviewForSelection()
             await refreshSelectedItemAttachments()
+            await refreshSelectedItemCollections()
         }
     }
 
@@ -329,6 +340,7 @@ final class AppModel {
                         await refreshItems()
                         let enrichment = await enrichImportedAttachment(item: item, attachment: attachment)
                         item = enrichment.item
+                        await addItemToSelectedCollectionIfNeeded(item.id)
                         if let doi = enrichment.detectedDOI {
                             detectedDOIs.insert(doi)
                         }

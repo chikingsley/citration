@@ -30,6 +30,34 @@ struct LibraryModelsTests {
         #expect(progress.fractionComplete == 1)
     }
 
+    @Test("collection normalizes blank and spaced names")
+    func collectionNormalizesNames() {
+        let named = LibraryCollection(name: "  Reading   List ")
+        let untitled = LibraryCollection(name: "   ")
+
+        #expect(named.name == "Reading List")
+        #expect(untitled.name == "Untitled Collection")
+    }
+
+    @Test("collection snapshot round-trips through Codable")
+    func collectionSnapshotRoundTripsThroughCodable() throws {
+        let collectionID = UUID()
+        let itemID = UUID()
+        let snapshot = LibraryCollectionSnapshot(
+            collections: [
+                LibraryCollection(id: collectionID, name: "AI Papers")
+            ],
+            memberships: [
+                LibraryCollectionMembership(collectionID: collectionID, itemID: itemID)
+            ]
+        )
+
+        let data = try JSONEncoder().encode(snapshot)
+        let decoded = try JSONDecoder().decode(LibraryCollectionSnapshot.self, from: data)
+
+        #expect(decoded == snapshot)
+    }
+
     @Test("insight engine recommends local items with shared creator")
     func insightEngineRecommendsSharedCreator() {
         let sharedCreator = Creator(givenName: "Ada", familyName: "Lovelace")

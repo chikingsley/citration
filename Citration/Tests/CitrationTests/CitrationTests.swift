@@ -306,16 +306,17 @@ private extension CitrationTests {
 		pdfDOIExtractor: any PDFDOIExtracting,
 		attachmentStore: LocalAttachmentStore?
 	) -> AppModel {
-		AppModel(
-			store: InMemoryItemStore(),
-			metadataRegistry: MetadataProviderRegistry(providers: providers),
-			citationFormatter: StubCitationFormatter(),
-			storageConnectors: [],
-			pdfDOIExtractor: pdfDOIExtractor,
-			attachmentStore: attachmentStore,
-			annotationStore: makeAnnotationStore()
-		)
-	}
+			AppModel(
+				store: InMemoryItemStore(),
+				metadataRegistry: MetadataProviderRegistry(providers: providers),
+				citationFormatter: StubCitationFormatter(),
+				storageConnectors: [],
+				pdfDOIExtractor: pdfDOIExtractor,
+				attachmentStore: attachmentStore,
+				annotationStore: makeAnnotationStore(),
+				collectionStore: makeCollectionStore()
+			)
+		}
 
 	func waitUntil(
 		timeout: TimeInterval = 2.0,
@@ -340,14 +341,23 @@ private extension CitrationTests {
 		return directory
 	}
 
-	func makeAnnotationStore() -> LocalAnnotationStore? {
-		try? LocalAnnotationStore(
-			storeURL: FileManager.default.temporaryDirectory
+        func makeAnnotationStore() -> LocalAnnotationStore? {
+            try? LocalAnnotationStore(
+                storeURL: FileManager.default.temporaryDirectory
 				.appendingPathComponent("citration-appmodel-annotations")
 				.appendingPathComponent(UUID().uuidString)
 				.appendingPathExtension("json")
-		)
-	}
+            )
+        }
+
+        func makeCollectionStore() -> LocalCollectionStore? {
+            try? LocalCollectionStore(
+                storeURL: FileManager.default.temporaryDirectory
+                    .appendingPathComponent("citration-appmodel-collections")
+                    .appendingPathComponent(UUID().uuidString)
+                    .appendingPathExtension("json")
+            )
+        }
 
 	func cleanupDirectory(_ directory: URL) {
 		try? FileManager.default.removeItem(at: directory)

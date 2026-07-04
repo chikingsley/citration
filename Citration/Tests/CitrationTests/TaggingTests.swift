@@ -112,7 +112,8 @@ private extension TaggingTests {
 			storageConnectors: [],
 			pdfDOIExtractor: pdfDOIExtractor,
 			attachmentStore: attachmentStore,
-			annotationStore: makeAnnotationStore()
+			annotationStore: makeAnnotationStore(),
+			collectionStore: makeCollectionStore()
 		)
 	}
 
@@ -131,14 +132,23 @@ private extension TaggingTests {
 		Issue.record("Timed out waiting for condition")
 	}
 
-	func makeAnnotationStore() -> LocalAnnotationStore? {
-		try? LocalAnnotationStore(
-			storeURL: FileManager.default.temporaryDirectory
+    func makeAnnotationStore() -> LocalAnnotationStore? {
+        try? LocalAnnotationStore(
+            storeURL: FileManager.default.temporaryDirectory
 				.appendingPathComponent("citration-tagging-annotations")
 				.appendingPathComponent(UUID().uuidString)
 				.appendingPathExtension("json")
-		)
-	}
+        )
+    }
+
+    func makeCollectionStore() -> LocalCollectionStore? {
+        try? LocalCollectionStore(
+            storeURL: FileManager.default.temporaryDirectory
+                .appendingPathComponent("citration-tagging-collections")
+                .appendingPathComponent(UUID().uuidString)
+                .appendingPathExtension("json")
+        )
+    }
 
 	func makeTempDirectory() -> URL {
 		let directory = FileManager.default.temporaryDirectory

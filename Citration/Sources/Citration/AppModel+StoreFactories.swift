@@ -36,4 +36,22 @@ extension AppModel {
             }
         }
     }
+
+    static func makeCollectionStore() -> LocalCollectionStore {
+        do {
+            let storeURL = try LocalCollectionStorePaths.defaultStoreURL()
+            return try LocalCollectionStore(storeURL: storeURL)
+        }
+        catch {
+            let fallback = FileManager.default.temporaryDirectory
+                .appendingPathComponent("citration", isDirectory: true)
+                .appendingPathComponent("collections.json")
+            do {
+                return try LocalCollectionStore(storeURL: fallback)
+            }
+            catch {
+                fatalError("Unable to initialize collection store: \(error)")
+            }
+        }
+    }
 }

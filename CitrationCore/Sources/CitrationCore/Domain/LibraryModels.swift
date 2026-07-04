@@ -190,6 +190,68 @@ public struct ReaderProgress: Hashable, Codable, Sendable {
     }
 }
 
+public struct LibraryCollection: Identifiable, Hashable, Codable, Sendable {
+    public var id: UUID
+    public var name: String
+    public var parentID: UUID?
+    public var createdAt: Date
+    public var updatedAt: Date
+
+    public init(
+        id: UUID = UUID(),
+        name: String,
+        parentID: UUID? = nil,
+        createdAt: Date = .now,
+        updatedAt: Date = .now
+    ) {
+        self.id = id
+        self.name = Self.normalizedName(name) ?? "Untitled Collection"
+        self.parentID = parentID
+        self.createdAt = createdAt
+        self.updatedAt = updatedAt
+    }
+
+    public static func normalizedName(_ name: String) -> String? {
+        let collapsed = name
+            .components(separatedBy: .whitespacesAndNewlines)
+            .filter { !$0.isEmpty }
+            .joined(separator: " ")
+        return collapsed.isEmpty ? nil : collapsed
+    }
+}
+
+public struct LibraryCollectionMembership: Identifiable, Hashable, Codable, Sendable {
+    public var id: UUID
+    public var collectionID: UUID
+    public var itemID: UUID
+    public var createdAt: Date
+
+    public init(
+        id: UUID = UUID(),
+        collectionID: UUID,
+        itemID: UUID,
+        createdAt: Date = .now
+    ) {
+        self.id = id
+        self.collectionID = collectionID
+        self.itemID = itemID
+        self.createdAt = createdAt
+    }
+}
+
+public struct LibraryCollectionSnapshot: Hashable, Codable, Sendable {
+    public var collections: [LibraryCollection]
+    public var memberships: [LibraryCollectionMembership]
+
+    public init(
+        collections: [LibraryCollection] = [],
+        memberships: [LibraryCollectionMembership] = []
+    ) {
+        self.collections = collections
+        self.memberships = memberships
+    }
+}
+
 public enum LibraryRelationshipKind: String, Codable, CaseIterable, Sendable {
     case cites
     case citedBy

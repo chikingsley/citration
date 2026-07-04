@@ -31,16 +31,18 @@ struct RootView: View {
     @State private var isAttachDropTargeted = false
     @State private var importDragBorderPhase: CGFloat = 0
     @State private var attachDragBorderPhase: CGFloat = 0
+    private let librarySelectionID = "library"
 
-	private var filteredItems: [BCItem] {
-		let scopedItems: [BCItem]
-		if let selectedTag {
-			scopedItems = model.items.filter { item in
-				item.tags.contains { $0.localizedCaseInsensitiveCompare(selectedTag) == .orderedSame }
-			}
-		} else {
-			scopedItems = model.items
-		}
+    private var filteredItems: [BCItem] {
+        let collectionItems = model.selectedCollectionItems
+        let scopedItems: [BCItem]
+        if let selectedTag {
+            scopedItems = collectionItems.filter { item in
+                item.tags.contains { $0.localizedCaseInsensitiveCompare(selectedTag) == .orderedSame }
+            }
+        } else {
+            scopedItems = collectionItems
+        }
 
 		guard !searchText.isEmpty else { return scopedItems }
 		return scopedItems.filter { item in
@@ -66,22 +68,29 @@ struct RootView: View {
             VStack(spacing: 0) {
                 List(selection: $selectedCollection) {
                     DisclosureGroup(isExpanded: $libraryExpanded) {
-                        Label { Text("My Publications") } icon: {
-                            Image(systemName: "person.fill").foregroundStyle(.green)
-                        }.tag("publications")
-                        Label { Text("Duplicate Items") } icon: {
-                            Image(systemName: "doc.on.doc.fill").foregroundStyle(.orange)
-                        }.tag("duplicates")
-                        Label { Text("Unfiled Items") } icon: {
-                            Image(systemName: "tray.fill").foregroundStyle(Color(white: 0.5))
-                        }.tag("unfiled")
-                        Label { Text("Trash") } icon: {
-                            Image(systemName: "trash.fill").foregroundStyle(.red)
-                        }.tag("trash")
+                        Label { Text("All Items") } icon: {
+                            Image(systemName: "tray.full.fill").foregroundStyle(.blue)
+                        }
+                        .tag(librarySelectionID)
+
+                        if model.collections.isEmpty {
+                            Text("No collections")
+                                .foregroundStyle(.secondary)
+                        } else {
+                            ForEach(model.collections) { collection in
+                                Label(collection.name, systemImage: "folder.fill")
+                                    .tag(collectionSelectionID(for: collection))
+                                    .contextMenu {
+                                        Button("Remove Collection", systemImage: "trash") {
+                                        removeCollection(collection)
+                                    }
+                                }
+                            }
+                        }
                     } label: {
                         Label { Text("My Library") } icon: {
                             Image(systemName: "building.columns.fill").foregroundStyle(.blue)
-                        }.tag("library")
+                        }
                     }
                 }
                 .listStyle(.sidebar)
@@ -89,7 +98,17 @@ struct RootView: View {
                 .navigationSplitViewColumnWidth(min: 200, ideal: 220)
 
                 importDropZone
-                TagFilterPanel(items: model.items, selectedTag: $selectedTag)
+                TagFilterPanel(items: model.selectedCollectionItems, selectedTag: $selectedTag)
+            }
+            .onAppear {
+                model.selectCollection(id: collectionID(from: selectedCollection))
+            }
+            .onChange(of: selectedCollection) { _, selection in
+                selectedTag = nil
+                model.selectCollection(id: collectionID(from: selection))
+            }
+            .onChange(of: model.selectedCollectionID) { _, collectionID in
+                selectedCollection = collectionSelectionID(for: collectionID)
             }
             .onDrop(
                 of: [.fileURL],
@@ -160,6 +179,10 @@ struct RootView: View {
 
                 Button("New Item", systemImage: "doc.badge.plus") {
                     model.addEmptyItem()
+                }
+
+                Button("New Collection", systemImage: "folder.badge.plus") {
+                    model.createCollection()
                 }
 
                 Button("New Note", systemImage: "note.text.badge.plus") {
@@ -365,9 +388,10 @@ struct RootView: View {
 						if item.creators.count > 1 {
 							LabeledContent("Authors", value: item.creators.map(\.displayName).joined(separator: ", "))
 						}
-					}
+                    }
                     ItemTagsInspectorSection(model: model, item: item)
-					Section("Citation Preview") {
+                    ItemCollectionsInspectorSection(model: model, item: item)
+                    Section("Citation Preview") {
 						Text(model.citationPreview)
 							.font(.system(.caption, design: .monospaced))
                             .textSelection(.enabled)
@@ -572,6 +596,33 @@ struct RootView: View {
         DispatchQueue.main.async {
             model.importAttachments(urls: urls, mode: mode)
         }
+    }
+
+    private func collectionSelectionID(for collection: LibraryCollection) -> String {
+        collectionSelectionID(for: collection.id)
+    }
+
+    private func collectionSelectionID(for collectionID: UUID?) -> String {
+        guard let collectionID else {
+            return librarySelectionID
+        }
+        return "collection:\(collectionID.uuidString)"
+    }
+
+    private func collectionID(from selection: String?) -> UUID? {
+        guard let selection,
+              selection.hasPrefix("collection:") else {
+            return nil
+        }
+
+        return UUID(uuidString: String(selection.dropFirst("collection:".count)))
+    }
+
+    private func removeCollection(_ collection: LibraryCollection) {
+        if selectedCollection == collectionSelectionID(for: collection) {
+            selectedCollection = librarySelectionID
+        }
+        model.removeCollection(collection)
     }
 }
 
