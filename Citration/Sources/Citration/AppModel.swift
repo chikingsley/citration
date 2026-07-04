@@ -470,14 +470,16 @@ final class AppModel {
         }
 
         let candidates = await pdfDOIExtractor.extractCandidates(from: attachment.localURL)
-        guard !candidates.isEmpty else {
-            return AttachmentEnrichment(item: item, detectedDOI: nil)
-        }
+        let fallbackTitleQuery = metadataFallbackTitle(for: item, attachment: attachment)
 
-        if let best = await resolveMetadataForPDFCandidates(candidates) {
+        if let best = await resolveMetadataForPDFCandidates(candidates, fallbackTitleQuery: fallbackTitleQuery) {
             let enriched = mergeMetadata(best, into: item, fallbackDOI: candidates.detectedDOI)
             await store.upsert(enriched)
             return AttachmentEnrichment(item: enriched, detectedDOI: candidates.detectedDOI)
+        }
+
+        guard !candidates.isEmpty else {
+            return AttachmentEnrichment(item: item, detectedDOI: nil)
         }
 
         let withDetectedIdentifiers = mergeIdentifiers(candidates.identifiers, into: item)
@@ -489,7 +491,10 @@ final class AppModel {
         attachment.documentFormat == .pdf
     }
 
-    private func resolveMetadataForPDFCandidates(_ candidates: PDFMetadataCandidates) async -> CanonicalMetadataRecord? {
+    private func resolveMetadataForPDFCandidates(
+        _ candidates: PDFMetadataCandidates,
+        fallbackTitleQuery: String?
+    ) async -> CanonicalMetadataRecord? {
         let arXivIdentifiers = candidates.identifiers.filter { $0.type == .arxiv }
         for arXiv in arXivIdentifiers {
             if let record = await resolveMetadata(
@@ -520,7 +525,17 @@ final class AppModel {
             }
         }
 
-        for title in candidates.titleHints {
+        var titleQueries = candidates.titleHints
+        if let fallbackTitleQuery {
+            let hasExistingQuery = titleQueries.contains {
+                $0.caseInsensitiveCompare(fallbackTitleQuery) == .orderedSame
+            }
+            if !hasExistingQuery {
+                titleQueries.append(fallbackTitleQuery)
+            }
+        }
+
+        for title in titleQueries {
             if let record = await resolveMetadata(
                 identifiers: [],
                 freeTextQuery: title
@@ -530,6 +545,18 @@ final class AppModel {
         }
 
         return nil
+    }
+
+    private func metadataFallbackTitle(for item: BCItem, attachment: LocalAttachment) -> String? {
+        if let title = normalizedTitle(item.title), title != "Untitled Item" {
+            return title
+        }
+
+        let attachmentTitle = inferredTitle(from: attachment.localURL)
+        guard attachmentTitle != "Untitled Item" else {
+            return nil
+        }
+        return normalizedTitle(attachmentTitle)
     }
 
     private func resolveMetadata(

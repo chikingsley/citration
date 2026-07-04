@@ -27,7 +27,8 @@ The current app already has a good starting point:
 - `CitrationCore` is the portable domain/persistence/metadata/storage/sync
   package.
 - Drag/drop import already creates items and attaches local files.
-- PDF import can extract DOI/arXiv/ISBN candidates and resolve metadata.
+- PDF import can extract DOI/arXiv/ISBN candidates and resolve metadata, with
+  title-search fallback from extracted hints or filename-derived titles.
 - Metadata providers already cover Crossref, arXiv, and OpenLibrary ISBN.
 - The UI already follows the broad Xcode/Zotero shape: sidebar, table, toolbar,
   right inspector, and status text.
