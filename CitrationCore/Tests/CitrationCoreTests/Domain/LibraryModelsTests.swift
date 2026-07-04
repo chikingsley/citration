@@ -87,6 +87,39 @@ struct LibraryModelsTests {
         #expect(recommendations.first?.reasons.contains(.samePublicationYear(1843)) == true)
     }
 
+    @Test("insight engine recommends shared topics without same-year noise")
+    func insightEngineRecommendsSharedTopics() throws {
+        let sourceID = try #require(UUID(uuidString: "00000000-0000-0000-0000-000000000001"))
+        let topicMatchID = try #require(UUID(uuidString: "00000000-0000-0000-0000-000000000002"))
+        let sameYearOnlyID = try #require(UUID(uuidString: "00000000-0000-0000-0000-000000000003"))
+        let source = BCItem(
+            id: sourceID,
+            title: "Source",
+            publicationYear: 2024,
+            tags: ["Machine Learning", "Vision"]
+        )
+        let topicMatch = BCItem(
+            id: topicMatchID,
+            title: "Topic Match",
+            publicationYear: 2023,
+            tags: [" machine   learning ", "Robotics"]
+        )
+        let sameYearOnly = BCItem(
+            id: sameYearOnlyID,
+            title: "Same Year Only",
+            publicationYear: 2024
+        )
+
+        let recommendations = LibraryInsightEngine().recommendations(
+            for: source,
+            in: [source, sameYearOnly, topicMatch]
+        )
+
+        #expect(recommendations.map(\.candidateItemID) == [topicMatch.id])
+        #expect(recommendations.first?.reasons == [.sharedTopic("machine learning")])
+        #expect(RecommendationReason.sharedTopic("machine learning").displayLabel == "Shared topic: machine learning")
+    }
+
     @Test("insight engine includes user linked relationships")
     func insightEngineIncludesUserLinkedRelationships() {
         let source = BCItem(title: "Source")

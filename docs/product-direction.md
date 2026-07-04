@@ -34,6 +34,8 @@ The current app already has a good starting point:
   deeper Readium-style navigation and CFI persistence still need follow-up work.
 - The UI already follows the broad Xcode/Zotero shape: sidebar, table, toolbar,
   right inspector, and status text.
+- Local related-work recommendations already use user links, shared authors,
+  shared identifiers, and shared tags/topics before any network discovery.
 
 ## Reader Stack
 

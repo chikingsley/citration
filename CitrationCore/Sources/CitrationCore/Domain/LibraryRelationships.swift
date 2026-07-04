@@ -60,6 +60,7 @@ public struct LibraryRelationship: Identifiable, Hashable, Codable, Sendable {
 
 public enum RecommendationReason: Hashable, Codable, Sendable {
     case sharedCreator(String)
+    case sharedTopic(String)
     case sharedIdentifier(IdentifierType)
     case samePublicationYear(Int)
     case openAlexRelatedWork(String)
@@ -69,6 +70,8 @@ public enum RecommendationReason: Hashable, Codable, Sendable {
         switch self {
         case .sharedCreator(let name):
             return "Shared author: \(name)"
+        case .sharedTopic(let topic):
+            return "Shared topic: \(topic)"
         case .sharedIdentifier(let type):
             return "Shared \(type.rawValue.uppercased())"
         case .samePublicationYear(let year):
@@ -197,8 +200,17 @@ public struct LibraryInsightEngine: Sendable {
             score += 0.80
         }
 
+        let sharedTopics = source.normalizedTopicTags.intersection(candidate.normalizedTopicTags).sorted()
+        for topic in sharedTopics.prefix(2) {
+            reasons.append(.sharedTopic(topic))
+        }
+        if !sharedTopics.isEmpty {
+            score += min(Double(sharedTopics.count) * 0.25, 0.50)
+        }
+
         if let year = source.publicationYear,
-           candidate.publicationYear == year {
+           candidate.publicationYear == year,
+           !reasons.isEmpty {
             reasons.append(.samePublicationYear(year))
             score += 0.10
         }
@@ -236,6 +248,10 @@ private extension Array where Element: Hashable {
 private extension BCItem {
     var normalizedCreatorNames: Set<String> {
         Set(creators.map(\.displayName).map(Self.normalizeRecommendationToken).filter { !$0.isEmpty })
+    }
+
+    var normalizedTopicTags: Set<String> {
+        Set(tags.map(Self.normalizeRecommendationToken).filter { !$0.isEmpty })
     }
 
     static func normalizeRecommendationToken(_ value: String) -> String {
