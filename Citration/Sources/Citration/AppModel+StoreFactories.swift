@@ -54,4 +54,22 @@ extension AppModel {
             }
         }
     }
+
+    static func makeNoteStore() -> LocalNoteStore {
+        do {
+            let storeURL = try LocalNoteStorePaths.defaultStoreURL()
+            return try LocalNoteStore(storeURL: storeURL)
+        }
+        catch {
+            let fallback = FileManager.default.temporaryDirectory
+                .appendingPathComponent("citration", isDirectory: true)
+                .appendingPathComponent("notes.json")
+            do {
+                return try LocalNoteStore(storeURL: fallback)
+            }
+            catch {
+                fatalError("Unable to initialize note store: \(error)")
+            }
+        }
+    }
 }

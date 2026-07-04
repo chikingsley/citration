@@ -57,18 +57,28 @@ private extension ReaderAnnotationTests {
 			pdfDOIExtractor: NullPDFDOIExtractor(),
 			attachmentStore: nil,
 			annotationStore: annotationStore,
-			collectionStore: makeCollectionStore()
+			collectionStore: makeCollectionStore(),
+			noteStore: makeNoteStore()
 		)
 	}
 
-    func makeCollectionStore() -> LocalCollectionStore? {
-        try? LocalCollectionStore(
-            storeURL: FileManager.default.temporaryDirectory
-                .appendingPathComponent("citration-reader-collections")
-                .appendingPathComponent(UUID().uuidString)
-                .appendingPathExtension("json")
-        )
-    }
+	func makeCollectionStore() -> LocalCollectionStore? {
+		try? LocalCollectionStore(
+			storeURL: FileManager.default.temporaryDirectory
+				.appendingPathComponent("citration-reader-collections")
+				.appendingPathComponent(UUID().uuidString)
+				.appendingPathExtension("json")
+		)
+	}
+
+	func makeNoteStore() -> LocalNoteStore? {
+		try? LocalNoteStore(
+			storeURL: FileManager.default.temporaryDirectory
+				.appendingPathComponent("citration-reader-notes")
+				.appendingPathComponent(UUID().uuidString)
+				.appendingPathExtension("json")
+		)
+	}
 
 	func waitUntil(
 		timeout: TimeInterval = 2.0,

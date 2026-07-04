@@ -76,7 +76,8 @@ private extension CollectionTests {
             pdfDOIExtractor: NullPDFDOIExtractor(),
             attachmentStore: attachmentStore,
             annotationStore: makeAnnotationStore(),
-            collectionStore: makeCollectionStore()
+            collectionStore: makeCollectionStore(),
+            noteStore: makeNoteStore()
         )
     }
 
@@ -108,6 +109,15 @@ private extension CollectionTests {
         try? LocalCollectionStore(
             storeURL: FileManager.default.temporaryDirectory
                 .appendingPathComponent("citration-collection-tests")
+                .appendingPathComponent(UUID().uuidString)
+                .appendingPathExtension("json")
+        )
+    }
+
+    func makeNoteStore() -> LocalNoteStore? {
+        try? LocalNoteStore(
+            storeURL: FileManager.default.temporaryDirectory
+                .appendingPathComponent("citration-collection-notes")
                 .appendingPathComponent(UUID().uuidString)
                 .appendingPathExtension("json")
         )

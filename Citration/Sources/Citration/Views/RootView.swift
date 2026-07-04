@@ -186,7 +186,7 @@ struct RootView: View {
                 }
 
                 Button("New Note", systemImage: "note.text.badge.plus") {
-                    model.statusMessage = "Notes are not implemented yet"
+                    model.prepareNewItemNote()
                 }
 
                 Button("Attach", systemImage: "paperclip") {
@@ -391,6 +391,7 @@ struct RootView: View {
                     }
                     ItemTagsInspectorSection(model: model, item: item)
                     ItemCollectionsInspectorSection(model: model, item: item)
+                    ItemNotesInspectorSection(model: model)
                     Section("Citation Preview") {
 						Text(model.citationPreview)
 							.font(.system(.caption, design: .monospaced))

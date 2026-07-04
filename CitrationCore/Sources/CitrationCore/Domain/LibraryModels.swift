@@ -252,6 +252,32 @@ public struct LibraryCollectionSnapshot: Hashable, Codable, Sendable {
     }
 }
 
+public struct LibraryNote: Identifiable, Hashable, Codable, Sendable {
+    public var id: UUID
+    public var itemID: UUID
+    public var text: String
+    public var createdAt: Date
+    public var updatedAt: Date
+
+    public init(
+        id: UUID = UUID(),
+        itemID: UUID,
+        text: String,
+        createdAt: Date = .now,
+        updatedAt: Date = .now
+    ) {
+        self.id = id
+        self.itemID = itemID
+        self.text = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        self.createdAt = createdAt
+        self.updatedAt = updatedAt
+    }
+
+    public var isEmpty: Bool {
+        text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+}
+
 public enum LibraryRelationshipKind: String, Codable, CaseIterable, Sendable {
     case cites
     case citedBy

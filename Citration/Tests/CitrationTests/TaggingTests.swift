@@ -113,7 +113,8 @@ private extension TaggingTests {
 			pdfDOIExtractor: pdfDOIExtractor,
 			attachmentStore: attachmentStore,
 			annotationStore: makeAnnotationStore(),
-			collectionStore: makeCollectionStore()
+			collectionStore: makeCollectionStore(),
+			noteStore: makeNoteStore()
 		)
 	}
 
@@ -132,23 +133,32 @@ private extension TaggingTests {
 		Issue.record("Timed out waiting for condition")
 	}
 
-    func makeAnnotationStore() -> LocalAnnotationStore? {
-        try? LocalAnnotationStore(
-            storeURL: FileManager.default.temporaryDirectory
+	func makeAnnotationStore() -> LocalAnnotationStore? {
+		try? LocalAnnotationStore(
+			storeURL: FileManager.default.temporaryDirectory
 				.appendingPathComponent("citration-tagging-annotations")
 				.appendingPathComponent(UUID().uuidString)
 				.appendingPathExtension("json")
-        )
-    }
+		)
+	}
 
-    func makeCollectionStore() -> LocalCollectionStore? {
-        try? LocalCollectionStore(
-            storeURL: FileManager.default.temporaryDirectory
-                .appendingPathComponent("citration-tagging-collections")
-                .appendingPathComponent(UUID().uuidString)
-                .appendingPathExtension("json")
-        )
-    }
+	func makeCollectionStore() -> LocalCollectionStore? {
+		try? LocalCollectionStore(
+			storeURL: FileManager.default.temporaryDirectory
+				.appendingPathComponent("citration-tagging-collections")
+				.appendingPathComponent(UUID().uuidString)
+				.appendingPathExtension("json")
+		)
+	}
+
+	func makeNoteStore() -> LocalNoteStore? {
+		try? LocalNoteStore(
+			storeURL: FileManager.default.temporaryDirectory
+				.appendingPathComponent("citration-tagging-notes")
+				.appendingPathComponent(UUID().uuidString)
+				.appendingPathExtension("json")
+		)
+	}
 
 	func makeTempDirectory() -> URL {
 		let directory = FileManager.default.temporaryDirectory

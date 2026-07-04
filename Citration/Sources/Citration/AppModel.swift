@@ -42,6 +42,8 @@ final class AppModel {
     var activeReaderAttachment: LocalAttachment?
     var activeReaderAnnotations: [LibraryAnnotation] = []
     var readerNoteDraft: String = ""
+    var itemNoteDraft: String = ""
+    var selectedItemNotes: [LibraryNote] = []
     var tagDraft: String = ""
     var collections: [LibraryCollection] = []
     var collectionMemberships: [LibraryCollectionMembership] = []
@@ -62,6 +64,7 @@ final class AppModel {
     private let attachmentStore: LocalAttachmentStore
     let annotationStore: LocalAnnotationStore
     let collectionStore: LocalCollectionStore
+    let noteStore: LocalNoteStore
     private let pdfDOIExtractor: any PDFDOIExtracting
 
     init(
@@ -73,7 +76,8 @@ final class AppModel {
         pdfDOIExtractor: any PDFDOIExtracting = NullPDFDOIExtractor(),
         attachmentStore: LocalAttachmentStore? = nil,
         annotationStore: LocalAnnotationStore? = nil,
-        collectionStore: LocalCollectionStore? = nil
+        collectionStore: LocalCollectionStore? = nil,
+        noteStore: LocalNoteStore? = nil
     ) {
         self.store = store
         self.metadataRegistry = metadataRegistry
@@ -83,12 +87,14 @@ final class AppModel {
         self.attachmentStore = attachmentStore ?? AppModel.makeAttachmentStore()
         self.annotationStore = annotationStore ?? AppModel.makeAnnotationStore()
         self.collectionStore = collectionStore ?? AppModel.makeCollectionStore()
+        self.noteStore = noteStore ?? AppModel.makeNoteStore()
         self.pdfDOIExtractor = pdfDOIExtractor
 
         Task {
             await setupAuthServices()
             await refreshCollections()
             await refreshItems()
+            await refreshSelectedItemNotes()
         }
     }
 
@@ -174,6 +180,7 @@ final class AppModel {
         }
         await renderCitationPreviewForSelection()
         await refreshSelectedItemAttachments()
+        await refreshSelectedItemNotes()
     }
 
     func addEmptyItem() {
@@ -245,6 +252,7 @@ final class AppModel {
                 await store.removeItem(id: id)
             }
             try? await collectionStore.removeItems(ids: uniqueIDs)
+            try? await noteStore.removeNotes(itemIDs: uniqueIDs)
             await refreshCollections()
             await refreshItems()
 
@@ -257,6 +265,9 @@ final class AppModel {
 	}
 
     func selectItem(id: UUID?) {
+        if selectedItemID != id {
+            itemNoteDraft = ""
+        }
         if activeReaderAttachment?.itemID != id {
             activeReaderAttachment = nil
             activeReaderAnnotations = []
@@ -267,6 +278,7 @@ final class AppModel {
             await renderCitationPreviewForSelection()
             await refreshSelectedItemAttachments()
             await refreshSelectedItemCollections()
+            await refreshSelectedItemNotes()
         }
     }
 

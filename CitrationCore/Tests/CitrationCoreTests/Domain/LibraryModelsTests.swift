@@ -58,6 +58,16 @@ struct LibraryModelsTests {
         #expect(decoded == snapshot)
     }
 
+    @Test("item note trims text and reports empty state")
+    func itemNoteTrimsTextAndReportsEmptyState() {
+        let note = LibraryNote(itemID: UUID(), text: "  Remember this claim  ")
+        let empty = LibraryNote(itemID: UUID(), text: "   ")
+
+        #expect(note.text == "Remember this claim")
+        #expect(!note.isEmpty)
+        #expect(empty.isEmpty)
+    }
+
     @Test("insight engine recommends local items with shared creator")
     func insightEngineRecommendsSharedCreator() {
         let sharedCreator = Creator(givenName: "Ada", familyName: "Lovelace")
