@@ -6,10 +6,11 @@ import CitrationCore
 // MARK: - Search Scope
 
 enum SearchScope: String, CaseIterable {
-    case allFields = "All Fields & Tags"
-    case title     = "Title"
-    case creator   = "Creator"
-    case year      = "Year"
+	case allFields = "All Fields & Tags"
+	case title     = "Title"
+	case creator   = "Creator"
+	case year      = "Year"
+	case tags      = "Tags"
 }
 
 // MARK: - Root
@@ -19,10 +20,11 @@ struct RootView: View {
     @Bindable var model: AppModel
 
     @State private var inspectorPresented = true
-    @State private var searchText = ""
-    @State private var searchScope = SearchScope.allFields
-    @State private var selectedCollection: String? = "library"
-    @State private var selectedItemIDs = Set<UUID>()
+	@State private var searchText = ""
+	@State private var searchScope = SearchScope.allFields
+	@State private var selectedTag: String?
+	@State private var selectedCollection: String? = "library"
+	@State private var selectedItemIDs = Set<UUID>()
     @State private var libraryExpanded = true
     @State private var attachmentImporterPresented = false
     @State private var isImportDropTargeted = false
@@ -30,22 +32,34 @@ struct RootView: View {
     @State private var importDragBorderPhase: CGFloat = 0
     @State private var attachDragBorderPhase: CGFloat = 0
 
-    private var filteredItems: [BCItem] {
-        guard !searchText.isEmpty else { return model.items }
-        return model.items.filter { item in
-            switch searchScope {
-            case .allFields:
-                return item.title.localizedCaseInsensitiveContains(searchText) ||
-                    (item.creators.first?.displayName.localizedCaseInsensitiveContains(searchText) ?? false)
-            case .title:
-                return item.title.localizedCaseInsensitiveContains(searchText)
-            case .creator:
-                return item.creators.first?.displayName.localizedCaseInsensitiveContains(searchText) ?? false
-            case .year:
-                return item.publicationYear.map(String.init)?.contains(searchText) ?? false
-            }
-        }
-    }
+	private var filteredItems: [BCItem] {
+		let scopedItems: [BCItem]
+		if let selectedTag {
+			scopedItems = model.items.filter { item in
+				item.tags.contains { $0.localizedCaseInsensitiveCompare(selectedTag) == .orderedSame }
+			}
+		} else {
+			scopedItems = model.items
+		}
+
+		guard !searchText.isEmpty else { return scopedItems }
+		return scopedItems.filter { item in
+			switch searchScope {
+			case .allFields:
+				return item.title.localizedCaseInsensitiveContains(searchText) ||
+					(item.creators.first?.displayName.localizedCaseInsensitiveContains(searchText) ?? false) ||
+					item.tags.contains { $0.localizedCaseInsensitiveContains(searchText) }
+			case .title:
+				return item.title.localizedCaseInsensitiveContains(searchText)
+			case .creator:
+				return item.creators.first?.displayName.localizedCaseInsensitiveContains(searchText) ?? false
+			case .year:
+				return item.publicationYear.map(String.init)?.contains(searchText) ?? false
+			case .tags:
+				return item.tags.contains { $0.localizedCaseInsensitiveContains(searchText) }
+			}
+		}
+	}
 
     var body: some View {
         NavigationSplitView {
@@ -75,7 +89,7 @@ struct RootView: View {
                 .navigationSplitViewColumnWidth(min: 200, ideal: 220)
 
                 importDropZone
-                tagsPanel
+                TagFilterPanel(items: model.items, selectedTag: $selectedTag)
             }
             .onDrop(
                 of: [.fileURL],
@@ -112,13 +126,18 @@ struct RootView: View {
                             Text(authorSummary(for: item))
                         }
                         .width(min: 80, ideal: 160, max: 300)
-                        TableColumn("Year") { item in
-                            Text(item.publicationYear.map(String.init) ?? "")
-                        }
-                        .width(min: 40, ideal: 60, max: 80)
-                    }
-                    .onChange(of: selectedItemIDs) { _, selection in
-                        syncPrimarySelection(from: selection)
+						TableColumn("Year") { item in
+							Text(item.publicationYear.map(String.init) ?? "")
+						}
+						.width(min: 40, ideal: 60, max: 80)
+						TableColumn("Tags") { item in
+							Text(item.tags.joined(separator: ", "))
+								.lineLimit(1)
+						}
+						.width(min: 80, ideal: 140, max: 240)
+					}
+					.onChange(of: selectedItemIDs) { _, selection in
+						syncPrimarySelection(from: selection)
                     }
                 }
             }
@@ -325,29 +344,6 @@ struct RootView: View {
             .animation(.easeInOut(duration: 0.14), value: isAttachDropTargeted)
     }
 
-    private var tagsPanel: some View {
-        VStack(spacing: 0) {
-            Divider()
-            Text("No tags to display")
-                .font(.caption)
-                .foregroundStyle(.tertiary)
-                .frame(maxWidth: .infinity, minHeight: 60)
-            Divider()
-            HStack {
-                Text("Filter Tags")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                Spacer()
-                Image(systemName: "line.3.horizontal.decrease")
-                    .font(.system(size: 11))
-                    .foregroundStyle(.secondary)
-            }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 6)
-            .background(.bar)
-        }
-    }
-
     // MARK: - Inspector Content
 
     @ViewBuilder
@@ -366,13 +362,14 @@ struct RootView: View {
                         }
                         LabeledContent("Year", value: item.publicationYear.map(String.init) ?? "n.d.")
                         LabeledContent("Creator", value: item.creators.first?.displayName ?? "Unknown")
-                        if item.creators.count > 1 {
-                            LabeledContent("Authors", value: item.creators.map(\.displayName).joined(separator: ", "))
-                        }
-                    }
-                    Section("Citation Preview") {
-                        Text(model.citationPreview)
-                            .font(.system(.caption, design: .monospaced))
+						if item.creators.count > 1 {
+							LabeledContent("Authors", value: item.creators.map(\.displayName).joined(separator: ", "))
+						}
+					}
+                    ItemTagsInspectorSection(model: model, item: item)
+					Section("Citation Preview") {
+						Text(model.citationPreview)
+							.font(.system(.caption, design: .monospaced))
                             .textSelection(.enabled)
                     }
                     Section("Attachments") {

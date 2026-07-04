@@ -42,13 +42,7 @@ final class AppModel {
     var activeReaderAttachment: LocalAttachment?
     var activeReaderAnnotations: [LibraryAnnotation] = []
     var readerNoteDraft: String = ""
-    var selectedItemRecommendations: [LibraryRecommendation] {
-        guard let selectedItem else {
-            return []
-        }
-        return LibraryInsightEngine().recommendations(for: selectedItem, in: items)
-    }
-
+    var tagDraft: String = ""
     var storageConnectors: [StorageConnector]
 
     // Auth state
@@ -58,7 +52,7 @@ final class AppModel {
     private(set) var workspaceService: WorkspaceService?
     private let sessionStore: AuthSessionStore
 
-    private let store: any BCItemStore
+    let store: any BCItemStore
     private let metadataRegistry: MetadataProviderRegistry
     private let citationFormatter: any CitationFormattingEngine
     private let attachmentStore: LocalAttachmentStore
@@ -234,9 +228,9 @@ final class AppModel {
         removeItems(ids: [selectedItemID])
     }
 
-    func removeItems(ids: [UUID]) {
-        let uniqueIDs = Array(Set(ids))
-        guard !uniqueIDs.isEmpty else { return }
+	func removeItems(ids: [UUID]) {
+		let uniqueIDs = Array(Set(ids))
+		guard !uniqueIDs.isEmpty else { return }
 
         Task { @MainActor in
             for id in uniqueIDs {
@@ -248,9 +242,9 @@ final class AppModel {
                 statusMessage = "Removed item"
             } else {
                 statusMessage = "Removed \(uniqueIDs.count) items"
-            }
-        }
-    }
+			}
+		}
+	}
 
     func selectItem(id: UUID?) {
         if activeReaderAttachment?.itemID != id {
@@ -578,6 +572,7 @@ final class AppModel {
             itemType: nextType,
             creators: nextCreators,
             publicationYear: nextYear,
+            tags: item.tags,
             createdAt: item.createdAt,
             updatedAt: item.updatedAt
         )
@@ -615,6 +610,7 @@ final class AppModel {
             itemType: item.itemType,
             creators: item.creators,
             publicationYear: item.publicationYear,
+            tags: item.tags,
             createdAt: item.createdAt,
             updatedAt: item.updatedAt
         )
