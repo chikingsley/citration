@@ -114,7 +114,8 @@ private extension TaggingTests {
 			attachmentStore: attachmentStore,
 			annotationStore: makeAnnotationStore(),
 			collectionStore: makeCollectionStore(),
-			noteStore: makeNoteStore()
+			noteStore: makeNoteStore(),
+			relationshipStore: makeRelationshipStore()
 		)
 	}
 
@@ -155,6 +156,15 @@ private extension TaggingTests {
 		try? LocalNoteStore(
 			storeURL: FileManager.default.temporaryDirectory
 				.appendingPathComponent("citration-tagging-notes")
+				.appendingPathComponent(UUID().uuidString)
+				.appendingPathExtension("json")
+		)
+	}
+
+	func makeRelationshipStore() -> LocalRelationshipStore? {
+		try? LocalRelationshipStore(
+			storeURL: FileManager.default.temporaryDirectory
+				.appendingPathComponent("citration-tagging-relationships")
 				.appendingPathComponent(UUID().uuidString)
 				.appendingPathExtension("json")
 		)

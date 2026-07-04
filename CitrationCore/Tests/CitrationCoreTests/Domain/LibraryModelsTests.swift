@@ -85,6 +85,30 @@ struct LibraryModelsTests {
         #expect(recommendations.first?.reasons.contains(.samePublicationYear(1843)) == true)
     }
 
+    @Test("insight engine includes user linked relationships")
+    func insightEngineIncludesUserLinkedRelationships() {
+        let source = BCItem(title: "Source")
+        let linked = BCItem(title: "Linked")
+        let relationship = LibraryRelationship(
+            sourceItemID: source.id,
+            targetItemID: linked.id,
+            kind: .series,
+            confidence: 1,
+            note: "  Read together  "
+        )
+
+        let recommendations = LibraryInsightEngine().recommendations(
+            for: source,
+            in: [source, linked],
+            relationships: [relationship]
+        )
+
+        #expect(recommendations.map(\.candidateItemID) == [linked.id])
+        #expect(recommendations.first?.reasons == [.userLinked(.series)])
+        #expect(relationship.note == "Read together")
+        #expect(LibraryRelationshipKind.sameCreator.displayLabel == "Same author")
+    }
+
     @Test("annotation trims note text and reports empty state")
     func annotationTrimsNoteTextAndReportsEmptyState() {
         let annotation = LibraryAnnotation(

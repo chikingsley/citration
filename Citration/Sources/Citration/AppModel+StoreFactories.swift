@@ -72,4 +72,22 @@ extension AppModel {
             }
         }
     }
+
+    static func makeRelationshipStore() -> LocalRelationshipStore {
+        do {
+            let storeURL = try LocalRelationshipStorePaths.defaultStoreURL()
+            return try LocalRelationshipStore(storeURL: storeURL)
+        }
+        catch {
+            let fallback = FileManager.default.temporaryDirectory
+                .appendingPathComponent("citration", isDirectory: true)
+                .appendingPathComponent("relationships.json")
+            do {
+                return try LocalRelationshipStore(storeURL: fallback)
+            }
+            catch {
+                fatalError("Unable to initialize relationship store: \(error)")
+            }
+        }
+    }
 }

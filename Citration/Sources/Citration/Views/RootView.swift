@@ -486,24 +486,7 @@ struct RootView: View {
                             }
                         }
                     }
-                    Section("Related") {
-                        if model.selectedItemRecommendations.isEmpty {
-                            Text("No related local items yet.")
-                                .foregroundStyle(.secondary)
-                        } else {
-                            ForEach(model.selectedItemRecommendations) { recommendation in
-                                if let candidate = model.items.first(where: { $0.id == recommendation.candidateItemID }) {
-                                    VStack(alignment: .leading, spacing: 3) {
-                                        Text(candidate.title.bcCollapsedWhitespace())
-                                            .font(.subheadline.weight(.medium))
-                                        Text(recommendation.reasons.map(\.displayLabel).joined(separator: " · "))
-                                            .font(.caption)
-                                            .foregroundStyle(.secondary)
-                                    }
-                                }
-                            }
-                        }
-                    }
+                    ItemRelatedInspectorSection(model: model)
                 }
                 .formStyle(.grouped)
             }

@@ -5,28 +5,6 @@ import CitrationCore
 @MainActor
 @Observable
 final class AppModel {
-    enum Route: String, CaseIterable, Identifiable {
-        case workspace
-        case components
-
-        var id: String { rawValue }
-
-        var title: String {
-            switch self {
-            case .workspace:
-                return "Workspace"
-            case .components:
-                return "Components"
-            }
-        }
-    }
-
-    enum AttachmentImportMode {
-        case auto
-        case attachToSelectedItem
-        case createNewItemPerFile
-    }
-
     var route: Route = .workspace
     var doiInput: String = ""
     var isResolvingDOI: Bool = false
@@ -49,6 +27,11 @@ final class AppModel {
     var collectionMemberships: [LibraryCollectionMembership] = []
     var selectedCollectionID: UUID?
     var selectedItemCollectionIDs = Set<UUID>()
+    var libraryRelationships: [LibraryRelationship] = []
+    var selectedItemRelationships: [LibraryRelationship] = []
+    var relatedItemTargetID: UUID?
+    var relatedItemKind: LibraryRelationshipKind = .userLinked
+    var relatedItemNoteDraft: String = ""
     var storageConnectors: [StorageConnector]
 
     // Auth state
@@ -65,6 +48,7 @@ final class AppModel {
     let annotationStore: LocalAnnotationStore
     let collectionStore: LocalCollectionStore
     let noteStore: LocalNoteStore
+    let relationshipStore: LocalRelationshipStore
     private let pdfDOIExtractor: any PDFDOIExtracting
 
     init(
@@ -77,7 +61,8 @@ final class AppModel {
         attachmentStore: LocalAttachmentStore? = nil,
         annotationStore: LocalAnnotationStore? = nil,
         collectionStore: LocalCollectionStore? = nil,
-        noteStore: LocalNoteStore? = nil
+        noteStore: LocalNoteStore? = nil,
+        relationshipStore: LocalRelationshipStore? = nil
     ) {
         self.store = store
         self.metadataRegistry = metadataRegistry
@@ -88,12 +73,14 @@ final class AppModel {
         self.annotationStore = annotationStore ?? AppModel.makeAnnotationStore()
         self.collectionStore = collectionStore ?? AppModel.makeCollectionStore()
         self.noteStore = noteStore ?? AppModel.makeNoteStore()
+        self.relationshipStore = relationshipStore ?? AppModel.makeRelationshipStore()
         self.pdfDOIExtractor = pdfDOIExtractor
 
         Task {
             await setupAuthServices()
             await refreshCollections()
             await refreshItems()
+            await refreshRelationships()
             await refreshSelectedItemNotes()
         }
     }
@@ -181,6 +168,7 @@ final class AppModel {
         await renderCitationPreviewForSelection()
         await refreshSelectedItemAttachments()
         await refreshSelectedItemNotes()
+        await refreshSelectedItemRelationships()
     }
 
     func addEmptyItem() {
@@ -253,7 +241,9 @@ final class AppModel {
             }
             try? await collectionStore.removeItems(ids: uniqueIDs)
             try? await noteStore.removeNotes(itemIDs: uniqueIDs)
+            try? await relationshipStore.removeRelationships(itemIDs: uniqueIDs)
             await refreshCollections()
+            await refreshRelationships()
             await refreshItems()
 
             if uniqueIDs.count == 1 {
@@ -267,6 +257,8 @@ final class AppModel {
     func selectItem(id: UUID?) {
         if selectedItemID != id {
             itemNoteDraft = ""
+            relatedItemTargetID = nil
+            relatedItemNoteDraft = ""
         }
         if activeReaderAttachment?.itemID != id {
             activeReaderAttachment = nil
@@ -279,6 +271,7 @@ final class AppModel {
             await refreshSelectedItemAttachments()
             await refreshSelectedItemCollections()
             await refreshSelectedItemNotes()
+            await refreshSelectedItemRelationships()
         }
     }
 

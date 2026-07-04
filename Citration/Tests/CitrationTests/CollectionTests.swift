@@ -77,7 +77,8 @@ private extension CollectionTests {
             attachmentStore: attachmentStore,
             annotationStore: makeAnnotationStore(),
             collectionStore: makeCollectionStore(),
-            noteStore: makeNoteStore()
+            noteStore: makeNoteStore(),
+            relationshipStore: makeRelationshipStore()
         )
     }
 
@@ -118,6 +119,15 @@ private extension CollectionTests {
         try? LocalNoteStore(
             storeURL: FileManager.default.temporaryDirectory
                 .appendingPathComponent("citration-collection-notes")
+                .appendingPathComponent(UUID().uuidString)
+                .appendingPathExtension("json")
+        )
+    }
+
+    func makeRelationshipStore() -> LocalRelationshipStore? {
+        try? LocalRelationshipStore(
+            storeURL: FileManager.default.temporaryDirectory
+                .appendingPathComponent("citration-collection-relationships")
                 .appendingPathComponent(UUID().uuidString)
                 .appendingPathExtension("json")
         )

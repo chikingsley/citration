@@ -5,6 +5,10 @@ extension AppModel {
         guard let selectedItem else {
             return []
         }
-        return LibraryInsightEngine().recommendations(for: selectedItem, in: items)
+        return LibraryInsightEngine().recommendations(
+            for: selectedItem,
+            in: items,
+            relationships: libraryRelationships
+        )
     }
 }
