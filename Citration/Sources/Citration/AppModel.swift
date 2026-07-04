@@ -16,6 +16,8 @@ final class AppModel {
     var items: [BCItem] = []
     var selectedItemID: UUID?
     var citationPreview: String = "Select an item to preview citation output"
+    var citationExportFormat: CitationExportFormat = .cslJSON
+    var citationExportText: String = ""
     var selectedItemAttachments: [LocalAttachment] = []
     var activeReaderAttachment: LocalAttachment?
     var activeReaderProgress: ReaderProgress?
@@ -228,6 +230,7 @@ final class AppModel {
     func selectItem(id: UUID?) {
         if selectedItemID != id {
             itemNoteDraft = ""
+            citationExportText = ""
             relatedItemTargetID = nil
             relatedItemNoteDraft = ""
         }

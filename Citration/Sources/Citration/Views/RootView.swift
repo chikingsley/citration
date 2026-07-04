@@ -397,11 +397,7 @@ struct RootView: View {
                     ItemTagsInspectorSection(model: model, item: item)
                     ItemCollectionsInspectorSection(model: model, item: item)
                     ItemNotesInspectorSection(model: model)
-                    Section("Citation Preview") {
-						Text(model.citationPreview)
-							.font(.system(.caption, design: .monospaced))
-                            .textSelection(.enabled)
-                    }
+                    CitationExportInspectorSection(model: model)
                     Section("Attachments") {
                         let isProcessingThisItem = model.reprocessingItemID == model.selectedItemID
                         let isProcessingOtherItem = model.reprocessingItemID != nil && !isProcessingThisItem
