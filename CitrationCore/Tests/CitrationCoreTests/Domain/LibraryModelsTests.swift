@@ -22,11 +22,13 @@ struct LibraryModelsTests {
     @Test("reader progress clamps fraction complete")
     func readerProgressClampsFractionComplete() {
         let progress = ReaderProgress(
-            attachmentID: UUID(),
+            itemID: UUID(),
+            attachmentKey: "item/paper.pdf",
             location: .page(12),
             fractionComplete: 1.8
         )
 
+        #expect(progress.id == "item/paper.pdf")
         #expect(progress.fractionComplete == 1)
     }
 

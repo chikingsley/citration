@@ -90,4 +90,22 @@ extension AppModel {
             }
         }
     }
+
+    static func makeReaderProgressStore() -> LocalReaderProgressStore {
+        do {
+            let storeURL = try LocalReaderProgressStorePaths.defaultStoreURL()
+            return try LocalReaderProgressStore(storeURL: storeURL)
+        }
+        catch {
+            let fallback = FileManager.default.temporaryDirectory
+                .appendingPathComponent("citration", isDirectory: true)
+                .appendingPathComponent("reader-progress.json")
+            do {
+                return try LocalReaderProgressStore(storeURL: fallback)
+            }
+            catch {
+                fatalError("Unable to initialize reader progress store: \(error)")
+            }
+        }
+    }
 }

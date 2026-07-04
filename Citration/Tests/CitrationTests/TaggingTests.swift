@@ -115,7 +115,8 @@ private extension TaggingTests {
 			annotationStore: makeAnnotationStore(),
 			collectionStore: makeCollectionStore(),
 			noteStore: makeNoteStore(),
-			relationshipStore: makeRelationshipStore()
+			relationshipStore: makeRelationshipStore(),
+			readerProgressStore: makeReaderProgressStore()
 		)
 	}
 
@@ -165,6 +166,15 @@ private extension TaggingTests {
 		try? LocalRelationshipStore(
 			storeURL: FileManager.default.temporaryDirectory
 				.appendingPathComponent("citration-tagging-relationships")
+				.appendingPathComponent(UUID().uuidString)
+				.appendingPathExtension("json")
+		)
+	}
+
+	func makeReaderProgressStore() -> LocalReaderProgressStore? {
+		try? LocalReaderProgressStore(
+			storeURL: FileManager.default.temporaryDirectory
+				.appendingPathComponent("citration-tagging-reader-progress")
 				.appendingPathComponent(UUID().uuidString)
 				.appendingPathExtension("json")
 		)

@@ -6,6 +6,8 @@ import CitrationCore
 struct ReaderPane: View {
     let attachment: LocalAttachment
     let item: BCItem?
+    let progress: ReaderProgress?
+    let onProgressChange: (ReaderProgress) -> Void
     let onClose: () -> Void
 
     var body: some View {
@@ -29,6 +31,12 @@ struct ReaderPane: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
+                if let progressDetail {
+                    Text(progressDetail)
+                        .font(.caption2)
+                        .foregroundStyle(.tertiary)
+                        .lineLimit(1)
+                }
             }
             Spacer()
             Button {
@@ -60,7 +68,11 @@ struct ReaderPane: View {
     private var readerContent: some View {
         switch attachment.documentFormat {
         case .pdf:
-            PDFReaderView(url: attachment.localURL)
+            PDFReaderView(
+                attachment: attachment,
+                progress: progress,
+                onProgressChange: onProgressChange
+            )
         case .epub:
             ContentUnavailableView(
                 "EPUB Reader Pending",
@@ -80,6 +92,18 @@ struct ReaderPane: View {
                 description: Text("Open externally for now.")
             )
         }
+    }
+
+    private var progressDetail: String? {
+        guard let progress else {
+            return nil
+        }
+
+        if let fractionComplete = progress.fractionComplete {
+            let percent = Int((fractionComplete * 100).rounded())
+            return "\(progress.location.displayLabel) · \(percent)%"
+        }
+        return progress.location.displayLabel
     }
 
     private func iconName(for format: DocumentFormat) -> String {
@@ -103,7 +127,9 @@ struct ReaderPane: View {
 }
 
 private struct PDFReaderView: NSViewRepresentable {
-    let url: URL
+    let attachment: LocalAttachment
+    let progress: ReaderProgress?
+    let onProgressChange: (ReaderProgress) -> Void
 
     func makeCoordinator() -> Coordinator {
         Coordinator()
@@ -111,29 +137,112 @@ private struct PDFReaderView: NSViewRepresentable {
 
     func makeNSView(context: Context) -> PDFView {
         let pdfView = PDFView()
+        context.coordinator.configure(attachment: attachment, onProgressChange: onProgressChange)
         pdfView.autoScales = true
         pdfView.displayMode = .singlePageContinuous
         pdfView.displayDirection = .vertical
         pdfView.displaysPageBreaks = true
         pdfView.backgroundColor = .windowBackgroundColor
+        NotificationCenter.default.addObserver(
+            context.coordinator,
+            selector: #selector(Coordinator.pageChanged(_:)),
+            name: .PDFViewPageChanged,
+            object: pdfView
+        )
         loadDocument(in: pdfView, context: context)
         return pdfView
     }
 
     func updateNSView(_ pdfView: PDFView, context: Context) {
-        guard context.coordinator.loadedURL != url else {
+        context.coordinator.configure(attachment: attachment, onProgressChange: onProgressChange)
+        guard context.coordinator.loadedURL != attachment.localURL else {
+            applyProgressIfNeeded(in: pdfView, context: context)
             return
         }
         loadDocument(in: pdfView, context: context)
     }
 
-    private func loadDocument(in pdfView: PDFView, context: Context) {
-        pdfView.document = PDFDocument(url: url)
-        context.coordinator.loadedURL = url
-        pdfView.autoScales = true
+    static func dismantleNSView(_ nsView: PDFView, coordinator: Coordinator) {
+        NotificationCenter.default.removeObserver(
+            coordinator,
+            name: .PDFViewPageChanged,
+            object: nsView
+        )
     }
 
-    final class Coordinator {
+    private func loadDocument(in pdfView: PDFView, context: Context) {
+        pdfView.document = PDFDocument(url: attachment.localURL)
+        context.coordinator.loadedURL = attachment.localURL
+        context.coordinator.appliedProgressToken = nil
+        pdfView.autoScales = true
+        applyProgressIfNeeded(in: pdfView, context: context)
+    }
+
+    private func applyProgressIfNeeded(in pdfView: PDFView, context: Context) {
+        guard let progress,
+              progress.attachmentKey == attachment.objectKey,
+              context.coordinator.appliedProgressToken != token(for: progress),
+              case .page(let pageNumber) = progress.location,
+              let document = pdfView.document,
+              document.pageCount > 0 else {
+            return
+        }
+
+        let zeroBasedPage = min(max(pageNumber - 1, 0), document.pageCount - 1)
+        guard let page = document.page(at: zeroBasedPage) else {
+            return
+        }
+
+        context.coordinator.appliedProgressToken = token(for: progress)
+        context.coordinator.isRestoringProgress = true
+        pdfView.go(to: page)
+        context.coordinator.isRestoringProgress = false
+    }
+
+    private func token(for progress: ReaderProgress) -> String {
+        "\(progress.attachmentKey)|\(progress.location.displayLabel)|\(progress.updatedAt.timeIntervalSince1970)"
+    }
+
+    final class Coordinator: NSObject {
         var loadedURL: URL?
+        var attachment: LocalAttachment?
+        var onProgressChange: ((ReaderProgress) -> Void)?
+        var appliedProgressToken: String?
+        var isRestoringProgress = false
+
+        func configure(
+            attachment: LocalAttachment,
+            onProgressChange: @escaping (ReaderProgress) -> Void
+        ) {
+            self.attachment = attachment
+            self.onProgressChange = onProgressChange
+        }
+
+        @MainActor
+        @objc
+        func pageChanged(_ notification: Notification) {
+            guard !isRestoringProgress,
+                  let pdfView = notification.object as? PDFView,
+                  let document = pdfView.document,
+                  document.pageCount > 0,
+                  let page = pdfView.currentPage,
+                  let attachment else {
+                return
+            }
+
+            let pageIndex = document.index(for: page)
+            guard pageIndex != NSNotFound else {
+                return
+            }
+
+            onProgressChange?(
+                ReaderProgress(
+                    itemID: attachment.itemID,
+                    attachmentKey: attachment.objectKey,
+                    location: .page(pageIndex + 1),
+                    fractionComplete: Double(pageIndex + 1) / Double(document.pageCount)
+                )
+            )
+        }
     }
 }

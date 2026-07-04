@@ -316,7 +316,8 @@ private extension CitrationTests {
 			annotationStore: makeAnnotationStore(),
 			collectionStore: makeCollectionStore(),
 			noteStore: makeNoteStore(),
-			relationshipStore: makeRelationshipStore()
+			relationshipStore: makeRelationshipStore(),
+			readerProgressStore: makeReaderProgressStore()
 		)
 	}
 
@@ -374,6 +375,15 @@ private extension CitrationTests {
 		try? LocalRelationshipStore(
 			storeURL: FileManager.default.temporaryDirectory
 				.appendingPathComponent("citration-appmodel-relationships")
+				.appendingPathComponent(UUID().uuidString)
+				.appendingPathExtension("json")
+		)
+	}
+
+	func makeReaderProgressStore() -> LocalReaderProgressStore? {
+		try? LocalReaderProgressStore(
+			storeURL: FileManager.default.temporaryDirectory
+				.appendingPathComponent("citration-appmodel-reader-progress")
 				.appendingPathComponent(UUID().uuidString)
 				.appendingPathExtension("json")
 		)
@@ -466,14 +476,11 @@ private actor MetadataRequestRecorder {
 private struct OrderedResolutionProvider: MetadataProvider {
 	let name: String = "ordered-resolution"
 	let recorder: MetadataRequestRecorder
-
 	func resolve(_ request: MetadataResolutionRequest) async throws -> [CanonicalMetadataRecord] {
 		await recorder.append(request)
-
 		guard let first = request.identifiers.first else {
 			return []
 		}
-
 		if first.type == .doi {
 			return [
 				CanonicalMetadataRecord(
@@ -487,7 +494,6 @@ private struct OrderedResolutionProvider: MetadataProvider {
 				)
 			]
 		}
-
 		return []
 	}
 }

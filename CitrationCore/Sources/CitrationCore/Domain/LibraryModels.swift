@@ -171,19 +171,23 @@ public struct LibraryAnnotation: Identifiable, Hashable, Codable, Sendable {
     }
 }
 
-public struct ReaderProgress: Hashable, Codable, Sendable {
-    public var attachmentID: UUID
+public struct ReaderProgress: Identifiable, Hashable, Codable, Sendable {
+    public var id: String { attachmentKey }
+    public var itemID: UUID
+    public var attachmentKey: String
     public var location: ReaderLocation
     public var fractionComplete: Double?
     public var updatedAt: Date
 
     public init(
-        attachmentID: UUID,
+        itemID: UUID,
+        attachmentKey: String,
         location: ReaderLocation,
         fractionComplete: Double? = nil,
         updatedAt: Date = .now
     ) {
-        self.attachmentID = attachmentID
+        self.itemID = itemID
+        self.attachmentKey = attachmentKey
         self.location = location
         self.fractionComplete = fractionComplete.map { min(max($0, 0), 1) }
         self.updatedAt = updatedAt

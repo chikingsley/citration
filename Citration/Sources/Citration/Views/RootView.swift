@@ -126,10 +126,15 @@ struct RootView: View {
                 if let attachment = model.activeReaderAttachment {
                     ReaderPane(
                         attachment: attachment,
-                        item: model.selectedItem
-                    ) {
-                        model.closeReader()
-                    }
+                        item: model.selectedItem,
+                        progress: model.activeReaderProgress,
+                        onProgressChange: { progress in
+                            model.updateReaderProgress(progress)
+                        },
+                        onClose: {
+                            model.closeReader()
+                        }
+                    )
                 } else if filteredItems.isEmpty {
                     ContentUnavailableView(
                         "No Items",

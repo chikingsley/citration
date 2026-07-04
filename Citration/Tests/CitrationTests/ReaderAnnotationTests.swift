@@ -59,7 +59,8 @@ private extension ReaderAnnotationTests {
 			annotationStore: annotationStore,
 			collectionStore: makeCollectionStore(),
 			noteStore: makeNoteStore(),
-			relationshipStore: makeRelationshipStore()
+			relationshipStore: makeRelationshipStore(),
+			readerProgressStore: makeReaderProgressStore()
 		)
 	}
 
@@ -85,6 +86,15 @@ private extension ReaderAnnotationTests {
 		try? LocalRelationshipStore(
 			storeURL: FileManager.default.temporaryDirectory
 				.appendingPathComponent("citration-reader-relationships")
+				.appendingPathComponent(UUID().uuidString)
+				.appendingPathExtension("json")
+		)
+	}
+
+	func makeReaderProgressStore() -> LocalReaderProgressStore? {
+		try? LocalReaderProgressStore(
+			storeURL: FileManager.default.temporaryDirectory
+				.appendingPathComponent("citration-reader-progress")
 				.appendingPathComponent(UUID().uuidString)
 				.appendingPathExtension("json")
 		)

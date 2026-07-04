@@ -18,6 +18,7 @@ final class AppModel {
     var citationPreview: String = "Select an item to preview citation output"
     var selectedItemAttachments: [LocalAttachment] = []
     var activeReaderAttachment: LocalAttachment?
+    var activeReaderProgress: ReaderProgress?
     var activeReaderAnnotations: [LibraryAnnotation] = []
     var readerNoteDraft: String = ""
     var itemNoteDraft: String = ""
@@ -49,6 +50,7 @@ final class AppModel {
     let collectionStore: LocalCollectionStore
     let noteStore: LocalNoteStore
     let relationshipStore: LocalRelationshipStore
+    let readerProgressStore: LocalReaderProgressStore
     private let pdfDOIExtractor: any PDFDOIExtracting
 
     init(
@@ -62,7 +64,8 @@ final class AppModel {
         annotationStore: LocalAnnotationStore? = nil,
         collectionStore: LocalCollectionStore? = nil,
         noteStore: LocalNoteStore? = nil,
-        relationshipStore: LocalRelationshipStore? = nil
+        relationshipStore: LocalRelationshipStore? = nil,
+        readerProgressStore: LocalReaderProgressStore? = nil
     ) {
         self.store = store
         self.metadataRegistry = metadataRegistry
@@ -74,6 +77,7 @@ final class AppModel {
         self.collectionStore = collectionStore ?? AppModel.makeCollectionStore()
         self.noteStore = noteStore ?? AppModel.makeNoteStore()
         self.relationshipStore = relationshipStore ?? AppModel.makeRelationshipStore()
+        self.readerProgressStore = readerProgressStore ?? AppModel.makeReaderProgressStore()
         self.pdfDOIExtractor = pdfDOIExtractor
 
         Task {
@@ -83,40 +87,6 @@ final class AppModel {
             await refreshRelationships()
             await refreshSelectedItemNotes()
         }
-    }
-
-    static func bootstrap() -> AppModel {
-        let store: any BCItemStore
-        do {
-            let storeURL = try CitrationCorePaths.defaultItemStoreURL()
-            store = try SwiftDataItemStore(storeURL: storeURL)
-        }
-        catch {
-            assertionFailure("Failed to initialize SwiftData item store: \(error)")
-            store = InMemoryItemStore()
-        }
-
-        let providers: [any MetadataProvider] = [
-            ArXivMetadataProvider(),
-            CrossrefDOIMetadataProvider(),
-            OpenLibraryISBNMetadataProvider()
-        ]
-        let metadataRegistry = MetadataProviderRegistry(providers: providers)
-        let citationFormatter = StubCitationFormatter()
-        let pdfDOIExtractor = MuPDFDOIExtractor()
-        let storageConnectors = [
-            StorageConnector(name: "Local Files", type: .local, bucket: "local", isDefault: true)
-        ]
-        let sessionStore = KeychainAuthSessionStore()
-
-        return AppModel(
-            store: store,
-            metadataRegistry: metadataRegistry,
-            citationFormatter: citationFormatter,
-            storageConnectors: storageConnectors,
-            sessionStore: sessionStore,
-            pdfDOIExtractor: pdfDOIExtractor
-        )
     }
 
     // MARK: - Auth
@@ -242,6 +212,7 @@ final class AppModel {
             try? await collectionStore.removeItems(ids: uniqueIDs)
             try? await noteStore.removeNotes(itemIDs: uniqueIDs)
             try? await relationshipStore.removeRelationships(itemIDs: uniqueIDs)
+            try? await readerProgressStore.removeProgress(itemIDs: uniqueIDs)
             await refreshCollections()
             await refreshRelationships()
             await refreshItems()
@@ -262,6 +233,7 @@ final class AppModel {
         }
         if activeReaderAttachment?.itemID != id {
             activeReaderAttachment = nil
+            activeReaderProgress = nil
             activeReaderAnnotations = []
             readerNoteDraft = ""
         }
@@ -435,8 +407,10 @@ final class AppModel {
         Task {
             do {
                 try await attachmentStore.removeAttachment(attachment)
+                try? await readerProgressStore.remove(attachmentKey: attachment.objectKey)
                 if activeReaderAttachment?.id == attachment.id {
                     activeReaderAttachment = nil
+                    activeReaderProgress = nil
                 }
                 await refreshSelectedItemAttachments()
                 statusMessage = "Removed attachment"
@@ -458,11 +432,13 @@ final class AppModel {
             if let activeReaderAttachment,
                !selectedItemAttachments.contains(where: { $0.id == activeReaderAttachment.id }) {
                 self.activeReaderAttachment = nil
+                activeReaderProgress = nil
             }
         }
         catch {
             selectedItemAttachments = []
             activeReaderAttachment = nil
+            activeReaderProgress = nil
             statusMessage = "Failed to load attachments"
         }
     }
