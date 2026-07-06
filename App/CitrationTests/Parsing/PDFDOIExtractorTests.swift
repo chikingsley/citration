@@ -46,12 +46,12 @@ struct PDFDOIExtractorTests {
 
     @Test(
         "MuPDF extractor finds DOI from sample PDF",
-        .enabled(if: FileManager.default.isExecutableFile(atPath: Self.mutoolPath)),
-        .enabled(if: FileManager.default.fileExists(atPath: Self.samplePDF.path))
+        .enabled(if: MuPDFDOIExtractor.defaultExecutableURL() != nil)
     )
-    func muPDFExtractorFindsDOIFromSamplePDF() async {
+    func muPDFExtractorFindsDOIFromSamplePDF() async throws {
+        let mutool = try #require(MuPDFDOIExtractor.defaultExecutableURL())
         let extractor = MuPDFDOIExtractor(
-            executableURL: URL(fileURLWithPath: Self.mutoolPath),
+            executableURL: mutool,
             allowPDFKitFallback: false
         )
         let doi = await extractor.extractDOI(from: Self.samplePDF)
@@ -60,15 +60,9 @@ struct PDFDOIExtractorTests {
 
     // MARK: Private
 
-    private static let mutoolPath = "/opt/homebrew/bin/mutool"
-
-    /// Sample fixture lives in a sibling checkout (~/GitHub/test); the test is
-    /// skipped when it or mutool is absent.
+    /// One-page vendored fixture whose text contains the expected DOI.
     private static let samplePDF = URL(fileURLWithPath: #filePath)
         .deletingLastPathComponent()
         .deletingLastPathComponent()
-        .deletingLastPathComponent()
-        .deletingLastPathComponent()
-        .deletingLastPathComponent()
-        .appendingPathComponent("test/tests/data/recognizePDF_test_DOI.pdf")
+        .appendingPathComponent("Fixtures/sample-article-with-doi.pdf")
 }

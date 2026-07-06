@@ -17,7 +17,7 @@ struct CitationExportAppTests {
             creators: [Creator(givenName: "Ada", familyName: "Lovelace")],
             publicationYear: 1843
         )
-        let model = makeModel(initialItems: [item])
+        let model = makeAppModel(initialItems: [item])
         await model.refreshItems()
         model.selectItem(id: item.id)
 
@@ -39,7 +39,7 @@ struct CitationExportAppTests {
             publicationYear: 1843
         )
         let second = BCItem(title: "Other")
-        let model = makeModel(initialItems: [first, second])
+        let model = makeAppModel(initialItems: [first, second])
         await model.refreshItems()
         model.selectItem(id: first.id)
 
@@ -48,68 +48,5 @@ struct CitationExportAppTests {
 
         model.selectItem(id: second.id)
         #expect(model.citationExportText.isEmpty)
-    }
-}
-
-private extension CitationExportAppTests {
-    func makeModel(initialItems: [BCItem]) -> AppModel {
-        AppModel(
-            store: InMemoryItemStore(initialItems: initialItems),
-            metadataRegistry: MetadataProviderRegistry(providers: [NoopMetadataProvider()]),
-            citationFormatter: StubCitationFormatter(),
-            storageConnectors: [],
-            pdfDOIExtractor: NullPDFDOIExtractor(),
-            attachmentStore: nil,
-            annotationStore: makeAnnotationStore(),
-            collectionStore: makeCollectionStore(),
-            noteStore: makeNoteStore(),
-            relationshipStore: makeRelationshipStore(),
-            readerProgressStore: makeReaderProgressStore()
-        )
-    }
-
-    func makeAnnotationStore() -> LocalAnnotationStore? {
-        try? LocalAnnotationStore(
-            storeURL: FileManager.default.temporaryDirectory
-                .appendingPathComponent("citration-citation-export-annotations")
-                .appendingPathComponent(UUID().uuidString)
-                .appendingPathExtension("json")
-        )
-    }
-
-    func makeCollectionStore() -> LocalCollectionStore? {
-        try? LocalCollectionStore(
-            storeURL: FileManager.default.temporaryDirectory
-                .appendingPathComponent("citration-citation-export-collections")
-                .appendingPathComponent(UUID().uuidString)
-                .appendingPathExtension("json")
-        )
-    }
-
-    func makeNoteStore() -> LocalNoteStore? {
-        try? LocalNoteStore(
-            storeURL: FileManager.default.temporaryDirectory
-                .appendingPathComponent("citration-citation-export-notes")
-                .appendingPathComponent(UUID().uuidString)
-                .appendingPathExtension("json")
-        )
-    }
-
-    func makeRelationshipStore() -> LocalRelationshipStore? {
-        try? LocalRelationshipStore(
-            storeURL: FileManager.default.temporaryDirectory
-                .appendingPathComponent("citration-citation-export-relationships")
-                .appendingPathComponent(UUID().uuidString)
-                .appendingPathExtension("json")
-        )
-    }
-
-    func makeReaderProgressStore() -> LocalReaderProgressStore? {
-        try? LocalReaderProgressStore(
-            storeURL: FileManager.default.temporaryDirectory
-                .appendingPathComponent("citration-citation-export-reader-progress")
-                .appendingPathComponent(UUID().uuidString)
-                .appendingPathExtension("json")
-        )
     }
 }

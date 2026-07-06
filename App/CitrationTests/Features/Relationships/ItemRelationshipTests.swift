@@ -12,7 +12,7 @@ struct ItemRelationshipTests {
     func addRelationshipToSelectedItemPersistsLinkAndRecommendation() async throws {
         let source = BCItem(title: "Source")
         let target = BCItem(title: "Target")
-        let model = makeModel(initialItems: [source, target])
+        let model = makeAppModel(initialItems: [source, target])
         await model.refreshItems()
         await model.refreshRelationships()
         model.selectItem(id: source.id)
@@ -38,7 +38,7 @@ struct ItemRelationshipTests {
     func removeRelationshipRemovesSelectedLink() async throws {
         let source = BCItem(title: "Source")
         let target = BCItem(title: "Target")
-        let model = makeModel(initialItems: [source, target])
+        let model = makeAppModel(initialItems: [source, target])
         await model.refreshItems()
         model.selectItem(id: source.id)
         model.relatedItemTargetID = target.id
@@ -57,7 +57,7 @@ struct ItemRelationshipTests {
     func removeSelectedItemRemovesRelationshipsTouchingItem() async throws {
         let source = BCItem(title: "Source")
         let target = BCItem(title: "Target")
-        let model = makeModel(initialItems: [source, target])
+        let model = makeAppModel(initialItems: [source, target])
         await model.refreshItems()
         model.selectItem(id: source.id)
         model.relatedItemTargetID = target.id
@@ -69,83 +69,5 @@ struct ItemRelationshipTests {
 
         #expect(try await model.relationshipStore.listRelationships(itemID: source.id).isEmpty)
         #expect(try await model.relationshipStore.listRelationships(itemID: target.id).isEmpty)
-    }
-}
-
-private extension ItemRelationshipTests {
-    func makeModel(initialItems: [BCItem]) -> AppModel {
-        AppModel(
-            store: InMemoryItemStore(initialItems: initialItems),
-            metadataRegistry: MetadataProviderRegistry(providers: [NoopMetadataProvider()]),
-            citationFormatter: StubCitationFormatter(),
-            storageConnectors: [],
-            pdfDOIExtractor: NullPDFDOIExtractor(),
-            attachmentStore: nil,
-            annotationStore: makeAnnotationStore(),
-            collectionStore: makeCollectionStore(),
-            noteStore: makeNoteStore(),
-            relationshipStore: makeRelationshipStore(),
-            readerProgressStore: makeReaderProgressStore()
-        )
-    }
-
-    func waitUntil(
-        timeout: TimeInterval = 2.0,
-        pollInterval: UInt64 = 10_000_000,
-        _ condition: @MainActor () -> Bool
-    ) async throws {
-        let start = Date()
-        while Date().timeIntervalSince(start) < timeout {
-            if condition() {
-                return
-            }
-            try await Task.sleep(nanoseconds: pollInterval)
-        }
-        Issue.record("Timed out waiting for condition")
-    }
-
-    func makeAnnotationStore() -> LocalAnnotationStore? {
-        try? LocalAnnotationStore(
-            storeURL: FileManager.default.temporaryDirectory
-                .appendingPathComponent("citration-item-relationship-annotations")
-                .appendingPathComponent(UUID().uuidString)
-                .appendingPathExtension("json")
-        )
-    }
-
-    func makeCollectionStore() -> LocalCollectionStore? {
-        try? LocalCollectionStore(
-            storeURL: FileManager.default.temporaryDirectory
-                .appendingPathComponent("citration-item-relationship-collections")
-                .appendingPathComponent(UUID().uuidString)
-                .appendingPathExtension("json")
-        )
-    }
-
-    func makeNoteStore() -> LocalNoteStore? {
-        try? LocalNoteStore(
-            storeURL: FileManager.default.temporaryDirectory
-                .appendingPathComponent("citration-item-relationship-notes")
-                .appendingPathComponent(UUID().uuidString)
-                .appendingPathExtension("json")
-        )
-    }
-
-    func makeRelationshipStore() -> LocalRelationshipStore? {
-        try? LocalRelationshipStore(
-            storeURL: FileManager.default.temporaryDirectory
-                .appendingPathComponent("citration-item-relationship-relationships")
-                .appendingPathComponent(UUID().uuidString)
-                .appendingPathExtension("json")
-        )
-    }
-
-    func makeReaderProgressStore() -> LocalReaderProgressStore? {
-        try? LocalReaderProgressStore(
-            storeURL: FileManager.default.temporaryDirectory
-                .appendingPathComponent("citration-item-relationship-reader-progress")
-                .appendingPathComponent(UUID().uuidString)
-                .appendingPathExtension("json")
-        )
     }
 }

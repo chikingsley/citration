@@ -11,7 +11,7 @@ struct TaggingTests {
     @Test("addTagToSelectedItem persists normalized tag")
     func addTagToSelectedItemPersistsNormalizedTag() async throws {
         let item = BCItem(title: "Tagged", tags: ["vision"])
-        let model = makeModel(initialItems: [item])
+        let model = makeAppModel(initialItems: [item])
         await model.refreshItems()
         model.selectItem(id: item.id)
 
@@ -26,7 +26,7 @@ struct TaggingTests {
     @Test("removeTag deletes tag from selected item")
     func removeTagDeletesTag() async throws {
         let item = BCItem(title: "Tagged", tags: ["vision", "machine learning"])
-        let model = makeModel(initialItems: [item])
+        let model = makeAppModel(initialItems: [item])
         await model.refreshItems()
         model.selectItem(id: item.id)
 
@@ -61,7 +61,7 @@ struct TaggingTests {
         let attachmentStore = try LocalAttachmentStore(
             baseDirectory: tempDirectory.appendingPathComponent("attachments", isDirectory: true)
         )
-        let model = makeModel(
+        let model = makeAppModel(
             initialItems: [item],
             providers: [provider],
             pdfDOIExtractor: TagPDFDOIExtractor(doi: doi),
@@ -101,106 +101,5 @@ private struct TagPDFDOIExtractor: PDFDOIExtracting {
     func extractDOI(from pdfURL: URL) -> String? {
         _ = pdfURL
         return doi
-    }
-}
-
-private extension TaggingTests {
-    func makeModel(
-        initialItems: [BCItem],
-        providers: [any MetadataProvider] = [NoopMetadataProvider()],
-        pdfDOIExtractor: any PDFDOIExtracting = NullPDFDOIExtractor(),
-        attachmentStore: LocalAttachmentStore? = nil
-    ) -> AppModel {
-        AppModel(
-            store: InMemoryItemStore(initialItems: initialItems),
-            metadataRegistry: MetadataProviderRegistry(providers: providers),
-            citationFormatter: StubCitationFormatter(),
-            storageConnectors: [],
-            pdfDOIExtractor: pdfDOIExtractor,
-            attachmentStore: attachmentStore,
-            annotationStore: makeAnnotationStore(),
-            collectionStore: makeCollectionStore(),
-            noteStore: makeNoteStore(),
-            relationshipStore: makeRelationshipStore(),
-            readerProgressStore: makeReaderProgressStore()
-        )
-    }
-
-    func waitUntil(
-        timeout: TimeInterval = 2.0,
-        pollInterval: UInt64 = 10_000_000,
-        _ condition: @MainActor () -> Bool
-    ) async throws {
-        let start = Date()
-        while Date().timeIntervalSince(start) < timeout {
-            if condition() {
-                return
-            }
-            try await Task.sleep(nanoseconds: pollInterval)
-        }
-        Issue.record("Timed out waiting for condition")
-    }
-
-    func makeAnnotationStore() -> LocalAnnotationStore? {
-        try? LocalAnnotationStore(
-            storeURL: FileManager.default.temporaryDirectory
-                .appendingPathComponent("citration-tagging-annotations")
-                .appendingPathComponent(UUID().uuidString)
-                .appendingPathExtension("json")
-        )
-    }
-
-    func makeCollectionStore() -> LocalCollectionStore? {
-        try? LocalCollectionStore(
-            storeURL: FileManager.default.temporaryDirectory
-                .appendingPathComponent("citration-tagging-collections")
-                .appendingPathComponent(UUID().uuidString)
-                .appendingPathExtension("json")
-        )
-    }
-
-    func makeNoteStore() -> LocalNoteStore? {
-        try? LocalNoteStore(
-            storeURL: FileManager.default.temporaryDirectory
-                .appendingPathComponent("citration-tagging-notes")
-                .appendingPathComponent(UUID().uuidString)
-                .appendingPathExtension("json")
-        )
-    }
-
-    func makeRelationshipStore() -> LocalRelationshipStore? {
-        try? LocalRelationshipStore(
-            storeURL: FileManager.default.temporaryDirectory
-                .appendingPathComponent("citration-tagging-relationships")
-                .appendingPathComponent(UUID().uuidString)
-                .appendingPathExtension("json")
-        )
-    }
-
-    func makeReaderProgressStore() -> LocalReaderProgressStore? {
-        try? LocalReaderProgressStore(
-            storeURL: FileManager.default.temporaryDirectory
-                .appendingPathComponent("citration-tagging-reader-progress")
-                .appendingPathComponent(UUID().uuidString)
-                .appendingPathExtension("json")
-        )
-    }
-
-    func makeTempDirectory() -> URL {
-        let directory = FileManager.default.temporaryDirectory
-            .appendingPathComponent("citration-tagging-tests", isDirectory: true)
-            .appendingPathComponent(UUID().uuidString, isDirectory: true)
-        try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-        return directory
-    }
-
-    func cleanupDirectory(_ directory: URL) {
-        try? FileManager.default.removeItem(at: directory)
-    }
-
-    func makeFile(named fileName: String, contents: Data, in directory: URL) throws -> URL {
-        let fileURL = directory.appendingPathComponent(fileName)
-        try contents.write(to: fileURL)
-        return fileURL
     }
 }

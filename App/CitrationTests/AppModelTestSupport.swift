@@ -7,22 +7,25 @@ import Testing
 
 @MainActor
 func makeAppModel(
-    providers: [any MetadataProvider],
+    initialItems: [BCItem] = [],
+    providers: [any MetadataProvider] = [NoopMetadataProvider()],
     pdfDOIExtractor: any PDFDOIExtracting = NullPDFDOIExtractor(),
-    attachmentStore: LocalAttachmentStore? = nil
+    attachmentStore: LocalAttachmentStore? = nil,
+    annotationStore: LocalAnnotationStore? = makeAnnotationStore(),
+    readerProgressStore: LocalReaderProgressStore? = makeReaderProgressStore()
 ) -> AppModel {
     AppModel(
-        store: InMemoryItemStore(),
+        store: InMemoryItemStore(initialItems: initialItems),
         metadataRegistry: MetadataProviderRegistry(providers: providers),
         citationFormatter: StubCitationFormatter(),
         storageConnectors: [],
         pdfDOIExtractor: pdfDOIExtractor,
         attachmentStore: attachmentStore,
-        annotationStore: makeAnnotationStore(),
+        annotationStore: annotationStore,
         collectionStore: makeCollectionStore(),
         noteStore: makeNoteStore(),
         relationshipStore: makeRelationshipStore(),
-        readerProgressStore: makeReaderProgressStore()
+        readerProgressStore: readerProgressStore
     )
 }
 

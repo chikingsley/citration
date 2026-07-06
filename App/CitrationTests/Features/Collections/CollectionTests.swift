@@ -10,7 +10,7 @@ import Testing
 struct CollectionTests {
     @Test("createCollection updates model state")
     func createCollectionUpdatesModelState() async throws {
-        let model = makeModel(initialItems: [])
+        let model = makeAppModel(initialItems: [])
         await model.refreshCollections()
 
         model.createCollection(named: "  Reading   Queue ")
@@ -24,7 +24,7 @@ struct CollectionTests {
     @Test("setSelectedItem toggles collection membership")
     func setSelectedItemTogglesMembership() async throws {
         let item = BCItem(title: "Paper")
-        let model = makeModel(initialItems: [item])
+        let model = makeAppModel(initialItems: [item])
         await model.refreshItems()
         await model.refreshCollections()
         model.selectItem(id: item.id)
@@ -48,7 +48,7 @@ struct CollectionTests {
         let attachmentStore = try LocalAttachmentStore(
             baseDirectory: tempDirectory.appendingPathComponent("attachments", isDirectory: true)
         )
-        let model = makeModel(initialItems: [], attachmentStore: attachmentStore)
+        let model = makeAppModel(initialItems: [], attachmentStore: attachmentStore)
         await model.refreshItems()
         await model.refreshCollections()
         model.createCollection(named: "Inbox")
@@ -62,104 +62,5 @@ struct CollectionTests {
         #expect(model.collectionMemberships.first?.collectionID == collectionID)
         #expect(model.collectionMemberships.first?.itemID == model.items.first?.id)
         #expect(model.selectedCollectionItems.map(\.id) == model.items.map(\.id))
-    }
-}
-
-private extension CollectionTests {
-    func makeModel(
-        initialItems: [BCItem],
-        attachmentStore: LocalAttachmentStore? = nil
-    ) -> AppModel {
-        AppModel(
-            store: InMemoryItemStore(initialItems: initialItems),
-            metadataRegistry: MetadataProviderRegistry(providers: [NoopMetadataProvider()]),
-            citationFormatter: StubCitationFormatter(),
-            storageConnectors: [],
-            pdfDOIExtractor: NullPDFDOIExtractor(),
-            attachmentStore: attachmentStore,
-            annotationStore: makeAnnotationStore(),
-            collectionStore: makeCollectionStore(),
-            noteStore: makeNoteStore(),
-            relationshipStore: makeRelationshipStore(),
-            readerProgressStore: makeReaderProgressStore()
-        )
-    }
-
-    func waitUntil(
-        timeout: TimeInterval = 2.0,
-        pollInterval: UInt64 = 10_000_000,
-        _ condition: @MainActor () -> Bool
-    ) async throws {
-        let start = Date()
-        while Date().timeIntervalSince(start) < timeout {
-            if condition() {
-                return
-            }
-            try await Task.sleep(nanoseconds: pollInterval)
-        }
-        Issue.record("Timed out waiting for condition")
-    }
-
-    func makeAnnotationStore() -> LocalAnnotationStore? {
-        try? LocalAnnotationStore(
-            storeURL: FileManager.default.temporaryDirectory
-                .appendingPathComponent("citration-collection-annotations")
-                .appendingPathComponent(UUID().uuidString)
-                .appendingPathExtension("json")
-        )
-    }
-
-    func makeCollectionStore() -> LocalCollectionStore? {
-        try? LocalCollectionStore(
-            storeURL: FileManager.default.temporaryDirectory
-                .appendingPathComponent("citration-collection-tests")
-                .appendingPathComponent(UUID().uuidString)
-                .appendingPathExtension("json")
-        )
-    }
-
-    func makeNoteStore() -> LocalNoteStore? {
-        try? LocalNoteStore(
-            storeURL: FileManager.default.temporaryDirectory
-                .appendingPathComponent("citration-collection-notes")
-                .appendingPathComponent(UUID().uuidString)
-                .appendingPathExtension("json")
-        )
-    }
-
-    func makeRelationshipStore() -> LocalRelationshipStore? {
-        try? LocalRelationshipStore(
-            storeURL: FileManager.default.temporaryDirectory
-                .appendingPathComponent("citration-collection-relationships")
-                .appendingPathComponent(UUID().uuidString)
-                .appendingPathExtension("json")
-        )
-    }
-
-    func makeReaderProgressStore() -> LocalReaderProgressStore? {
-        try? LocalReaderProgressStore(
-            storeURL: FileManager.default.temporaryDirectory
-                .appendingPathComponent("citration-collection-reader-progress")
-                .appendingPathComponent(UUID().uuidString)
-                .appendingPathExtension("json")
-        )
-    }
-
-    func makeTempDirectory() -> URL {
-        let directory = FileManager.default.temporaryDirectory
-            .appendingPathComponent("citration-collection-tests", isDirectory: true)
-            .appendingPathComponent(UUID().uuidString, isDirectory: true)
-        try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-        return directory
-    }
-
-    func cleanupDirectory(_ directory: URL) {
-        try? FileManager.default.removeItem(at: directory)
-    }
-
-    func makeFile(named fileName: String, contents: Data, in directory: URL) throws -> URL {
-        let fileURL = directory.appendingPathComponent(fileName)
-        try contents.write(to: fileURL)
-        return fileURL
     }
 }
