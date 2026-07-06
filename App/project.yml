@@ -24,6 +24,8 @@ targets:
       path: Citration/Config/Citration-Info.plist
     sources:
       - path: Citration
+      - path: Resources
+        buildPhase: resources
     dependencies:
       - package: citration
         product: CitrationCore

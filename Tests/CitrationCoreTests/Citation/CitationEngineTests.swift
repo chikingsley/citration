@@ -12,6 +12,7 @@ struct CitationEngineTests {
 
         let output = try await formatter.formatCluster(
             cluster,
+            items: [],
             style: style,
             options: CitationRenderOptions(format: .plainText)
         )
@@ -23,10 +24,10 @@ struct CitationEngineTests {
     func stubFormatterRendersBibliographyEntryCount() async throws {
         let formatter = StubCitationFormatter()
         let style = CitationStyle(id: "chicago-author-date", title: "Chicago Author-Date")
-        let ids = [UUID(), UUID(), UUID()]
+        let items = [BCItem(title: "A"), BCItem(title: "B"), BCItem(title: "C")]
 
         let bibliography = try await formatter.formatBibliography(
-            itemIDs: ids,
+            items: items,
             style: style,
             options: CitationRenderOptions(format: .markdown)
         )
@@ -44,6 +45,7 @@ struct CitationEngineTests {
         await #expect(throws: CitationEngineError.self) {
             try await formatter.formatCluster(
                 cluster,
+                items: [],
                 style: style,
                 options: CitationRenderOptions(format: .plainText)
             )
@@ -69,6 +71,7 @@ struct CitationEngineTests {
 
         let output = try await formatter.formatCluster(
             cluster,
+            items: [],
             style: style,
             options: CitationRenderOptions(format: .plainText)
         )
@@ -85,7 +88,7 @@ struct CitationEngineTests {
         let style = CitationStyle(id: "apa", title: "APA")
 
         let bibliography = try await formatter.formatBibliography(
-            itemIDs: [],
+            items: [],
             style: style,
             options: CitationRenderOptions(format: .plainText)
         )

@@ -19,7 +19,7 @@ extension AppModel {
             OpenLibraryTitleSearchMetadataProvider(),
         ]
         let metadataRegistry = MetadataProviderRegistry(providers: providers)
-        let citationFormatter = StubCitationFormatter()
+        let citationFormatter = CSLCitationFormatter()
         let pdfDOIExtractor = PDFKitDOIExtractor()
         let openAlexAPIKeyStore = FileAPIKeyStore()
         let openAlexCredentialSource = OpenAlexCredentialSource(keyStore: openAlexAPIKeyStore)

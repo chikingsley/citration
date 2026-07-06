@@ -32,14 +32,16 @@ final class CitationModel {
         }
 
         do {
-            let cluster = CitationCluster(items: [CitationItem(itemID: selectedItem.id)])
             let style = CitationStyle(id: "apa", title: "APA")
-            let output = try await formatter.formatCluster(
-                cluster,
+            let bibliography = try await formatter.formatBibliography(
+                items: [selectedItem],
                 style: style,
                 options: CitationRenderOptions(format: .plainText)
             )
-            preview = output.text
+            guard let entry = bibliography.entries.first else {
+                throw CitationEngineError.invalidInput("no bibliography entry")
+            }
+            preview = entry
         } catch {
             preview = "Citation preview failed: \(error.localizedDescription)"
         }

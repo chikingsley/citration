@@ -20,12 +20,13 @@ public enum CitationEngineError: Error, LocalizedError, Sendable {
 public protocol CitationFormattingEngine: Sendable {
     func formatCluster(
         _ cluster: CitationCluster,
+        items: [BCItem],
         style: CitationStyle,
         options: CitationRenderOptions
     ) async throws -> FormattedCitationCluster
 
     func formatBibliography(
-        itemIDs: [UUID],
+        items: [BCItem],
         style: CitationStyle,
         options: CitationRenderOptions
     ) async throws -> FormattedBibliography
@@ -42,9 +43,11 @@ public struct StubCitationFormatter: CitationFormattingEngine {
 
     public func formatCluster(
         _ cluster: CitationCluster,
+        items: [BCItem],
         style: CitationStyle,
         options: CitationRenderOptions
     ) throws -> FormattedCitationCluster {
+        _ = items
         guard !cluster.items.isEmpty else {
             throw CitationEngineError.invalidInput("cluster must contain at least one citation item")
         }
@@ -71,16 +74,16 @@ public struct StubCitationFormatter: CitationFormattingEngine {
     }
 
     public func formatBibliography(
-        itemIDs: [UUID],
+        items: [BCItem],
         style: CitationStyle,
         options: CitationRenderOptions
     ) -> FormattedBibliography {
-        guard !itemIDs.isEmpty else {
+        guard !items.isEmpty else {
             return FormattedBibliography(entries: [], format: options.format)
         }
 
-        let entries = itemIDs.enumerated().map { index, id in
-            "\(index + 1). [\(style.id)] \(id.uuidString)"
+        let entries = items.enumerated().map { index, item in
+            "\(index + 1). [\(style.id)] \(item.id.uuidString)"
         }
 
         return FormattedBibliography(entries: entries, format: options.format)

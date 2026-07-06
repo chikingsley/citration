@@ -47,6 +47,10 @@ swift run citration openalex-smoke 10.7717/peerj.4375
 Formatting is owned by SwiftFormat (`.swiftformat`); SwiftLint (`.swiftlint.yml`)
 enforces semantic and safety rules only. Both run on every commit via lefthook.
 
+Citation previews and bibliographies are rendered by citeproc-js (the CSL
+processor Zotero uses, vendored at `App/Resources/CSL/` with APA/Chicago/MLA
+styles; dual-licensed CPAL/AGPL) running in JavaScriptCore.
+
 Scanned PDFs with no text layer are OCRed through Mistral
 (`mistral-ocr-latest`) when `MISTRAL_API_KEY` is configured (same `.env` +
 local-file pattern as OpenAlex; the key file is
