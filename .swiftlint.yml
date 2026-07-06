@@ -60,13 +60,25 @@ opt_in_rules:
   - toggle_bool
   - unavailable_function
   # Naming / organization
-  # - file_name  # enable after the repo restructure renames grouping files
+  - file_name
 
 # Dead-code rules; run via `swiftlint analyze --compiler-log-path <log>`
 # against a clean build log (too slow for every commit).
 analyzer_rules:
   - unused_declaration
   - unused_import
+
+# Deliberate multi-type grouping files; everything else must be named
+# after a type it declares.
+file_name:
+  excluded:
+    - main.swift
+    - CitationModels.swift
+    - LibraryModels.swift
+    - LibraryRelationships.swift
+    - MetadataModels.swift
+    - DesignTokens.swift
+    - AppModelTestSupport.swift
 
 # Crash-risk rules — flag prominently
 force_cast:

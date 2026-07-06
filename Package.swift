@@ -2,21 +2,17 @@
 import PackageDescription
 
 let package = Package(
-    name: "CitrationWorkspace",
+    name: "citration",
     platforms: [
         .macOS(.v14)
     ],
     products: [
-        .executable(name: "citration", targets: ["CitrationCLI"])
-    ],
-    dependencies: [
-        .package(path: "CitrationCore")
+        .library(name: "CitrationCore", targets: ["CitrationCore"]),
+        .executable(name: "citration", targets: ["CitrationCLI"]),
     ],
     targets: [
-        .executableTarget(
-            name: "CitrationCLI",
-            dependencies: ["CitrationCore"],
-            path: "Tools/CitrationCLI/Sources/CitrationCLI"
-        )
+        .target(name: "CitrationCore"),
+        .executableTarget(name: "CitrationCLI", dependencies: ["CitrationCore"]),
+        .testTarget(name: "CitrationCoreTests", dependencies: ["CitrationCore"]),
     ]
 )

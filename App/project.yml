@@ -1,0 +1,74 @@
+name: Citration
+options:
+  minimumXcodeGenVersion: 2.44.0
+  deploymentTarget:
+    macOS: "14.0"
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    MACOSX_DEPLOYMENT_TARGET: "14.0"
+    PRODUCT_BUNDLE_IDENTIFIER: com.citration.app
+    CODE_SIGN_STYLE: Automatic
+    GENERATE_INFOPLIST_FILE: NO
+packages:
+  citration:
+    path: ../
+  Inject:
+    url: https://github.com/krzysztofzablocki/Inject.git
+    from: 1.5.2
+targets:
+  Citration:
+    type: application
+    platform: macOS
+    info:
+      path: Citration/Config/Citration-Info.plist
+    sources:
+      - path: Citration
+    dependencies:
+      - package: citration
+        product: CitrationCore
+      - package: Inject
+    settings:
+      base:
+        PRODUCT_NAME: Citration
+      configs:
+        Debug:
+          CODE_SIGNING_ALLOWED: NO
+          CODE_SIGNING_REQUIRED: NO
+          OTHER_LDFLAGS:
+            - "$(inherited)"
+            - -Xlinker
+            - -interposable
+          EMIT_FRONTEND_COMMAND_LINES: YES
+  CitrationTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - path: CitrationTests
+    dependencies:
+      - target: Citration
+      - package: citration
+        product: CitrationCore
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+      configs:
+        Debug:
+          CODE_SIGNING_ALLOWED: NO
+          CODE_SIGNING_REQUIRED: NO
+schemes:
+  Citration:
+    build:
+      targets:
+        Citration: all
+    run:
+      config: Debug
+    test:
+      config: Debug
+      gatherCoverageData: false
+      targets:
+        - CitrationTests
+    profile:
+      config: Release
+    archive:
+      config: Release

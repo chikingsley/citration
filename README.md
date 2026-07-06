@@ -3,27 +3,52 @@
 Citration is a Swift-native macOS app for reading, annotating, and organizing
 research documents.
 
-The macOS app lives in `Citration`. Shared domain, persistence, metadata,
-storage, sync, and citation code lives in `CitrationCore`. Repo tooling lives in
-`Tools/CitrationCLI`.
+## Layout
+
+```
+Package.swift          Root package: CitrationCore library + citration CLI
+Sources/
+  CitrationCore/       Shared domain, persistence, metadata, storage, citation code
+  CitrationCLI/        Repo tooling + OpenAlex utilities (swift run citration ...)
+Tests/
+  CitrationCoreTests/  Core tests (mirrors Sources/CitrationCore)
+App/
+  project.yml          XcodeGen spec — the single build definition for the app
+  Citration/           macOS app target (feature folders + Providers/Stores/Parsing)
+  CitrationTests/      App tests (mirrors App/Citration)
+```
+
+`App/Citration.xcodeproj` is generated, not committed.
+
+## Setup
+
+```bash
+brew install swiftlint swiftformat xcodegen lefthook
+lefthook install                     # git hooks: swiftformat + swiftlint on commit
+swift run citration generate         # generate App/Citration.xcodeproj
+open App/Citration.xcodeproj
+```
 
 ## Commands
 
-Use the Swift CLI from the repo root:
-
 ```bash
+swift run citration check            # format --lint, lint, package + app tests
 swift run citration test
-swift run citration lint
-swift run citration check
+swift run citration format [--lint]
+swift run citration lint [--fix]
+swift run citration generate
 swift run citration openalex-key status
 swift run citration openalex-key import-env
 swift run citration openalex-smoke 10.7717/peerj.4375
 ```
 
-OpenAlex API keys are user-provided credentials. For local development, put
-`OPENALEX_API_KEY` in an ignored root `.env`, then run
-`swift run citration openalex-key import-env` to store it in macOS Keychain.
-The app also exposes an OpenAlex key field in the inspector.
+Formatting is owned by SwiftFormat (`.swiftformat`); SwiftLint (`.swiftlint.yml`)
+enforces semantic and safety rules only. Both run on every commit via lefthook.
+
+OpenAlex API keys are user-provided credentials. For local development, copy
+`.env.example` to `.env` (git-ignored), set `OPENALEX_API_KEY`, then run
+`swift run citration openalex-key import-env` to store it in the macOS
+Keychain. The app also exposes an OpenAlex key field in the inspector.
 
 Zotero is an external behavior reference only. Notes are kept in
 `docs/zotero-reference-notes.md`; Zotero source is not vendored here.
