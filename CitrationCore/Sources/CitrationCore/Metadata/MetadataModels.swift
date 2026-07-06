@@ -52,6 +52,44 @@ public struct CanonicalMetadataRecord: Identifiable, Hashable, Codable, Sendable
 	}
 }
 
+public enum MetadataConflictField: String, Hashable, Codable, Sendable {
+	case title
+	case publicationYear
+	case itemType
+}
+
+public struct MetadataResolutionConflict: Identifiable, Hashable, Codable, Sendable {
+	public var field: MetadataConflictField
+	public var preferredValue: String
+	public var alternateValue: String
+	public var preferredProvider: String
+	public var alternateProvider: String
+
+	public init(
+		field: MetadataConflictField,
+		preferredValue: String,
+		alternateValue: String,
+		preferredProvider: String,
+		alternateProvider: String
+	) {
+		self.field = field
+		self.preferredValue = preferredValue
+		self.alternateValue = alternateValue
+		self.preferredProvider = preferredProvider
+		self.alternateProvider = alternateProvider
+	}
+
+	public var id: String {
+		[
+			field.rawValue,
+			preferredProvider,
+			alternateProvider,
+			preferredValue,
+			alternateValue
+		].joined(separator: "|")
+	}
+}
+
 public struct MetadataResolutionRequest: Hashable, Sendable {
 	public var identifiers: [Identifier]
 	public var freeTextQuery: String?
@@ -65,10 +103,16 @@ public struct MetadataResolutionRequest: Hashable, Sendable {
 public struct MetadataResolutionResult: Sendable {
 	public var records: [CanonicalMetadataRecord]
 	public var warnings: [String]
+	public var conflicts: [MetadataResolutionConflict]
 
-	public init(records: [CanonicalMetadataRecord], warnings: [String] = []) {
+	public init(
+		records: [CanonicalMetadataRecord],
+		warnings: [String] = [],
+		conflicts: [MetadataResolutionConflict] = []
+	) {
 		self.records = records
 		self.warnings = warnings
+		self.conflicts = conflicts
 	}
 
 	public var bestMatch: CanonicalMetadataRecord? {

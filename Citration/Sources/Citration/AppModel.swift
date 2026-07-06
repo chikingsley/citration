@@ -12,6 +12,11 @@ final class AppModel {
     var reprocessingItemID: UUID?
     var isReprocessingAttachments: Bool { reprocessingItemID != nil }
     var statusMessage: String = "Ready"
+    var metadataWarnings: [String] = []
+    var metadataConflicts: [MetadataResolutionConflict] = []
+    var hasMetadataDiagnostics: Bool {
+        !metadataWarnings.isEmpty || !metadataConflicts.isEmpty
+    }
 
     var items: [BCItem] = []
     var selectedItemID: UUID?
@@ -203,6 +208,7 @@ final class AppModel {
             relatedItemTargetID = nil
             relatedItemNoteDraft = ""
             selectedItemDiscoverySuggestions = []
+            clearMetadataDiagnostics()
         }
         if activeReaderAttachment?.itemID != id {
             activeReaderAttachment = nil

@@ -14,6 +14,7 @@ extension AppModel {
             return
         }
 
+        clearMetadataDiagnostics()
         let noun = fileURLs.count == 1 ? "file" : "files"
         statusMessage = "Importing \(fileURLs.count) \(noun)..."
         isImportingAttachments = true
@@ -43,6 +44,7 @@ extension AppModel {
         }
 
         let targetItemID = selectedItem.id
+        clearMetadataDiagnostics()
         reprocessingItemID = targetItemID
         statusMessage = "Processing attachments..."
 
@@ -200,6 +202,7 @@ private extension AppModel {
         }
 
         appendDetectedDOIStatus(summary.detectedDOIs)
+        appendMetadataDiagnosticsStatus()
     }
 
     func updateReprocessStatus(_ summary: AttachmentReprocessSummary) {
@@ -211,6 +214,7 @@ private extension AppModel {
         let noun = summary.processedCount == 1 ? "attachment" : "attachments"
         statusMessage = "Processed \(summary.processedCount) \(noun)"
         appendDetectedDOIStatus(summary.detectedDOIs)
+        appendMetadataDiagnosticsStatus()
     }
 
     func appendDetectedDOIStatus(_ detectedDOIs: Set<String>) {

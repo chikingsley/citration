@@ -7,6 +7,7 @@ extension AppModel {
             return
         }
 
+        clearMetadataDiagnostics()
         isResolvingDOI = true
         statusMessage = "Resolving DOI \(doi)..."
 
@@ -15,6 +16,7 @@ extension AppModel {
                 identifiers: [Identifier(type: .doi, value: doi)]
             )
             let result = await metadataRegistry.resolveAll(request)
+            recordMetadataDiagnostics(result)
 
             guard let best = result.bestMatch else {
                 isResolvingDOI = false
@@ -40,6 +42,7 @@ extension AppModel {
             doiInput = ""
             isResolvingDOI = false
             statusMessage = "Added: \(item.title)"
+            appendMetadataDiagnosticsStatus()
         }
     }
 
@@ -80,6 +83,24 @@ extension AppModel {
 
     func shouldAttemptDOIExtraction(for attachment: LocalAttachment) -> Bool {
         attachment.documentFormat == .pdf
+    }
+
+    func clearMetadataDiagnostics() {
+        metadataWarnings = []
+        metadataConflicts = []
+    }
+
+    func recordMetadataDiagnostics(_ result: MetadataResolutionResult) {
+        metadataWarnings = result.warnings
+        metadataConflicts = result.conflicts
+    }
+
+    func appendMetadataDiagnosticsStatus() {
+        guard !metadataConflicts.isEmpty else {
+            return
+        }
+
+        statusMessage += " · check metadata"
     }
 }
 
@@ -163,6 +184,7 @@ private extension AppModel {
             freeTextQuery: freeTextQuery
         )
         let result = await metadataRegistry.resolveAll(request)
+        recordMetadataDiagnostics(result)
         return result.bestMatch
     }
 

@@ -40,8 +40,9 @@ public struct MetadataProviderRegistry: Sendable {
             }
         }
 
+        let conflicts = detectConflicts(in: records)
         let deduped = deduplicate(records)
-        return MetadataResolutionResult(records: deduped, warnings: warnings)
+        return MetadataResolutionResult(records: deduped, warnings: warnings, conflicts: conflicts)
     }
 
     private func deduplicate(_ records: [CanonicalMetadataRecord]) -> [CanonicalMetadataRecord] {
@@ -70,6 +71,123 @@ public struct MetadataProviderRegistry: Sendable {
         let normalizedTitle = record.title.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         let year = record.publicationYear.map(String.init) ?? "unknown"
         return "title:\(normalizedTitle)|year:\(year)"
+    }
+
+    private func detectConflicts(in records: [CanonicalMetadataRecord]) -> [MetadataResolutionConflict] {
+        let groupedRecords = Dictionary(grouping: records, by: dedupeKey(for:))
+        return groupedRecords.values.flatMap(conflictsInGroup)
+    }
+
+    private func conflictsInGroup(_ records: [CanonicalMetadataRecord]) -> [MetadataResolutionConflict] {
+        guard records.count > 1,
+              let preferred = records.max(by: { $0.confidence < $1.confidence }) else {
+            return []
+        }
+
+        return records
+            .filter { $0.id != preferred.id }
+            .flatMap { conflicts(preferred: preferred, alternate: $0) }
+    }
+
+    private func conflicts(
+        preferred: CanonicalMetadataRecord,
+        alternate: CanonicalMetadataRecord
+    ) -> [MetadataResolutionConflict] {
+        var conflicts: [MetadataResolutionConflict] = []
+        appendStringConflict(.title, preferred.title, alternate.title, preferred, alternate, to: &conflicts)
+        appendYearConflict(preferred, alternate, to: &conflicts)
+        appendItemTypeConflict(preferred, alternate, to: &conflicts)
+        return conflicts
+    }
+
+    private func appendStringConflict(
+        _ field: MetadataConflictField,
+        _ preferredValue: String,
+        _ alternateValue: String,
+        _ preferred: CanonicalMetadataRecord,
+        _ alternate: CanonicalMetadataRecord,
+        to conflicts: inout [MetadataResolutionConflict]
+    ) {
+        guard normalizedComparableString(preferredValue) != normalizedComparableString(alternateValue) else {
+            return
+        }
+
+        conflicts.append(
+            conflict(
+                field,
+                preferredValue: preferredValue,
+                alternateValue: alternateValue,
+                preferred: preferred,
+                alternate: alternate
+            )
+        )
+    }
+
+    private func appendYearConflict(
+        _ preferred: CanonicalMetadataRecord,
+        _ alternate: CanonicalMetadataRecord,
+        to conflicts: inout [MetadataResolutionConflict]
+    ) {
+        guard let preferredYear = preferred.publicationYear,
+              let alternateYear = alternate.publicationYear,
+              preferredYear != alternateYear else {
+            return
+        }
+
+        conflicts.append(
+            conflict(
+                .publicationYear,
+                preferredValue: String(preferredYear),
+                alternateValue: String(alternateYear),
+                preferred: preferred,
+                alternate: alternate
+            )
+        )
+    }
+
+    private func appendItemTypeConflict(
+        _ preferred: CanonicalMetadataRecord,
+        _ alternate: CanonicalMetadataRecord,
+        to conflicts: inout [MetadataResolutionConflict]
+    ) {
+        guard preferred.itemType != .unknown,
+              alternate.itemType != .unknown,
+              preferred.itemType != alternate.itemType else {
+            return
+        }
+
+        conflicts.append(
+            conflict(
+                .itemType,
+                preferredValue: preferred.itemType.rawValue,
+                alternateValue: alternate.itemType.rawValue,
+                preferred: preferred,
+                alternate: alternate
+            )
+        )
+    }
+
+    private func conflict(
+        _ field: MetadataConflictField,
+        preferredValue: String,
+        alternateValue: String,
+        preferred: CanonicalMetadataRecord,
+        alternate: CanonicalMetadataRecord
+    ) -> MetadataResolutionConflict {
+        MetadataResolutionConflict(
+            field: field,
+            preferredValue: preferredValue.trimmingCharacters(in: .whitespacesAndNewlines),
+            alternateValue: alternateValue.trimmingCharacters(in: .whitespacesAndNewlines),
+            preferredProvider: preferred.provenance.providerName,
+            alternateProvider: alternate.provenance.providerName
+        )
+    }
+
+    private func normalizedComparableString(_ value: String) -> String {
+        value
+            .split(whereSeparator: \.isWhitespace)
+            .joined(separator: " ")
+            .lowercased()
     }
 }
 

@@ -48,6 +48,9 @@ struct RootInspectorView: View {
             ScrollView {
                 Form {
                     itemInfoSection(item)
+                    if model.hasMetadataDiagnostics {
+                        MetadataDiagnosticsInspectorSection(model: model)
+                    }
                     ItemTagsInspectorSection(model: model, item: item)
                     ItemCollectionsInspectorSection(model: model, item: item)
                     ItemNotesInspectorSection(model: model)
