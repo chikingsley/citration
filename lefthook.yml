@@ -1,0 +1,13 @@
+# Git hooks managed by lefthook (brew install lefthook && lefthook install).
+# SwiftFormat rewrites staged files and re-stages them; SwiftLint then
+# blocks the commit on any remaining semantic violation.
+pre-commit:
+  parallel: false
+  commands:
+    1-swiftformat:
+      glob: "*.swift"
+      run: swiftformat {staged_files}
+      stage_fixed: true
+    2-swiftlint:
+      glob: "*.swift"
+      run: swiftlint lint --strict --quiet --force-exclude {staged_files}
