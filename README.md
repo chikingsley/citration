@@ -45,6 +45,13 @@ swift run citration openalex-smoke 10.7717/peerj.4375
 Formatting is owned by SwiftFormat (`.swiftformat`); SwiftLint (`.swiftlint.yml`)
 enforces semantic and safety rules only. Both run on every commit via lefthook.
 
+Scanned PDFs with no text layer are OCRed through Mistral
+(`mistral-ocr-latest`) when `MISTRAL_API_KEY` is configured (same `.env` +
+local-file pattern as OpenAlex; the key file is
+`~/Library/Application Support/Citration/mistral-api-key`). OCR output is
+cached by content hash under `.../Citration/ocr/`, so re-processing the same
+document never repeats an API call.
+
 OpenAlex API keys are user-provided credentials. For local development, copy
 `.env.example` to `.env` (git-ignored), set `OPENALEX_API_KEY`, then run
 `swift run citration openalex-key import-env` to store it in a local file

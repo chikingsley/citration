@@ -12,7 +12,8 @@ func makeAppModel(
     pdfDOIExtractor: any PDFDOIExtracting = NullPDFDOIExtractor(),
     attachmentStore: LocalAttachmentStore? = nil,
     annotationStore: LocalAnnotationStore? = makeAnnotationStore(),
-    readerProgressStore: LocalReaderProgressStore? = makeReaderProgressStore()
+    readerProgressStore: LocalReaderProgressStore? = makeReaderProgressStore(),
+    ocrService: any OCRServicing = NullOCRService()
 ) -> AppModel {
     AppModel(
         store: InMemoryItemStore(initialItems: initialItems),
@@ -25,8 +26,40 @@ func makeAppModel(
         collectionStore: makeCollectionStore(),
         noteStore: makeNoteStore(),
         relationshipStore: makeRelationshipStore(),
-        readerProgressStore: readerProgressStore
+        readerProgressStore: readerProgressStore,
+        ocrService: ocrService
     )
+}
+
+// MARK: - NullOCRService
+
+/// Default for tests: never configured, never touches the network.
+struct NullOCRService: OCRServicing {
+    func isConfigured() -> Bool {
+        false
+    }
+
+    func recognizeText(from documentURL: URL) throws -> String {
+        _ = documentURL
+        throw OCRServiceError.notConfigured
+    }
+}
+
+// MARK: - StubOCRService
+
+/// Returns fixed markdown, recording nothing; lets tests exercise the
+/// OCR enrichment path without the network.
+struct StubOCRService: OCRServicing {
+    let markdown: String
+
+    func isConfigured() -> Bool {
+        true
+    }
+
+    func recognizeText(from documentURL: URL) -> String {
+        _ = documentURL
+        return markdown
+    }
 }
 
 func makeAnnotationStore() -> LocalAnnotationStore? {

@@ -21,7 +21,8 @@ final class AppModel {
         relationshipStore: LocalRelationshipStore? = nil,
         readerProgressStore: LocalReaderProgressStore? = nil,
         relatedWorkDiscoveryProvider: any RelatedWorkDiscoveryProvider = NoopRelatedWorkDiscoveryProvider(),
-        openAlexAPIKeyStore: any OpenAlexAPIKeyStore = InMemoryOpenAlexAPIKeyStore()
+        ocrService: any OCRServicing = MistralOCRService(),
+        openAlexAPIKeyStore: any APIKeyStore = InMemoryAPIKeyStore()
     ) {
         self.store = store
         citation = CitationModel(formatter: citationFormatter)
@@ -34,7 +35,8 @@ final class AppModel {
             store: store,
             attachmentStore: attachmentStore ?? AppModel.makeAttachmentStore(),
             metadataRegistry: metadataRegistry,
-            pdfDOIExtractor: pdfDOIExtractor
+            pdfDOIExtractor: pdfDOIExtractor,
+            ocrService: ocrService
         )
         reader = ReaderModel(
             progressStore: readerProgressStore ?? AppModel.makeReaderProgressStore(),

@@ -36,8 +36,8 @@ struct AuthSessionTests {
     }
 
     @Test("in-memory OpenAlex API key store trims and clears keys")
-    func inMemoryOpenAlexAPIKeyStoreLifecycle() async {
-        let store = InMemoryOpenAlexAPIKeyStore()
+    func inMemoryAPIKeyStoreLifecycle() async {
+        let store = InMemoryAPIKeyStore()
         #expect(await store.loadAPIKey() == nil)
 
         await store.saveAPIKey("  test-key  ")

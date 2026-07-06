@@ -8,7 +8,7 @@ extension CitrationCLI {
             return
         }
 
-        let store = FileOpenAlexAPIKeyStore()
+        let store = FileAPIKeyStore()
         switch subcommand {
         case "status":
             if await store.loadAPIKey() != nil {
@@ -71,7 +71,7 @@ extension CitrationCLI {
     }
 
     private func resolvedOpenAlexAPIKey() async throws -> String {
-        let store = FileOpenAlexAPIKeyStore()
+        let store = FileAPIKeyStore()
         if let apiKey = await store.loadAPIKey() {
             return apiKey
         }

@@ -1,15 +1,15 @@
 import Foundation
 
-// MARK: - OpenAlexAPIKeyStore
+// MARK: - APIKeyStore
 
-public protocol OpenAlexAPIKeyStore: Sendable {
+public protocol APIKeyStore: Sendable {
     func loadAPIKey() async -> String?
     func saveAPIKey(_ apiKey: String?) async
 }
 
-// MARK: - InMemoryOpenAlexAPIKeyStore
+// MARK: - InMemoryAPIKeyStore
 
-public actor InMemoryOpenAlexAPIKeyStore: OpenAlexAPIKeyStore {
+public actor InMemoryAPIKeyStore: APIKeyStore {
     // MARK: Lifecycle
 
     public init(apiKey: String? = nil) {
@@ -41,17 +41,21 @@ public actor InMemoryOpenAlexAPIKeyStore: OpenAlexAPIKeyStore {
     }
 }
 
-// MARK: - FileOpenAlexAPIKeyStore
+// MARK: - FileAPIKeyStore
 
 /// Stores the OpenAlex API key in a plain 0600 file under Application
 /// Support. Deliberately not the Keychain: unsigned debug builds get a
 /// fresh keychain identity every rebuild, which makes macOS re-prompt
 /// for access each time.
-public actor FileOpenAlexAPIKeyStore: OpenAlexAPIKeyStore {
+public actor FileAPIKeyStore: APIKeyStore {
     // MARK: Lifecycle
 
     public init(fileURL: URL? = nil) {
-        self.fileURL = fileURL ?? Self.defaultFileURL()
+        self.fileURL = fileURL ?? Self.defaultFileURL(fileName: "openalex-api-key")
+    }
+
+    public init(fileName: String) {
+        fileURL = Self.defaultFileURL(fileName: fileName)
     }
 
     // MARK: Public
@@ -94,10 +98,10 @@ public actor FileOpenAlexAPIKeyStore: OpenAlexAPIKeyStore {
 
     private let fileURL: URL?
 
-    private static func defaultFileURL() -> URL? {
+    private static func defaultFileURL(fileName: String) -> URL? {
         try? FileManager.default
             .url(for: .applicationSupportDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
             .appendingPathComponent("Citration", isDirectory: true)
-            .appendingPathComponent("openalex-api-key")
+            .appendingPathComponent(fileName)
     }
 }

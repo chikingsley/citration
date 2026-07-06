@@ -7,7 +7,7 @@ import Observation
 final class OpenAlexSettingsModel {
     // MARK: Lifecycle
 
-    init(keyStore: any OpenAlexAPIKeyStore) {
+    init(keyStore: any APIKeyStore) {
         self.keyStore = keyStore
     }
 
@@ -17,7 +17,7 @@ final class OpenAlexSettingsModel {
     var hasKey: Bool = false
     var isSaving: Bool = false
 
-    let keyStore: any OpenAlexAPIKeyStore
+    let keyStore: any APIKeyStore
 
     func bind(context: any LibraryContext, insights: InsightsModel) {
         self.context = context

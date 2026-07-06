@@ -21,12 +21,14 @@ final class ImportModel {
         store: any BCItemStore,
         attachmentStore: LocalAttachmentStore,
         metadataRegistry: MetadataProviderRegistry,
-        pdfDOIExtractor: any PDFDOIExtracting
+        pdfDOIExtractor: any PDFDOIExtracting,
+        ocrService: any OCRServicing = MistralOCRService()
     ) {
         self.store = store
         self.attachmentStore = attachmentStore
         self.metadataRegistry = metadataRegistry
         self.pdfDOIExtractor = pdfDOIExtractor
+        self.ocrService = ocrService
     }
 
     // MARK: Internal
@@ -184,39 +186,6 @@ final class ImportModel {
 
     // MARK: - Metadata enrichment
 
-    func enrichImportedAttachment(
-        item: BCItem,
-        attachment: LocalAttachment
-    ) async -> AttachmentEnrichment {
-        guard shouldAttemptDOIExtraction(for: attachment), item.doi == nil else {
-            return AttachmentEnrichment(item: item, detectedDOI: nil)
-        }
-
-        let candidates = await pdfDOIExtractor.extractCandidates(from: attachment.localURL)
-        let fallbackTitleQuery = MetadataMerging.metadataFallbackTitle(for: item, attachment: attachment)
-
-        let resolver = PDFMetadataResolver(registry: metadataRegistry) { [weak self] result in
-            self?.recordMetadataDiagnostics(result)
-        }
-        if let best = await resolver.resolve(candidates: candidates, fallbackTitleQuery: fallbackTitleQuery) {
-            let enriched = MetadataMerging.mergeMetadata(best, into: item, fallbackDOI: candidates.detectedDOI)
-            await store.upsert(enriched)
-            return AttachmentEnrichment(item: enriched, detectedDOI: candidates.detectedDOI)
-        }
-
-        guard !candidates.isEmpty else {
-            return AttachmentEnrichment(item: item, detectedDOI: nil)
-        }
-
-        let withDetectedIdentifiers = MetadataMerging.mergeIdentifiers(candidates.identifiers, into: item)
-        await store.upsert(withDetectedIdentifiers)
-        return AttachmentEnrichment(item: withDetectedIdentifiers, detectedDOI: candidates.detectedDOI)
-    }
-
-    func shouldAttemptDOIExtraction(for attachment: LocalAttachment) -> Bool {
-        attachment.documentFormat == .pdf
-    }
-
     // MARK: - Diagnostics
 
     func clearMetadataDiagnostics() {
@@ -248,6 +217,7 @@ final class ImportModel {
     private let store: any BCItemStore
     private let metadataRegistry: MetadataProviderRegistry
     private let pdfDOIExtractor: any PDFDOIExtracting
+    private let ocrService: any OCRServicing
 
     private func attachmentImportPlan(mode: AttachmentImportMode) -> AttachmentImportPlan? {
         switch mode {
@@ -427,5 +397,68 @@ private struct AttachmentReprocessSummary {
         if let doi = enrichment.detectedDOI {
             detectedDOIs.insert(doi)
         }
+    }
+}
+
+// MARK: - Metadata enrichment
+
+extension ImportModel {
+    func enrichImportedAttachment(
+        item: BCItem,
+        attachment: LocalAttachment
+    ) async -> AttachmentEnrichment {
+        guard shouldAttemptDOIExtraction(for: attachment), item.doi == nil else {
+            return AttachmentEnrichment(item: item, detectedDOI: nil)
+        }
+
+        var candidates = await pdfDOIExtractor.extractCandidates(from: attachment.localURL)
+
+        if
+            candidates.isEmpty,
+            !PDFKitDOIExtractor.hasTextLayer(at: attachment.localURL),
+            await ocrService.isConfigured()
+        {
+            context?.statusMessage = "Running OCR on \(attachment.fileName)..."
+            if let markdown = try? await ocrService.recognizeText(from: attachment.localURL) {
+                candidates = OCRTextParsing.candidates(fromMarkdown: markdown)
+            }
+        }
+
+        let fallbackTitleQuery = MetadataMerging.metadataFallbackTitle(for: item, attachment: attachment)
+
+        let resolver = PDFMetadataResolver(registry: metadataRegistry) { [weak self] result in
+            self?.recordMetadataDiagnostics(result)
+        }
+        if let best = await resolver.resolve(candidates: candidates, fallbackTitleQuery: fallbackTitleQuery) {
+            let enriched = MetadataMerging.mergeMetadata(best, into: item, fallbackDOI: candidates.detectedDOI)
+            await store.upsert(enriched)
+            return AttachmentEnrichment(item: enriched, detectedDOI: candidates.detectedDOI)
+        }
+
+        guard !candidates.isEmpty else {
+            return AttachmentEnrichment(item: item, detectedDOI: nil)
+        }
+
+        var withDetectedIdentifiers = MetadataMerging.mergeIdentifiers(candidates.identifiers, into: item)
+        if
+            let ocrTitle = candidates.titleHints.first,
+            hasPlaceholderTitle(withDetectedIdentifiers, attachment: attachment)
+        {
+            withDetectedIdentifiers.title = ocrTitle
+        }
+        await store.upsert(withDetectedIdentifiers)
+        return AttachmentEnrichment(item: withDetectedIdentifiers, detectedDOI: candidates.detectedDOI)
+    }
+
+    func shouldAttemptDOIExtraction(for attachment: LocalAttachment) -> Bool {
+        attachment.documentFormat == .pdf
+    }
+
+    /// True while the item still carries an auto-generated title (from
+    /// the filename or the "Untitled Item" default) that an OCR-derived
+    /// title should replace.
+    private func hasPlaceholderTitle(_ item: BCItem, attachment: LocalAttachment) -> Bool {
+        item.title == "Untitled Item"
+            || item.title == MetadataMerging.inferredTitle(from: attachment.localURL)
     }
 }

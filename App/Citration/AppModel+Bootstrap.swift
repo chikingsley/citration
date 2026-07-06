@@ -20,7 +20,7 @@ extension AppModel {
         let metadataRegistry = MetadataProviderRegistry(providers: providers)
         let citationFormatter = StubCitationFormatter()
         let pdfDOIExtractor = PDFKitDOIExtractor()
-        let openAlexAPIKeyStore = FileOpenAlexAPIKeyStore()
+        let openAlexAPIKeyStore = FileAPIKeyStore()
         let openAlexCredentialSource = OpenAlexCredentialSource(keyStore: openAlexAPIKeyStore)
         let relatedWorkDiscoveryProvider = OpenAlexRelatedWorkProvider(apiKeyProvider: openAlexCredentialSource)
         let storageConnectors = [

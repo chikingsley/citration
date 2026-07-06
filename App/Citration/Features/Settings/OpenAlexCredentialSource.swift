@@ -33,7 +33,7 @@ struct OpenAlexCredentialSource: OpenAlexAPIKeyProviding {
     // MARK: Lifecycle
 
     init(
-        keyStore: any OpenAlexAPIKeyStore,
+        keyStore: any APIKeyStore,
         environment: [String: String] = ProcessInfo.processInfo.environment
     ) {
         self.keyStore = keyStore
@@ -52,6 +52,6 @@ struct OpenAlexCredentialSource: OpenAlexAPIKeyProviding {
 
     // MARK: Private
 
-    private let keyStore: any OpenAlexAPIKeyStore
+    private let keyStore: any APIKeyStore
     private let environment: [String: String]
 }
