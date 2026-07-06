@@ -104,6 +104,13 @@ struct CrossrefDOIMetadataProvider: MetadataProvider {
             return []
         }
 
+        // Crossref always returns its best guess; only trust it when the
+        // returned title genuinely resembles what was asked for.
+        let candidateTitle = message.title.compactMap(\.bcTrimmedNonEmpty).first ?? ""
+        guard TitleSimilarity.isAcceptableMatch(query: query, candidate: candidateTitle) else {
+            return []
+        }
+
         let record = makeRecord(
             from: message,
             fallbackDOI: nil,
