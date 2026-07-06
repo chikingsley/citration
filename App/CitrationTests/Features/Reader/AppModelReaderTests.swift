@@ -16,9 +16,9 @@ struct AppModelReaderTests {
         )
         let model = makeAppModel(providers: [NoopMetadataProvider()])
 
-        model.openReader(for: attachment)
+        model.reader.open(attachment)
 
-        #expect(model.activeReaderAttachment == attachment)
+        #expect(model.reader.activeAttachment == attachment)
         #expect(model.selectedItemID == itemID)
         #expect(model.statusMessage == "Reading reader.pdf")
     }
@@ -32,9 +32,9 @@ struct AppModelReaderTests {
         )
         let model = makeAppModel(providers: [NoopMetadataProvider()])
 
-        model.openReader(for: attachment)
+        model.reader.open(attachment)
 
-        #expect(model.activeReaderAttachment == attachment)
+        #expect(model.reader.activeAttachment == attachment)
         #expect(model.statusMessage == "Reading book.epub")
     }
 
@@ -47,9 +47,9 @@ struct AppModelReaderTests {
         )
         let model = makeAppModel(providers: [NoopMetadataProvider()])
 
-        model.openReader(for: attachment)
+        model.reader.open(attachment)
         model.selectItem(id: UUID())
 
-        #expect(model.activeReaderAttachment == nil)
+        #expect(model.reader.activeAttachment == nil)
     }
 }

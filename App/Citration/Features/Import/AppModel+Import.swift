@@ -56,11 +56,7 @@ extension AppModel {
         Task {
             do {
                 try await attachmentStore.removeAttachment(attachment)
-                try? await readerProgressStore.remove(attachmentKey: attachment.objectKey)
-                if activeReaderAttachment?.id == attachment.id {
-                    activeReaderAttachment = nil
-                    activeReaderProgress = nil
-                }
+                await reader.handleAttachmentRemoved(attachment)
                 await refreshSelectedItemAttachments()
                 statusMessage = "Removed attachment"
             } catch {
@@ -77,17 +73,10 @@ extension AppModel {
 
         do {
             selectedItemAttachments = try await attachmentStore.listAttachments(for: selectedItemID)
-            if
-                let activeReaderAttachment,
-                !selectedItemAttachments.contains(where: { $0.id == activeReaderAttachment.id })
-            {
-                self.activeReaderAttachment = nil
-                activeReaderProgress = nil
-            }
+            reader.clearIfActiveMissing(from: selectedItemAttachments)
         } catch {
             selectedItemAttachments = []
-            activeReaderAttachment = nil
-            activeReaderProgress = nil
+            reader.clear()
             statusMessage = "Failed to load attachments"
         }
     }

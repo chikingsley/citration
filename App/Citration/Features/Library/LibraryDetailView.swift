@@ -12,16 +12,16 @@ struct LibraryDetailView: View {
 
     var body: some View {
         Group {
-            if let attachment = model.activeReaderAttachment {
+            if let attachment = model.reader.activeAttachment {
                 ReaderPane(
                     attachment: attachment,
                     item: model.selectedItem,
-                    progress: model.activeReaderProgress,
+                    progress: model.reader.progress,
                     onProgressChange: { progress in
-                        model.updateReaderProgress(progress)
+                        model.reader.updateProgress(progress)
                     },
                     onClose: {
-                        model.closeReader()
+                        model.reader.close()
                     }
                 )
             } else if filteredItems.isEmpty {

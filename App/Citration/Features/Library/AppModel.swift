@@ -29,11 +29,13 @@ final class AppModel {
         self.storageConnectors = storageConnectors
         self.sessionStore = sessionStore
         self.attachmentStore = attachmentStore ?? AppModel.makeAttachmentStore()
-        self.annotationStore = annotationStore ?? AppModel.makeAnnotationStore()
         collections = CollectionsModel(store: collectionStore ?? AppModel.makeCollectionStore())
         notes = NotesModel(store: noteStore ?? AppModel.makeNoteStore())
         relationships = RelationshipsModel(store: relationshipStore ?? AppModel.makeRelationshipStore())
-        self.readerProgressStore = readerProgressStore ?? AppModel.makeReaderProgressStore()
+        reader = ReaderModel(
+            progressStore: readerProgressStore ?? AppModel.makeReaderProgressStore(),
+            annotationStore: annotationStore ?? AppModel.makeAnnotationStore()
+        )
         self.pdfDOIExtractor = pdfDOIExtractor
         self.relatedWorkDiscoveryProvider = relatedWorkDiscoveryProvider
         self.openAlexAPIKeyStore = openAlexAPIKeyStore
@@ -41,6 +43,7 @@ final class AppModel {
         notes.bind(context: self)
         tags.bind(context: self)
         relationships.bind(context: self)
+        reader.bind(context: self)
 
         Task {
             await setupAuthServices()
@@ -68,10 +71,6 @@ final class AppModel {
     var citationExportFormat: CitationExportFormat = .cslJSON
     var citationExportText: String = ""
     var selectedItemAttachments: [LocalAttachment] = []
-    var activeReaderAttachment: LocalAttachment?
-    var activeReaderProgress: ReaderProgress?
-    var activeReaderAnnotations: [LibraryAnnotation] = []
-    var readerNoteDraft: String = ""
     var selectedItemDiscoverySuggestions: [WorkDiscoverySuggestion] = []
     var isLoadingDiscoverySuggestions: Bool = false
     var openAlexAPIKeyDraft: String = ""
@@ -88,11 +87,10 @@ final class AppModel {
     let notes: NotesModel
     let tags: TagsModel = .init()
     let relationships: RelationshipsModel
+    let reader: ReaderModel
     let store: any BCItemStore
     let metadataRegistry: MetadataProviderRegistry
     let attachmentStore: LocalAttachmentStore
-    let annotationStore: LocalAnnotationStore
-    let readerProgressStore: LocalReaderProgressStore
     let pdfDOIExtractor: any PDFDOIExtracting
     let relatedWorkDiscoveryProvider: any RelatedWorkDiscoveryProvider
     let openAlexAPIKeyStore: any OpenAlexAPIKeyStore
@@ -174,7 +172,7 @@ final class AppModel {
                 await store.removeItem(id: id)
             }
             await notes.removeItems(ids: uniqueIDs)
-            try? await readerProgressStore.removeProgress(itemIDs: uniqueIDs)
+            await reader.removeItems(ids: uniqueIDs)
             await collections.removeItems(ids: uniqueIDs)
             await relationships.removeItems(ids: uniqueIDs)
             await refreshItems()
@@ -195,12 +193,7 @@ final class AppModel {
             selectedItemDiscoverySuggestions = []
             clearMetadataDiagnostics()
         }
-        if activeReaderAttachment?.itemID != id {
-            activeReaderAttachment = nil
-            activeReaderProgress = nil
-            activeReaderAnnotations = []
-            readerNoteDraft = ""
-        }
+        reader.clearIfSelectionChanged(to: id)
         selectedItemID = id
         Task {
             await renderCitationPreviewForSelection()

@@ -34,11 +34,11 @@ struct ReaderProgressTests {
         )
         await model.refreshItems()
 
-        model.openReader(for: attachment)
-        try await waitUntil { model.activeReaderProgress?.location == .page(8) }
+        model.reader.open(attachment)
+        try await waitUntil { model.reader.progress?.location == .page(8) }
 
-        #expect(model.activeReaderAttachment == attachment)
-        #expect(model.activeReaderProgress?.fractionComplete == 0.4)
+        #expect(model.reader.activeAttachment == attachment)
+        #expect(model.reader.progress?.fractionComplete == 0.4)
     }
 
     @Test("updateReaderProgress persists active attachment progress")
@@ -58,9 +58,9 @@ struct ReaderProgressTests {
             readerProgressStore: progressStore
         )
         await model.refreshItems()
-        model.openReader(for: attachment)
+        model.reader.open(attachment)
 
-        model.updateReaderProgress(
+        model.reader.updateProgress(
             ReaderProgress(
                 itemID: item.id,
                 attachmentKey: attachment.objectKey,
@@ -68,7 +68,7 @@ struct ReaderProgressTests {
                 fractionComplete: 0.25
             )
         )
-        try await waitUntil { model.activeReaderProgress?.location == .page(3) }
+        try await waitUntil { model.reader.progress?.location == .page(3) }
         let persisted = try await progressStore.progress(for: attachment.objectKey)
 
         #expect(persisted?.location == .page(3))

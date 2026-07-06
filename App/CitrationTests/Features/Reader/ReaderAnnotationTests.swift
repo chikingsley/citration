@@ -22,13 +22,13 @@ struct ReaderAnnotationTests {
         )
         let model = makeAppModel(annotationStore: annotationStore)
 
-        model.openReader(for: attachment)
-        model.readerNoteDraft = "  Remember this argument  "
-        model.addReaderNote()
-        try await waitUntil { model.activeReaderAnnotations.count == 1 }
+        model.reader.open(attachment)
+        model.reader.noteDraft = "  Remember this argument  "
+        model.reader.addNote()
+        try await waitUntil { model.reader.annotations.count == 1 }
 
-        #expect(model.readerNoteDraft.isEmpty)
-        #expect(model.activeReaderAnnotations.first?.note == "Remember this argument")
+        #expect(model.reader.noteDraft.isEmpty)
+        #expect(model.reader.annotations.first?.note == "Remember this argument")
         #expect(model.statusMessage == "Added note")
     }
 
@@ -41,10 +41,10 @@ struct ReaderAnnotationTests {
         )
         let model = makeAppModel(annotationStore: annotationStore)
 
-        model.readerNoteDraft = "   "
-        model.addReaderNote()
+        model.reader.noteDraft = "   "
+        model.reader.addNote()
 
         #expect(model.statusMessage == "Enter a note first")
-        #expect(model.activeReaderAnnotations.isEmpty)
+        #expect(model.reader.annotations.isEmpty)
     }
 }

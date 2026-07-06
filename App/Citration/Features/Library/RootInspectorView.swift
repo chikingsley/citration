@@ -61,7 +61,7 @@ struct RootInspectorView: View {
                     ItemNotesInspectorSection(notes: model.notes)
                     CitationExportInspectorSection(model: model)
                     attachmentsSection
-                    if model.activeReaderAttachment?.itemID == item.id {
+                    if model.reader.activeAttachment?.itemID == item.id {
                         readerNotesSection
                     }
                     ItemRelatedInspectorSection(relationships: model.relationships, model: model)
@@ -116,22 +116,23 @@ struct RootInspectorView: View {
     }
 
     private var readerNotesSection: some View {
-        Section("Reader Notes") {
-            TextField("Add a note", text: $model.readerNoteDraft, axis: .vertical)
+        @Bindable var reader = model.reader
+        return Section("Reader Notes") {
+            TextField("Add a note", text: $reader.noteDraft, axis: .vertical)
                 .lineLimit(2 ... 5)
             HStack {
                 Button("Add Note", systemImage: "note.text.badge.plus") {
-                    model.addReaderNote()
+                    model.reader.addNote()
                 }
-                .disabled(model.readerNoteDraft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                .disabled(model.reader.noteDraft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 Spacer()
             }
 
-            if model.activeReaderAnnotations.isEmpty {
+            if model.reader.annotations.isEmpty {
                 Text("No notes for this attachment yet.")
                     .foregroundStyle(.secondary)
             } else {
-                ForEach(model.activeReaderAnnotations) { annotation in
+                ForEach(model.reader.annotations) { annotation in
                     readerAnnotationRow(annotation)
                 }
             }
@@ -166,7 +167,7 @@ struct RootInspectorView: View {
             }
             Spacer()
             Button {
-                model.openReader(for: attachment)
+                model.reader.open(attachment)
             } label: {
                 Image(systemName: "book.pages")
             }
@@ -192,7 +193,7 @@ struct RootInspectorView: View {
                     .foregroundStyle(.secondary)
                 Spacer()
                 Button {
-                    model.removeReaderAnnotation(annotation)
+                    model.reader.removeAnnotation(annotation)
                 } label: {
                     Image(systemName: "trash")
                 }

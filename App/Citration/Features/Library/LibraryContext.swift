@@ -8,7 +8,7 @@ import Foundation
 @MainActor
 protocol LibraryContext: AnyObject {
     var statusMessage: String { get set }
-    var selectedItemID: UUID? { get }
+    var selectedItemID: UUID? { get set }
     var items: [BCItem] { get }
     var selectedItem: BCItem? { get }
 
