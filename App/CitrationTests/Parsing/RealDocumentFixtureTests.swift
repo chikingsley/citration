@@ -12,21 +12,21 @@ struct RealDocumentFixtureTests {
 
     @Test("finds the DOI printed in a born-digital paper")
     func findsDOIInBornDigitalPaper() async {
-        let candidates = await MuPDFDOIExtractor()
+        let candidates = await PDFKitDOIExtractor()
             .extractCandidates(from: Self.fixture("efl-drama-paper.pdf"))
         #expect(candidates.detectedDOI == "10.1186/s40862-026-00398-5")
     }
 
     @Test("finds the DOI in a journal-archive paper")
     func findsDOIInJournalArchivePaper() async {
-        let candidates = await MuPDFDOIExtractor()
+        let candidates = await PDFKitDOIExtractor()
             .extractCandidates(from: Self.fixture("mongol-costumes-paper.pdf"))
         #expect(candidates.detectedDOI == "10.1080/02529203.2018.1414417")
     }
 
     @Test("textbook yields its book-level DOI first plus ISBNs")
     func textbookYieldsBookIdentifiers() async {
-        let candidates = await MuPDFDOIExtractor()
+        let candidates = await PDFKitDOIExtractor()
             .extractCandidates(from: Self.fixture("language-learning-theories.pdf"))
         #expect(candidates.detectedDOI == "10.1007/978-3-031-92210-7")
         let isbns = candidates.identifiers.filter { $0.type == .isbn }.map(\.value)
@@ -37,7 +37,7 @@ struct RealDocumentFixtureTests {
     /// candidates — the detectable signal for a future OCR pass.
     @Test("scanned book with no text layer yields no candidates")
     func scannedBookYieldsNoCandidates() async {
-        let candidates = await MuPDFDOIExtractor()
+        let candidates = await PDFKitDOIExtractor()
             .extractCandidates(from: Self.fixture("kabul-persian-scanned.pdf"))
         #expect(candidates.isEmpty)
         #expect(candidates.detectedDOI == nil)
