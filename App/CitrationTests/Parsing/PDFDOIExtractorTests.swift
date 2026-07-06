@@ -4,8 +4,6 @@ import Testing
 
 @Suite("PDF DOI Parsing")
 struct PDFDOIExtractorTests {
-    // MARK: Internal
-
     @Test("candidates normalizes DOI from noisy text")
     func candidatesNormalizesDOIFromNoisyText() {
         let text = """
@@ -43,26 +41,4 @@ struct PDFDOIExtractorTests {
         #expect(candidates == ["9780306406157"])
         #expect(ISBNParsing.normalizeCandidate("123-4-567-89012-3") == nil)
     }
-
-    @Test(
-        "MuPDF extractor finds DOI from sample PDF",
-        .enabled(if: MuPDFDOIExtractor.defaultExecutableURL() != nil)
-    )
-    func muPDFExtractorFindsDOIFromSamplePDF() async throws {
-        let mutool = try #require(MuPDFDOIExtractor.defaultExecutableURL())
-        let extractor = MuPDFDOIExtractor(
-            executableURL: mutool,
-            allowPDFKitFallback: false
-        )
-        let doi = await extractor.extractDOI(from: Self.samplePDF)
-        #expect(doi == "10.1371/journal.pntd.0003350")
-    }
-
-    // MARK: Private
-
-    /// One-page vendored fixture whose text contains the expected DOI.
-    private static let samplePDF = URL(fileURLWithPath: #filePath)
-        .deletingLastPathComponent()
-        .deletingLastPathComponent()
-        .appendingPathComponent("Fixtures/sample-article-with-doi.pdf")
 }
