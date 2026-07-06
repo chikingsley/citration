@@ -188,7 +188,12 @@ struct RootInspectorView: View {
     private func readerAnnotationRow(_ annotation: LibraryAnnotation) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack {
-                Text(annotation.updatedAt, style: .date)
+                if annotation.kind != .note {
+                    Circle()
+                        .fill(Color(nsColor: annotation.color.nsColor))
+                        .frame(width: 8, height: 8)
+                }
+                Text(annotationDetail(for: annotation))
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 Spacer()
@@ -198,12 +203,28 @@ struct RootInspectorView: View {
                     Image(systemName: "trash")
                 }
                 .buttonStyle(.borderless)
-                .help("Remove note")
+                .help("Remove annotation")
             }
-            Text(annotation.note)
+            Text(annotationBody(for: annotation))
                 .textSelection(.enabled)
+                .italic(annotation.kind != .note)
         }
         .padding(.vertical, 4)
+    }
+
+    private func annotationDetail(for annotation: LibraryAnnotation) -> String {
+        let date = annotation.updatedAt.formatted(date: .abbreviated, time: .omitted)
+        if let location = annotation.location, annotation.kind != .note {
+            return "\(location.displayLabel) · \(date)"
+        }
+        return date
+    }
+
+    private func annotationBody(for annotation: LibraryAnnotation) -> String {
+        if annotation.kind == .note {
+            return annotation.note
+        }
+        return annotation.selectedText ?? annotation.note
     }
 
     private func attachmentDetail(for attachment: LocalAttachment) -> String {

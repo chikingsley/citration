@@ -169,6 +169,43 @@ final class ReaderModel {
         }
     }
 
+    /// Persists a highlight or underline over the given selection.
+    func addHighlight(
+        text: String,
+        pageNumber: Int,
+        color: AnnotationColor,
+        kind: AnnotationKind = .highlight
+    ) {
+        guard let activeAttachment else {
+            context?.statusMessage = "Open a document first"
+            return
+        }
+
+        Task {
+            do {
+                _ = try await annotationStore.upsert(
+                    LibraryAnnotation(
+                        itemID: activeAttachment.itemID,
+                        attachmentKey: activeAttachment.objectKey,
+                        kind: kind,
+                        location: .page(pageNumber),
+                        selectedText: text,
+                        note: "",
+                        color: color
+                    )
+                )
+                await refreshAnnotations()
+                context?.statusMessage = kind == .underline ? "Added underline" : "Added highlight"
+            } catch {
+                context?.statusMessage = "Failed to add highlight"
+            }
+        }
+    }
+
+    func reportMissingSelection() {
+        context?.statusMessage = "Select text to highlight"
+    }
+
     func removeAnnotation(_ annotation: LibraryAnnotation) {
         Task {
             do {

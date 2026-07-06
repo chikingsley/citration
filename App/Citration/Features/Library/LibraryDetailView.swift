@@ -16,13 +16,7 @@ struct LibraryDetailView: View {
                 ReaderPane(
                     attachment: attachment,
                     item: model.selectedItem,
-                    progress: model.reader.progress,
-                    onProgressChange: { progress in
-                        model.reader.updateProgress(progress)
-                    },
-                    onClose: {
-                        model.reader.close()
-                    }
+                    reader: model.reader
                 )
             } else if filteredItems.isEmpty {
                 ContentUnavailableView(
