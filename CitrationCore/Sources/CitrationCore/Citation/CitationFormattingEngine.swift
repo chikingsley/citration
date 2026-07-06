@@ -1,15 +1,21 @@
 import Foundation
 
+// MARK: - CitationEngineError
+
 public enum CitationEngineError: Error, LocalizedError, Sendable {
     case invalidInput(String)
 
+    // MARK: Public
+
     public var errorDescription: String? {
         switch self {
-        case .invalidInput(let details):
-            return "Invalid citation input: \(details)"
+        case let .invalidInput(details):
+            "Invalid citation input: \(details)"
         }
     }
 }
+
+// MARK: - CitationFormattingEngine
 
 public protocol CitationFormattingEngine: Sendable {
     func formatCluster(
@@ -25,14 +31,20 @@ public protocol CitationFormattingEngine: Sendable {
     ) async throws -> FormattedBibliography
 }
 
+// MARK: - StubCitationFormatter
+
 public struct StubCitationFormatter: CitationFormattingEngine {
+    // MARK: Lifecycle
+
     public init() {}
+
+    // MARK: Public
 
     public func formatCluster(
         _ cluster: CitationCluster,
         style: CitationStyle,
         options: CitationRenderOptions
-    ) async throws -> FormattedCitationCluster {
+    ) throws -> FormattedCitationCluster {
         guard !cluster.items.isEmpty else {
             throw CitationEngineError.invalidInput("cluster must contain at least one citation item")
         }
@@ -62,7 +74,7 @@ public struct StubCitationFormatter: CitationFormattingEngine {
         itemIDs: [UUID],
         style: CitationStyle,
         options: CitationRenderOptions
-    ) async throws -> FormattedBibliography {
+    ) -> FormattedBibliography {
         guard !itemIDs.isEmpty else {
             return FormattedBibliography(entries: [], format: options.format)
         }

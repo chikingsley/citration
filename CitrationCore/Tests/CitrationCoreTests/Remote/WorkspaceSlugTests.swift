@@ -1,5 +1,5 @@
-import Testing
 @testable import CitrationCore
+import Testing
 
 @Suite("WorkspaceSlug")
 struct WorkspaceSlugTests {

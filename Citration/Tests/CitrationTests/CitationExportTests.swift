@@ -1,13 +1,15 @@
-import Testing
-import Foundation
 @testable import Citration
 import CitrationCore
+import Foundation
+import Testing
+
+// MARK: - CitationExportAppTests
 
 @Suite("Citation Export")
 @MainActor
 struct CitationExportAppTests {
     @Test("exportSelectedCitation prepares CSL JSON")
-    func exportSelectedCitationPreparesCSLJSON() async throws {
+    func exportSelectedCitationPreparesCSLJSON() async {
         let item = BCItem(
             title: "Paper",
             identifiers: [Identifier(type: .doi, value: "10.1234/example")],
@@ -28,7 +30,7 @@ struct CitationExportAppTests {
     }
 
     @Test("exportSelectedCitation prepares BibTeX and clears on item change")
-    func exportSelectedCitationPreparesBibTeXAndClearsOnItemChange() async throws {
+    func exportSelectedCitationPreparesBibTeXAndClearsOnItemChange() async {
         let first = BCItem(
             title: "Paper",
             identifiers: [Identifier(type: .doi, value: "10.1234/example")],

@@ -1,5 +1,7 @@
 import Foundation
 
+// MARK: - LibraryRelationshipKind
+
 public enum LibraryRelationshipKind: String, Codable, CaseIterable, Sendable {
     case cites
     case citedBy
@@ -10,35 +12,34 @@ public enum LibraryRelationshipKind: String, Codable, CaseIterable, Sendable {
     case supplement
     case userLinked
 
+    // MARK: Public
+
     public var displayLabel: String {
         switch self {
         case .cites:
-            return "Cites"
+            "Cites"
         case .citedBy:
-            return "Cited by"
+            "Cited by"
         case .series:
-            return "Series"
+            "Series"
         case .sameCreator:
-            return "Same author"
+            "Same author"
         case .sameInstitution:
-            return "Same institution"
+            "Same institution"
         case .sameTopic:
-            return "Same topic"
+            "Same topic"
         case .supplement:
-            return "Supplement"
+            "Supplement"
         case .userLinked:
-            return "Linked"
+            "Linked"
         }
     }
 }
 
+// MARK: - LibraryRelationship
+
 public struct LibraryRelationship: Identifiable, Hashable, Codable, Sendable {
-    public var id: UUID
-    public var sourceItemID: UUID
-    public var targetItemID: UUID
-    public var kind: LibraryRelationshipKind
-    public var confidence: Double
-    public var note: String?
+    // MARK: Lifecycle
 
     public init(
         id: UUID = UUID(),
@@ -56,7 +57,18 @@ public struct LibraryRelationship: Identifiable, Hashable, Codable, Sendable {
         let trimmedNote = note?.trimmingCharacters(in: .whitespacesAndNewlines)
         self.note = trimmedNote?.isEmpty == false ? trimmedNote : nil
     }
+
+    // MARK: Public
+
+    public var id: UUID
+    public var sourceItemID: UUID
+    public var targetItemID: UUID
+    public var kind: LibraryRelationshipKind
+    public var confidence: Double
+    public var note: String?
 }
+
+// MARK: - RecommendationReason
 
 public enum RecommendationReason: Hashable, Codable, Sendable {
     case sharedCreator(String)
@@ -71,40 +83,40 @@ public enum RecommendationReason: Hashable, Codable, Sendable {
     case openAlexReference(String)
     case userLinked(LibraryRelationshipKind)
 
+    // MARK: Public
+
     public var displayLabel: String {
         switch self {
-        case .sharedCreator(let name):
-            return "Shared author: \(name)"
-        case .sharedTopic(let topic):
-            return "Shared topic: \(topic)"
-        case .sharedIdentifier(let type):
-            return "Shared \(type.rawValue.uppercased())"
-        case .samePublicationYear(let year):
-            return "Same year: \(year)"
-        case .openAlexRelatedWork(let workID):
-            return "OpenAlex related work: \(workID)"
-        case .openAlexSameAuthor(let author):
-            return "OpenAlex same author: \(author)"
-        case .openAlexSameInstitution(let institution):
-            return "OpenAlex same institution: \(institution)"
-        case .openAlexSameTopic(let topic):
-            return "OpenAlex same topic: \(topic)"
-        case .openAlexCitedBy(let workID):
-            return "OpenAlex cites this work: \(workID)"
-        case .openAlexReference(let workID):
-            return "OpenAlex reference from this work: \(workID)"
-        case .userLinked(let kind):
-            return "Linked: \(kind.displayLabel)"
+        case let .sharedCreator(name):
+            "Shared author: \(name)"
+        case let .sharedTopic(topic):
+            "Shared topic: \(topic)"
+        case let .sharedIdentifier(type):
+            "Shared \(type.rawValue.uppercased())"
+        case let .samePublicationYear(year):
+            "Same year: \(year)"
+        case let .openAlexRelatedWork(workID):
+            "OpenAlex related work: \(workID)"
+        case let .openAlexSameAuthor(author):
+            "OpenAlex same author: \(author)"
+        case let .openAlexSameInstitution(institution):
+            "OpenAlex same institution: \(institution)"
+        case let .openAlexSameTopic(topic):
+            "OpenAlex same topic: \(topic)"
+        case let .openAlexCitedBy(workID):
+            "OpenAlex cites this work: \(workID)"
+        case let .openAlexReference(workID):
+            "OpenAlex reference from this work: \(workID)"
+        case let .userLinked(kind):
+            "Linked: \(kind.displayLabel)"
         }
     }
 }
 
+// MARK: - LibraryRecommendation
+
 public struct LibraryRecommendation: Identifiable, Hashable, Codable, Sendable {
-    public var id: UUID
-    public var sourceItemID: UUID
-    public var candidateItemID: UUID
-    public var score: Double
-    public var reasons: [RecommendationReason]
+    // MARK: Lifecycle
 
     public init(
         id: UUID = UUID(),
@@ -119,20 +131,20 @@ public struct LibraryRecommendation: Identifiable, Hashable, Codable, Sendable {
         self.score = min(max(score, 0), 1)
         self.reasons = reasons
     }
+
+    // MARK: Public
+
+    public var id: UUID
+    public var sourceItemID: UUID
+    public var candidateItemID: UUID
+    public var score: Double
+    public var reasons: [RecommendationReason]
 }
 
+// MARK: - WorkDiscoverySuggestion
+
 public struct WorkDiscoverySuggestion: Identifiable, Hashable, Codable, Sendable {
-    public var id: String { providerRecordID }
-    public var providerName: String
-    public var providerRecordID: String
-    public var title: String
-    public var creators: [Creator]
-    public var publicationYear: Int?
-    public var itemType: ItemType
-    public var identifiers: [Identifier]
-    public var sourceURL: URL?
-    public var confidence: Double
-    public var reasons: [RecommendationReason]
+    // MARK: Lifecycle
 
     public init(
         providerName: String,
@@ -158,6 +170,23 @@ public struct WorkDiscoverySuggestion: Identifiable, Hashable, Codable, Sendable
         self.reasons = reasons
     }
 
+    // MARK: Public
+
+    public var providerName: String
+    public var providerRecordID: String
+    public var title: String
+    public var creators: [Creator]
+    public var publicationYear: Int?
+    public var itemType: ItemType
+    public var identifiers: [Identifier]
+    public var sourceURL: URL?
+    public var confidence: Double
+    public var reasons: [RecommendationReason]
+
+    public var id: String {
+        providerRecordID
+    }
+
     public func makeLibraryItem(createdAt: Date = .now) -> BCItem {
         BCItem(
             title: title,
@@ -170,6 +199,8 @@ public struct WorkDiscoverySuggestion: Identifiable, Hashable, Codable, Sendable
         )
     }
 
+    // MARK: Private
+
     private static func collapsedWhitespace(_ value: String) -> String {
         value
             .components(separatedBy: .whitespacesAndNewlines)
@@ -178,25 +209,39 @@ public struct WorkDiscoverySuggestion: Identifiable, Hashable, Codable, Sendable
     }
 }
 
+// MARK: - RelatedWorkDiscoveryProvider
+
 public protocol RelatedWorkDiscoveryProvider: Sendable {
     var name: String { get }
     func suggestions(for item: BCItem, limit: Int) async throws -> [WorkDiscoverySuggestion]
 }
 
+// MARK: - NoopRelatedWorkDiscoveryProvider
+
 public struct NoopRelatedWorkDiscoveryProvider: RelatedWorkDiscoveryProvider {
-    public let name = "none"
+    // MARK: Lifecycle
 
     public init() {}
 
-    public func suggestions(for item: BCItem, limit: Int) async throws -> [WorkDiscoverySuggestion] {
+    // MARK: Public
+
+    public let name = "none"
+
+    public func suggestions(for item: BCItem, limit: Int) -> [WorkDiscoverySuggestion] {
         _ = item
         _ = limit
         return []
     }
 }
 
+// MARK: - LibraryInsightEngine
+
 public struct LibraryInsightEngine: Sendable {
+    // MARK: Lifecycle
+
     public init() {}
+
+    // MARK: Public
 
     public func recommendations(
         for item: BCItem,
@@ -223,8 +268,10 @@ public struct LibraryInsightEngine: Sendable {
                 return lhs.score > rhs.score
             }
             .prefix(max(0, limit))
-            .map { $0 }
+            .map(\.self)
     }
+
+    // MARK: Private
 
     private func linkedRecommendations(
         for item: BCItem,
@@ -234,17 +281,18 @@ public struct LibraryInsightEngine: Sendable {
         let candidateIDs = Set(candidates.map(\.id))
 
         return relationships.compactMap { relationship in
-            let candidateID: UUID?
-            if relationship.sourceItemID == item.id {
-                candidateID = relationship.targetItemID
+            let candidateID: UUID? = if relationship.sourceItemID == item.id {
+                relationship.targetItemID
             } else if relationship.targetItemID == item.id {
-                candidateID = relationship.sourceItemID
+                relationship.sourceItemID
             } else {
-                candidateID = nil
+                nil
             }
 
-            guard let candidateID,
-                  candidateIDs.contains(candidateID) else {
+            guard
+                let candidateID,
+                candidateIDs.contains(candidateID)
+            else {
                 return nil
             }
 
@@ -297,9 +345,11 @@ public struct LibraryInsightEngine: Sendable {
             score += min(Double(sharedTopics.count) * 0.25, 0.50)
         }
 
-        if let year = source.publicationYear,
-           candidate.publicationYear == year,
-           !reasons.isEmpty {
+        if
+            let year = source.publicationYear,
+            candidate.publicationYear == year,
+            !reasons.isEmpty
+        {
             reasons.append(.samePublicationYear(year))
             score += 0.10
         }

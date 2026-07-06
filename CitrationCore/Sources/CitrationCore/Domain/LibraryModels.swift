@@ -1,5 +1,7 @@
 import Foundation
 
+// MARK: - DocumentFormat
+
 public enum DocumentFormat: String, Codable, CaseIterable, Sendable {
     case pdf
     case epub
@@ -9,14 +11,58 @@ public enum DocumentFormat: String, Codable, CaseIterable, Sendable {
     case audio
     case unknown
 
+    // MARK: Public
+
+    public var displayName: String {
+        switch self {
+        case .pdf:
+            "PDF"
+        case .epub:
+            "EPUB"
+        case .html:
+            "HTML"
+        case .plainText:
+            "Text"
+        case .image:
+            "Image"
+        case .audio:
+            "Audio"
+        case .unknown:
+            "File"
+        }
+    }
+
+    public var readerCapabilities: Set<ReaderCapability> {
+        switch self {
+        case .pdf:
+            [.pageNavigation, .textSelection, .annotations, .tableOfContents]
+        case .epub:
+            [.reflowableText, .textSelection, .annotations, .tableOfContents]
+        case .html,
+             .plainText:
+            [.reflowableText, .textSelection, .annotations]
+        case .audio:
+            [.timeNavigation]
+        case .image,
+             .unknown:
+            []
+        }
+    }
+
+    public var isReadableDocument: Bool {
+        !readerCapabilities.isEmpty
+    }
+
     public static func infer(fileName: String, contentType: String? = nil) -> DocumentFormat {
         let normalizedContentType = contentType?.lowercased()
         switch normalizedContentType {
         case "application/pdf":
             return .pdf
-        case "application/epub+zip", "application/x-ibooks+zip":
+        case "application/epub+zip",
+             "application/x-ibooks+zip":
             return .epub
-        case "text/html", "application/xhtml+xml":
+        case "text/html",
+             "application/xhtml+xml":
             return .html
         case "text/plain":
             return .plainText
@@ -33,57 +79,34 @@ public enum DocumentFormat: String, Codable, CaseIterable, Sendable {
             return .pdf
         case "epub":
             return .epub
-        case "html", "htm", "xhtml":
+        case "html",
+             "htm",
+             "xhtml":
             return .html
-        case "txt", "md", "markdown":
+        case "txt",
+             "md",
+             "markdown":
             return .plainText
-        case "png", "jpg", "jpeg", "gif", "heic", "tiff":
+        case "png",
+             "jpg",
+             "jpeg",
+             "gif",
+             "heic",
+             "tiff":
             return .image
-        case "mp3", "m4a", "aac", "wav", "aiff":
+        case "mp3",
+             "m4a",
+             "aac",
+             "wav",
+             "aiff":
             return .audio
         default:
             return .unknown
         }
     }
-
-    public var displayName: String {
-        switch self {
-        case .pdf:
-            return "PDF"
-        case .epub:
-            return "EPUB"
-        case .html:
-            return "HTML"
-        case .plainText:
-            return "Text"
-        case .image:
-            return "Image"
-        case .audio:
-            return "Audio"
-        case .unknown:
-            return "File"
-        }
-    }
-
-    public var readerCapabilities: Set<ReaderCapability> {
-        switch self {
-        case .pdf:
-            return [.pageNavigation, .textSelection, .annotations, .tableOfContents]
-        case .epub:
-            return [.reflowableText, .textSelection, .annotations, .tableOfContents]
-        case .html, .plainText:
-            return [.reflowableText, .textSelection, .annotations]
-        case .audio:
-            return [.timeNavigation]
-        case .image, .unknown:
-            return []
-        }
-    }
-
-    public var isReadableDocument: Bool {
-        !readerCapabilities.isEmpty
-    }
 }
+
+// MARK: - ReaderCapability
 
 public enum ReaderCapability: String, Codable, CaseIterable, Sendable {
     case pageNavigation
@@ -94,21 +117,25 @@ public enum ReaderCapability: String, Codable, CaseIterable, Sendable {
     case tableOfContents
 }
 
+// MARK: - ReaderLocation
+
 public enum ReaderLocation: Hashable, Codable, Sendable {
     case page(Int)
     case epubCFI(String)
     case textOffset(Int)
     case time(seconds: Double)
 
+    // MARK: Public
+
     public var displayLabel: String {
         switch self {
-        case .page(let page):
+        case let .page(page):
             return "Page \(page)"
         case .epubCFI:
             return "EPUB location"
-        case .textOffset(let offset):
+        case let .textOffset(offset):
             return "Text offset \(offset)"
-        case .time(let seconds):
+        case let .time(seconds):
             let minutes = Int(seconds) / 60
             let remainder = Int(seconds) % 60
             return "\(minutes):\(String(format: "%02d", remainder))"
@@ -116,11 +143,15 @@ public enum ReaderLocation: Hashable, Codable, Sendable {
     }
 }
 
+// MARK: - AnnotationKind
+
 public enum AnnotationKind: String, Codable, CaseIterable, Sendable {
     case highlight
     case note
     case underline
 }
+
+// MARK: - AnnotationColor
 
 public enum AnnotationColor: String, Codable, CaseIterable, Sendable {
     case yellow
@@ -130,17 +161,10 @@ public enum AnnotationColor: String, Codable, CaseIterable, Sendable {
     case purple
 }
 
+// MARK: - LibraryAnnotation
+
 public struct LibraryAnnotation: Identifiable, Hashable, Codable, Sendable {
-    public var id: UUID
-    public var itemID: UUID
-    public var attachmentKey: String
-    public var kind: AnnotationKind
-    public var location: ReaderLocation?
-    public var selectedText: String?
-    public var note: String
-    public var color: AnnotationColor
-    public var createdAt: Date
-    public var updatedAt: Date
+    // MARK: Lifecycle
 
     public init(
         id: UUID = UUID(),
@@ -166,18 +190,28 @@ public struct LibraryAnnotation: Identifiable, Hashable, Codable, Sendable {
         self.updatedAt = updatedAt
     }
 
+    // MARK: Public
+
+    public var id: UUID
+    public var itemID: UUID
+    public var attachmentKey: String
+    public var kind: AnnotationKind
+    public var location: ReaderLocation?
+    public var selectedText: String?
+    public var note: String
+    public var color: AnnotationColor
+    public var createdAt: Date
+    public var updatedAt: Date
+
     public var isEmpty: Bool {
         note.isEmpty && (selectedText?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ?? true)
     }
 }
 
+// MARK: - ReaderProgress
+
 public struct ReaderProgress: Identifiable, Hashable, Codable, Sendable {
-    public var id: String { attachmentKey }
-    public var itemID: UUID
-    public var attachmentKey: String
-    public var location: ReaderLocation
-    public var fractionComplete: Double?
-    public var updatedAt: Date
+    // MARK: Lifecycle
 
     public init(
         itemID: UUID,
@@ -192,14 +226,24 @@ public struct ReaderProgress: Identifiable, Hashable, Codable, Sendable {
         self.fractionComplete = fractionComplete.map { min(max($0, 0), 1) }
         self.updatedAt = updatedAt
     }
+
+    // MARK: Public
+
+    public var itemID: UUID
+    public var attachmentKey: String
+    public var location: ReaderLocation
+    public var fractionComplete: Double?
+    public var updatedAt: Date
+
+    public var id: String {
+        attachmentKey
+    }
 }
 
+// MARK: - LibraryCollection
+
 public struct LibraryCollection: Identifiable, Hashable, Codable, Sendable {
-    public var id: UUID
-    public var name: String
-    public var parentID: UUID?
-    public var createdAt: Date
-    public var updatedAt: Date
+    // MARK: Lifecycle
 
     public init(
         id: UUID = UUID(),
@@ -215,6 +259,14 @@ public struct LibraryCollection: Identifiable, Hashable, Codable, Sendable {
         self.updatedAt = updatedAt
     }
 
+    // MARK: Public
+
+    public var id: UUID
+    public var name: String
+    public var parentID: UUID?
+    public var createdAt: Date
+    public var updatedAt: Date
+
     public static func normalizedName(_ name: String) -> String? {
         let collapsed = name
             .components(separatedBy: .whitespacesAndNewlines)
@@ -224,11 +276,10 @@ public struct LibraryCollection: Identifiable, Hashable, Codable, Sendable {
     }
 }
 
+// MARK: - LibraryCollectionMembership
+
 public struct LibraryCollectionMembership: Identifiable, Hashable, Codable, Sendable {
-    public var id: UUID
-    public var collectionID: UUID
-    public var itemID: UUID
-    public var createdAt: Date
+    // MARK: Lifecycle
 
     public init(
         id: UUID = UUID(),
@@ -241,11 +292,19 @@ public struct LibraryCollectionMembership: Identifiable, Hashable, Codable, Send
         self.itemID = itemID
         self.createdAt = createdAt
     }
+
+    // MARK: Public
+
+    public var id: UUID
+    public var collectionID: UUID
+    public var itemID: UUID
+    public var createdAt: Date
 }
 
+// MARK: - LibraryCollectionSnapshot
+
 public struct LibraryCollectionSnapshot: Hashable, Codable, Sendable {
-    public var collections: [LibraryCollection]
-    public var memberships: [LibraryCollectionMembership]
+    // MARK: Lifecycle
 
     public init(
         collections: [LibraryCollection] = [],
@@ -254,14 +313,17 @@ public struct LibraryCollectionSnapshot: Hashable, Codable, Sendable {
         self.collections = collections
         self.memberships = memberships
     }
+
+    // MARK: Public
+
+    public var collections: [LibraryCollection]
+    public var memberships: [LibraryCollectionMembership]
 }
 
+// MARK: - LibraryNote
+
 public struct LibraryNote: Identifiable, Hashable, Codable, Sendable {
-    public var id: UUID
-    public var itemID: UUID
-    public var text: String
-    public var createdAt: Date
-    public var updatedAt: Date
+    // MARK: Lifecycle
 
     public init(
         id: UUID = UUID(),
@@ -276,6 +338,14 @@ public struct LibraryNote: Identifiable, Hashable, Codable, Sendable {
         self.createdAt = createdAt
         self.updatedAt = updatedAt
     }
+
+    // MARK: Public
+
+    public var id: UUID
+    public var itemID: UUID
+    public var text: String
+    public var createdAt: Date
+    public var updatedAt: Date
 
     public var isEmpty: Bool {
         text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty

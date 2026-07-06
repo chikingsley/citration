@@ -1,41 +1,50 @@
 import Foundation
 
+// MARK: - MetadataProviderError
+
 public enum MetadataProviderError: Error, LocalizedError, Sendable {
     case invalidRequest(String)
     case providerFailure(provider: String, details: String)
 
+    // MARK: Public
+
     public var errorDescription: String? {
         switch self {
-        case .invalidRequest(let details):
-            return "Invalid metadata request: \(details)"
-        case .providerFailure(let provider, let details):
-            return "Metadata provider '\(provider)' failed: \(details)"
+        case let .invalidRequest(details):
+            "Invalid metadata request: \(details)"
+        case let .providerFailure(provider, details):
+            "Metadata provider '\(provider)' failed: \(details)"
         }
     }
 }
+
+// MARK: - MetadataProvider
 
 public protocol MetadataProvider: Sendable {
     var name: String { get }
     func resolve(_ request: MetadataResolutionRequest) async throws -> [CanonicalMetadataRecord]
 }
 
+// MARK: - MetadataProviderRegistry
+
 public struct MetadataProviderRegistry: Sendable {
-    private let providers: [any MetadataProvider]
+    // MARK: Lifecycle
 
     public init(providers: [any MetadataProvider]) {
         self.providers = providers
     }
 
+    // MARK: Public
+
     public func resolveAll(_ request: MetadataResolutionRequest) async -> MetadataResolutionResult {
-        var records: [CanonicalMetadataRecord] = []
-        var warnings: [String] = []
+        var records = [CanonicalMetadataRecord]()
+        var warnings = [String]()
 
         for provider in providers {
             do {
                 let providerRecords = try await provider.resolve(request)
                 records.append(contentsOf: providerRecords)
-            }
-            catch {
+            } catch {
                 warnings.append("\(provider.name): \(error.localizedDescription)")
             }
         }
@@ -45,8 +54,12 @@ public struct MetadataProviderRegistry: Sendable {
         return MetadataResolutionResult(records: deduped, warnings: warnings, conflicts: conflicts)
     }
 
+    // MARK: Private
+
+    private let providers: [any MetadataProvider]
+
     private func deduplicate(_ records: [CanonicalMetadataRecord]) -> [CanonicalMetadataRecord] {
-        var bestByKey: [String: CanonicalMetadataRecord] = [:]
+        var bestByKey = [String: CanonicalMetadataRecord]()
 
         for record in records {
             let key = dedupeKey(for: record)
@@ -54,8 +67,7 @@ public struct MetadataProviderRegistry: Sendable {
                 if record.confidence > existing.confidence {
                     bestByKey[key] = record
                 }
-            }
-            else {
+            } else {
                 bestByKey[key] = record
             }
         }
@@ -79,8 +91,10 @@ public struct MetadataProviderRegistry: Sendable {
     }
 
     private func conflictsInGroup(_ records: [CanonicalMetadataRecord]) -> [MetadataResolutionConflict] {
-        guard records.count > 1,
-              let preferred = records.max(by: { $0.confidence < $1.confidence }) else {
+        guard
+            records.count > 1,
+            let preferred = records.max(by: { $0.confidence < $1.confidence })
+        else {
             return []
         }
 
@@ -93,7 +107,7 @@ public struct MetadataProviderRegistry: Sendable {
         preferred: CanonicalMetadataRecord,
         alternate: CanonicalMetadataRecord
     ) -> [MetadataResolutionConflict] {
-        var conflicts: [MetadataResolutionConflict] = []
+        var conflicts = [MetadataResolutionConflict]()
         appendStringConflict(.title, preferred.title, alternate.title, preferred, alternate, to: &conflicts)
         appendYearConflict(preferred, alternate, to: &conflicts)
         appendItemTypeConflict(preferred, alternate, to: &conflicts)
@@ -128,9 +142,11 @@ public struct MetadataProviderRegistry: Sendable {
         _ alternate: CanonicalMetadataRecord,
         to conflicts: inout [MetadataResolutionConflict]
     ) {
-        guard let preferredYear = preferred.publicationYear,
-              let alternateYear = alternate.publicationYear,
-              preferredYear != alternateYear else {
+        guard
+            let preferredYear = preferred.publicationYear,
+            let alternateYear = alternate.publicationYear,
+            preferredYear != alternateYear
+        else {
             return
         }
 
@@ -150,9 +166,11 @@ public struct MetadataProviderRegistry: Sendable {
         _ alternate: CanonicalMetadataRecord,
         to conflicts: inout [MetadataResolutionConflict]
     ) {
-        guard preferred.itemType != .unknown,
-              alternate.itemType != .unknown,
-              preferred.itemType != alternate.itemType else {
+        guard
+            preferred.itemType != .unknown,
+            alternate.itemType != .unknown,
+            preferred.itemType != alternate.itemType
+        else {
             return
         }
 
@@ -191,14 +209,20 @@ public struct MetadataProviderRegistry: Sendable {
     }
 }
 
+// MARK: - NoopMetadataProvider
+
 public struct NoopMetadataProvider: MetadataProvider {
-    public let name: String
+    // MARK: Lifecycle
 
     public init(name: String = "noop") {
         self.name = name
     }
 
-    public func resolve(_ request: MetadataResolutionRequest) async throws -> [CanonicalMetadataRecord] {
+    // MARK: Public
+
+    public let name: String
+
+    public func resolve(_ request: MetadataResolutionRequest) -> [CanonicalMetadataRecord] {
         _ = request
         return []
     }

@@ -1,31 +1,35 @@
 import Foundation
 
 public struct S3CompatibleObjectStore: AttachmentObjectStore {
-    public let connector: StorageConnector
+    // MARK: Lifecycle
 
     public init(connector: StorageConnector) {
         self.connector = connector
     }
 
-    public func presignUpload(request: PresignUploadRequest) async throws -> PresignUploadResponse {
+    // MARK: Public
+
+    public let connector: StorageConnector
+
+    public func presignUpload(request _: PresignUploadRequest) throws -> PresignUploadResponse {
         throw ObjectStoreError.unsupportedOperation(
             "Presign upload is not implemented for connector type '\(connector.type.rawValue)' yet"
         )
     }
 
-    public func presignDownload(objectKey: String) async throws -> URL {
+    public func presignDownload(objectKey _: String) throws -> URL {
         throw ObjectStoreError.unsupportedOperation(
             "Presign download is not implemented for connector type '\(connector.type.rawValue)' yet"
         )
     }
 
-    public func completeMultipartUpload(_ request: CompleteMultipartUploadRequest) async throws {
+    public func completeMultipartUpload(_: CompleteMultipartUploadRequest) throws {
         throw ObjectStoreError.unsupportedOperation(
             "Multipart completion is not implemented for connector type '\(connector.type.rawValue)' yet"
         )
     }
 
-    public func deleteObject(objectKey: String) async throws {
+    public func deleteObject(objectKey _: String) throws {
         throw ObjectStoreError.unsupportedOperation(
             "Delete object is not implemented for connector type '\(connector.type.rawValue)' yet"
         )

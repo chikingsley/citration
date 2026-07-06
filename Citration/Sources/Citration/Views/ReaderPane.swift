@@ -1,10 +1,14 @@
 import AppKit
+import CitrationCore
 import PDFKit
 import SwiftUI
 import WebKit
-import CitrationCore
+
+// MARK: - ReaderPane
 
 struct ReaderPane: View {
+    // MARK: Internal
+
     let attachment: LocalAttachment
     let item: BCItem?
     let progress: ReaderProgress?
@@ -18,6 +22,20 @@ struct ReaderPane: View {
             readerContent
         }
         .background(Color(nsColor: .windowBackgroundColor))
+    }
+
+    // MARK: Private
+
+    private var progressDetail: String? {
+        guard let progress else {
+            return nil
+        }
+
+        if let fractionComplete = progress.fractionComplete {
+            let percent = Int((fractionComplete * 100).rounded())
+            return "\(progress.location.displayLabel) · \(percent)%"
+        }
+        return progress.location.displayLabel
     }
 
     private var header: some View {
@@ -74,19 +92,25 @@ struct ReaderPane: View {
                 progress: progress,
                 onProgressChange: onProgressChange
             )
+
         case .epub:
             EPUBReaderView(
                 attachment: attachment,
                 progress: progress,
                 onProgressChange: onProgressChange
             )
-        case .html, .plainText:
+
+        case .html,
+             .plainText:
             ContentUnavailableView(
                 "\(attachment.documentFormat.displayName) Reader Pending",
                 systemImage: iconName(for: attachment.documentFormat),
                 description: Text("Open externally for now.")
             )
-        case .image, .audio, .unknown:
+
+        case .image,
+             .audio,
+             .unknown:
             ContentUnavailableView(
                 "No Reader Available",
                 systemImage: iconName(for: attachment.documentFormat),
@@ -95,39 +119,51 @@ struct ReaderPane: View {
         }
     }
 
-    private var progressDetail: String? {
-        guard let progress else {
-            return nil
-        }
-
-        if let fractionComplete = progress.fractionComplete {
-            let percent = Int((fractionComplete * 100).rounded())
-            return "\(progress.location.displayLabel) · \(percent)%"
-        }
-        return progress.location.displayLabel
-    }
-
     private func iconName(for format: DocumentFormat) -> String {
         switch format {
         case .pdf:
-            return "doc.richtext"
+            "doc.richtext"
         case .epub:
-            return "book"
+            "book"
         case .html:
-            return "safari"
+            "safari"
         case .plainText:
-            return "doc.plaintext"
+            "doc.plaintext"
         case .image:
-            return "photo"
+            "photo"
         case .audio:
-            return "waveform"
+            "waveform"
         case .unknown:
-            return "doc"
+            "doc"
         }
     }
 }
 
+// MARK: - EPUBReaderView
+
 private struct EPUBReaderView: NSViewRepresentable {
+    // MARK: Internal
+
+    final class Coordinator: NSObject {
+        // MARK: Lifecycle
+
+        deinit {
+            removePublicationRoot()
+        }
+
+        // MARK: Internal
+
+        var loadedObjectKey: String?
+        var publicationRoot: URL?
+
+        func removePublicationRoot() {
+            if let publicationRoot {
+                try? FileManager.default.removeItem(at: publicationRoot)
+            }
+            publicationRoot = nil
+        }
+    }
+
     let attachment: LocalAttachment
     let progress: ReaderProgress?
     let onProgressChange: (ReaderProgress) -> Void
@@ -152,39 +188,7 @@ private struct EPUBReaderView: NSViewRepresentable {
         loadPublication(in: webView, context: context)
     }
 
-    private func loadPublication(in webView: WKWebView, context: Context) {
-        var didLoadPublication = false
-        do {
-            let publication = try EPUBPackageReader().publication(from: attachment.localURL)
-            context.coordinator.removePublicationRoot()
-            context.coordinator.loadedObjectKey = attachment.objectKey
-            context.coordinator.publicationRoot = publication.rootDirectory
-            webView.loadFileURL(
-                publication.initialDocumentURL,
-                allowingReadAccessTo: publication.rootDirectory
-            )
-            didLoadPublication = true
-        }
-        catch {
-            context.coordinator.removePublicationRoot()
-            context.coordinator.loadedObjectKey = attachment.objectKey
-            webView.loadHTMLString(
-                Self.errorHTML(message: error.localizedDescription),
-                baseURL: nil
-            )
-        }
-
-        if didLoadPublication, progress == nil {
-            onProgressChange(
-                ReaderProgress(
-                    itemID: attachment.itemID,
-                    attachmentKey: attachment.objectKey,
-                    location: .epubCFI("epub-start"),
-                    fractionComplete: nil
-                )
-            )
-        }
-    }
+    // MARK: Private
 
     private static func errorHTML(message: String) -> String {
         let escapedMessage = message
@@ -214,27 +218,101 @@ private struct EPUBReaderView: NSViewRepresentable {
         """
     }
 
-    final class Coordinator: NSObject {
-        var loadedObjectKey: String?
-        var publicationRoot: URL?
-
-        deinit {
-            removePublicationRoot()
+    private func loadPublication(in webView: WKWebView, context: Context) {
+        var didLoadPublication = false
+        do {
+            let publication = try EPUBPackageReader().publication(from: attachment.localURL)
+            context.coordinator.removePublicationRoot()
+            context.coordinator.loadedObjectKey = attachment.objectKey
+            context.coordinator.publicationRoot = publication.rootDirectory
+            webView.loadFileURL(
+                publication.initialDocumentURL,
+                allowingReadAccessTo: publication.rootDirectory
+            )
+            didLoadPublication = true
+        } catch {
+            context.coordinator.removePublicationRoot()
+            context.coordinator.loadedObjectKey = attachment.objectKey
+            webView.loadHTMLString(
+                Self.errorHTML(message: error.localizedDescription),
+                baseURL: nil
+            )
         }
 
-        func removePublicationRoot() {
-            if let publicationRoot {
-                try? FileManager.default.removeItem(at: publicationRoot)
-            }
-            publicationRoot = nil
+        if didLoadPublication, progress == nil {
+            onProgressChange(
+                ReaderProgress(
+                    itemID: attachment.itemID,
+                    attachmentKey: attachment.objectKey,
+                    location: .epubCFI("epub-start"),
+                    fractionComplete: nil
+                )
+            )
         }
     }
 }
 
+// MARK: - PDFReaderView
+
 private struct PDFReaderView: NSViewRepresentable {
+    // MARK: Internal
+
+    final class Coordinator: NSObject {
+        var loadedURL: URL?
+        var attachment: LocalAttachment?
+        var onProgressChange: ((ReaderProgress) -> Void)?
+        var appliedProgressToken: String?
+        var isRestoringProgress = false
+
+        func configure(
+            attachment: LocalAttachment,
+            onProgressChange: @escaping (ReaderProgress) -> Void
+        ) {
+            self.attachment = attachment
+            self.onProgressChange = onProgressChange
+        }
+
+        @MainActor
+        @objc
+        func pageChanged(_ notification: Notification) {
+            guard
+                !isRestoringProgress,
+                let pdfView = notification.object as? PDFView,
+                let document = pdfView.document,
+                document.pageCount > 0,
+                let page = pdfView.currentPage,
+                let attachment
+            else {
+                return
+            }
+
+            let pageIndex = document.index(for: page)
+            guard pageIndex != NSNotFound else {
+                return
+            }
+
+            onProgressChange?(
+                ReaderProgress(
+                    itemID: attachment.itemID,
+                    attachmentKey: attachment.objectKey,
+                    location: .page(pageIndex + 1),
+                    fractionComplete: Double(pageIndex + 1) / Double(document.pageCount)
+                )
+            )
+        }
+    }
+
     let attachment: LocalAttachment
     let progress: ReaderProgress?
     let onProgressChange: (ReaderProgress) -> Void
+
+    static func dismantleNSView(_ nsView: PDFView, coordinator: Coordinator) {
+        NotificationCenter.default.removeObserver(
+            coordinator,
+            name: .PDFViewPageChanged,
+            object: nsView
+        )
+    }
 
     func makeCoordinator() -> Coordinator {
         Coordinator()
@@ -267,13 +345,7 @@ private struct PDFReaderView: NSViewRepresentable {
         loadDocument(in: pdfView, context: context)
     }
 
-    static func dismantleNSView(_ nsView: PDFView, coordinator: Coordinator) {
-        NotificationCenter.default.removeObserver(
-            coordinator,
-            name: .PDFViewPageChanged,
-            object: nsView
-        )
-    }
+    // MARK: Private
 
     private func loadDocument(in pdfView: PDFView, context: Context) {
         pdfView.document = PDFDocument(url: attachment.localURL)
@@ -284,12 +356,14 @@ private struct PDFReaderView: NSViewRepresentable {
     }
 
     private func applyProgressIfNeeded(in pdfView: PDFView, context: Context) {
-        guard let progress,
-              progress.attachmentKey == attachment.objectKey,
-              context.coordinator.appliedProgressToken != token(for: progress),
-              case .page(let pageNumber) = progress.location,
-              let document = pdfView.document,
-              document.pageCount > 0 else {
+        guard
+            let progress,
+            progress.attachmentKey == attachment.objectKey,
+            context.coordinator.appliedProgressToken != token(for: progress),
+            case let .page(pageNumber) = progress.location,
+            let document = pdfView.document,
+            document.pageCount > 0
+        else {
             return
         }
 
@@ -306,48 +380,5 @@ private struct PDFReaderView: NSViewRepresentable {
 
     private func token(for progress: ReaderProgress) -> String {
         "\(progress.attachmentKey)|\(progress.location.displayLabel)|\(progress.updatedAt.timeIntervalSince1970)"
-    }
-
-    final class Coordinator: NSObject {
-        var loadedURL: URL?
-        var attachment: LocalAttachment?
-        var onProgressChange: ((ReaderProgress) -> Void)?
-        var appliedProgressToken: String?
-        var isRestoringProgress = false
-
-        func configure(
-            attachment: LocalAttachment,
-            onProgressChange: @escaping (ReaderProgress) -> Void
-        ) {
-            self.attachment = attachment
-            self.onProgressChange = onProgressChange
-        }
-
-        @MainActor
-        @objc
-        func pageChanged(_ notification: Notification) {
-            guard !isRestoringProgress,
-                  let pdfView = notification.object as? PDFView,
-                  let document = pdfView.document,
-                  document.pageCount > 0,
-                  let page = pdfView.currentPage,
-                  let attachment else {
-                return
-            }
-
-            let pageIndex = document.index(for: page)
-            guard pageIndex != NSNotFound else {
-                return
-            }
-
-            onProgressChange?(
-                ReaderProgress(
-                    itemID: attachment.itemID,
-                    attachmentKey: attachment.objectKey,
-                    location: .page(pageIndex + 1),
-                    fractionComplete: Double(pageIndex + 1) / Double(document.pageCount)
-                )
-            )
-        }
     }
 }

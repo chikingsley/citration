@@ -1,5 +1,7 @@
-import Foundation
 import CitrationCore
+import Foundation
+
+// MARK: - LocalRelationshipStorePaths
 
 enum LocalRelationshipStorePaths {
     static func defaultStoreURL(
@@ -19,11 +21,10 @@ enum LocalRelationshipStorePaths {
     }
 }
 
+// MARK: - LocalRelationshipStore
+
 actor LocalRelationshipStore {
-    private let storeURL: URL
-    private let fileManager: FileManager
-    private let encoder: JSONEncoder
-    private let decoder: JSONDecoder
+    // MARK: Lifecycle
 
     init(storeURL: URL, fileManager: FileManager = .default) throws {
         self.storeURL = storeURL
@@ -32,7 +33,7 @@ actor LocalRelationshipStore {
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
         self.encoder = encoder
-        self.decoder = JSONDecoder()
+        decoder = JSONDecoder()
 
         let directory = storeURL.deletingLastPathComponent()
         try fileManager.createDirectory(at: directory, withIntermediateDirectories: true)
@@ -40,6 +41,8 @@ actor LocalRelationshipStore {
             try Data("[]".utf8).write(to: storeURL)
         }
     }
+
+    // MARK: Internal
 
     func listRelationships(itemID: UUID? = nil) throws -> [LibraryRelationship] {
         try loadAll()
@@ -84,7 +87,9 @@ actor LocalRelationshipStore {
 
     func removeRelationships(itemIDs: [UUID]) throws {
         let idsToRemove = Set(itemIDs)
-        guard !idsToRemove.isEmpty else { return }
+        guard !idsToRemove.isEmpty else {
+            return
+        }
 
         var relationships = try loadAll()
         relationships.removeAll { relationship in
@@ -92,6 +97,13 @@ actor LocalRelationshipStore {
         }
         try saveAll(relationships)
     }
+
+    // MARK: Private
+
+    private let storeURL: URL
+    private let fileManager: FileManager
+    private let encoder: JSONEncoder
+    private let decoder: JSONDecoder
 
     private func loadAll() throws -> [LibraryRelationship] {
         guard fileManager.fileExists(atPath: storeURL.path) else {

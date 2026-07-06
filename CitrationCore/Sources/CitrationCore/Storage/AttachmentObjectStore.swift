@@ -1,5 +1,7 @@
 import Foundation
 
+// MARK: - StorageConnectorType
+
 public enum StorageConnectorType: String, Codable, CaseIterable, Sendable {
     case local
     case s3
@@ -8,16 +10,10 @@ public enum StorageConnectorType: String, Codable, CaseIterable, Sendable {
     case minio
 }
 
+// MARK: - StorageConnector
+
 public struct StorageConnector: Identifiable, Hashable, Codable, Sendable {
-    public var id: UUID
-    public var name: String
-    public var type: StorageConnectorType
-    public var endpoint: URL?
-    public var region: String?
-    public var bucket: String
-    public var forcePathStyle: Bool
-    public var isDefault: Bool
-    public var metadata: [String: String]
+    // MARK: Lifecycle
 
     public init(
         id: UUID = UUID(),
@@ -40,14 +36,24 @@ public struct StorageConnector: Identifiable, Hashable, Codable, Sendable {
         self.isDefault = isDefault
         self.metadata = metadata
     }
+
+    // MARK: Public
+
+    public var id: UUID
+    public var name: String
+    public var type: StorageConnectorType
+    public var endpoint: URL?
+    public var region: String?
+    public var bucket: String
+    public var forcePathStyle: Bool
+    public var isDefault: Bool
+    public var metadata: [String: String]
 }
 
+// MARK: - PresignUploadRequest
+
 public struct PresignUploadRequest: Hashable, Sendable {
-    public var itemID: UUID
-    public var filename: String
-    public var contentType: String
-    public var contentLength: Int64
-    public var checksumSHA256: String?
+    // MARK: Lifecycle
 
     public init(
         itemID: UUID,
@@ -62,13 +68,20 @@ public struct PresignUploadRequest: Hashable, Sendable {
         self.contentLength = contentLength
         self.checksumSHA256 = checksumSHA256
     }
+
+    // MARK: Public
+
+    public var itemID: UUID
+    public var filename: String
+    public var contentType: String
+    public var contentLength: Int64
+    public var checksumSHA256: String?
 }
 
+// MARK: - PresignUploadResponse
+
 public struct PresignUploadResponse: Hashable, Sendable {
-    public var objectKey: String
-    public var uploadURL: URL
-    public var requiredHeaders: [String: String]
-    public var expiresAt: Date
+    // MARK: Lifecycle
 
     public init(
         objectKey: String,
@@ -81,46 +94,71 @@ public struct PresignUploadResponse: Hashable, Sendable {
         self.requiredHeaders = requiredHeaders
         self.expiresAt = expiresAt
     }
+
+    // MARK: Public
+
+    public var objectKey: String
+    public var uploadURL: URL
+    public var requiredHeaders: [String: String]
+    public var expiresAt: Date
 }
 
+// MARK: - UploadedPart
+
 public struct UploadedPart: Hashable, Sendable {
-    public var partNumber: Int
-    public var etag: String
+    // MARK: Lifecycle
 
     public init(partNumber: Int, etag: String) {
         self.partNumber = partNumber
         self.etag = etag
     }
+
+    // MARK: Public
+
+    public var partNumber: Int
+    public var etag: String
 }
 
+// MARK: - CompleteMultipartUploadRequest
+
 public struct CompleteMultipartUploadRequest: Hashable, Sendable {
-    public var objectKey: String
-    public var uploadID: String
-    public var parts: [UploadedPart]
+    // MARK: Lifecycle
 
     public init(objectKey: String, uploadID: String, parts: [UploadedPart]) {
         self.objectKey = objectKey
         self.uploadID = uploadID
         self.parts = parts
     }
+
+    // MARK: Public
+
+    public var objectKey: String
+    public var uploadID: String
+    public var parts: [UploadedPart]
 }
+
+// MARK: - ObjectStoreError
 
 public enum ObjectStoreError: Error, LocalizedError, Sendable {
     case invalidConfiguration(String)
     case invalidRequest(String)
     case unsupportedOperation(String)
 
+    // MARK: Public
+
     public var errorDescription: String? {
         switch self {
-        case .invalidConfiguration(let details):
-            return "Invalid storage connector configuration: \(details)"
-        case .invalidRequest(let details):
-            return "Invalid object-store request: \(details)"
-        case .unsupportedOperation(let details):
-            return "Unsupported object-store operation: \(details)"
+        case let .invalidConfiguration(details):
+            "Invalid storage connector configuration: \(details)"
+        case let .invalidRequest(details):
+            "Invalid object-store request: \(details)"
+        case let .unsupportedOperation(details):
+            "Unsupported object-store operation: \(details)"
         }
     }
 }
+
+// MARK: - AttachmentObjectStore
 
 public protocol AttachmentObjectStore: Sendable {
     var connector: StorageConnector { get }

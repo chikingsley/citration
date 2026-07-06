@@ -1,9 +1,9 @@
+import CitrationCore
+import Inject
 import SwiftUI
 import UniformTypeIdentifiers
-import Inject
-import CitrationCore
 
-// MARK: - Search Scope
+// MARK: - SearchScope
 
 enum SearchScope: String, CaseIterable {
     case allFields = "All Fields & Tags"
@@ -13,55 +13,12 @@ enum SearchScope: String, CaseIterable {
     case tags = "Tags"
 }
 
-// MARK: - Root
+// MARK: - RootView
 
 struct RootView: View {
-    @ObserveInjection private var inject
+    // MARK: Internal
+
     @Bindable var model: AppModel
-
-    @State private var inspectorPresented = true
-    @State private var searchText = ""
-    @State private var searchScope = SearchScope.allFields
-    @State private var selectedTag: String?
-    @State private var selectedCollection: String? = LibrarySelectionIdentifier.library
-    @State private var selectedItemIDs = Set<UUID>()
-    @State private var libraryExpanded = true
-    @State private var attachmentImporterPresented = false
-    @State private var isImportDropTargeted = false
-    @State private var isAttachDropTargeted = false
-    @State private var importDragBorderPhase: CGFloat = 0
-    @State private var attachDragBorderPhase: CGFloat = 0
-
-    private var filteredItems: [BCItem] {
-        let collectionItems = model.selectedCollectionItems
-        let scopedItems: [BCItem]
-        if let selectedTag {
-            scopedItems = collectionItems.filter { item in
-                item.tags.contains { $0.localizedCaseInsensitiveCompare(selectedTag) == .orderedSame }
-            }
-        }
-        else {
-            scopedItems = collectionItems
-        }
-
-        guard !searchText.isEmpty else { return scopedItems }
-        return scopedItems.filter { item in
-            switch searchScope {
-            case .allFields:
-                return item.title.localizedCaseInsensitiveContains(searchText)
-                    || (item.creators.first?.displayName.localizedCaseInsensitiveContains(searchText) ?? false)
-                    || item.tags.contains { $0.localizedCaseInsensitiveContains(searchText) }
-            case .title:
-                return item.title.localizedCaseInsensitiveContains(searchText)
-            case .creator:
-                return item.creators.first?.displayName.localizedCaseInsensitiveContains(searchText) ?? false
-            case .year:
-                return item.publicationYear.map(String.init)?.contains(searchText) ?? false
-            case .tags:
-                return item.tags.contains { $0.localizedCaseInsensitiveContains(searchText) }
-            }
-        }
-    }
 
     var body: some View {
         NavigationSplitView {
@@ -143,6 +100,58 @@ struct RootView: View {
         .enableInjection()
     }
 
+    // MARK: Private
+
+    @State private var inspectorPresented = true
+    @State private var searchText = ""
+    @State private var searchScope: SearchScope = .allFields
+    @State private var selectedTag: String?
+    @State private var selectedCollection: String? = LibrarySelectionIdentifier.library
+    @State private var selectedItemIDs: Set<UUID> = []
+    @State private var libraryExpanded = true
+    @State private var attachmentImporterPresented = false
+    @State private var isImportDropTargeted = false
+    @State private var isAttachDropTargeted = false
+    @State private var importDragBorderPhase: CGFloat = 0
+    @State private var attachDragBorderPhase: CGFloat = 0
+
+    @ObserveInjection private var inject
+
+    private var filteredItems: [BCItem] {
+        let collectionItems = model.selectedCollectionItems
+        let scopedItems: [BCItem] = if let selectedTag {
+            collectionItems.filter { item in
+                item.tags.contains { $0.localizedCaseInsensitiveCompare(selectedTag) == .orderedSame }
+            }
+        } else {
+            collectionItems
+        }
+
+        guard !searchText.isEmpty else {
+            return scopedItems
+        }
+        return scopedItems.filter { item in
+            switch searchScope {
+            case .allFields:
+                item.title.localizedCaseInsensitiveContains(searchText)
+                    || (item.creators.first?.displayName.localizedCaseInsensitiveContains(searchText) ?? false)
+                    || item.tags.contains { $0.localizedCaseInsensitiveContains(searchText) }
+
+            case .title:
+                item.title.localizedCaseInsensitiveContains(searchText)
+
+            case .creator:
+                item.creators.first?.displayName.localizedCaseInsensitiveContains(searchText) ?? false
+
+            case .year:
+                item.publicationYear.map(String.init)?.contains(searchText) ?? false
+
+            case .tags:
+                item.tags.contains { $0.localizedCaseInsensitiveContains(searchText) }
+            }
+        }
+    }
+
     @ToolbarContentBuilder
     private var rootToolbar: some ToolbarContent {
         ToolbarItemGroup {
@@ -186,9 +195,9 @@ struct RootView: View {
 
     private func handleImportedAttachments(_ result: Result<[URL], any Error>) {
         switch result {
-        case .success(let urls):
+        case let .success(urls):
             model.importAttachments(urls: urls)
-        case .failure(let error):
+        case let .failure(error):
             model.statusMessage = "Import failed: \(error.localizedDescription)"
         }
     }
@@ -248,8 +257,7 @@ struct RootView: View {
             withAnimation(.linear(duration: 0.85).repeatForever(autoreverses: false)) {
                 importDragBorderPhase = -42
             }
-        }
-        else {
+        } else {
             importDragBorderPhase = 0
         }
     }
@@ -260,8 +268,7 @@ struct RootView: View {
             withAnimation(.linear(duration: 0.85).repeatForever(autoreverses: false)) {
                 attachDragBorderPhase = -42
             }
-        }
-        else {
+        } else {
             attachDragBorderPhase = 0
         }
     }

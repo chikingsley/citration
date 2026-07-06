@@ -1,5 +1,5 @@
-import SwiftUI
 import CitrationCore
+import SwiftUI
 
 struct ItemNotesInspectorSection: View {
     @Bindable var model: AppModel
@@ -7,7 +7,7 @@ struct ItemNotesInspectorSection: View {
     var body: some View {
         Section("Notes") {
             TextField("Add a note", text: $model.itemNoteDraft, axis: .vertical)
-                .lineLimit(2...6)
+                .lineLimit(2 ... 6)
                 .onSubmit {
                     model.addNoteToSelectedItem()
                 }

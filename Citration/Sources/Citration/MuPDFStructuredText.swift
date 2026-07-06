@@ -1,5 +1,7 @@
 import Foundation
 
+// MARK: - MuPDFStructuredDocument
+
 struct MuPDFStructuredDocument: Decodable {
     let pages: [MuPDFStructuredPage]
 
@@ -14,25 +16,35 @@ struct MuPDFStructuredDocument: Decodable {
     }
 }
 
+// MARK: - MuPDFStructuredPage
+
 struct MuPDFStructuredPage: Decodable {
     let blocks: [MuPDFStructuredBlock]
 }
 
+// MARK: - MuPDFStructuredBlock
+
 struct MuPDFStructuredBlock: Decodable {
-    let type: String?
-    let lines: [MuPDFStructuredLine]
+    // MARK: Lifecycle
 
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.type = try container.decodeIfPresent(String.self, forKey: .type)
-        self.lines = try container.decodeIfPresent([MuPDFStructuredLine].self, forKey: .lines) ?? []
+        type = try container.decodeIfPresent(String.self, forKey: .type)
+        lines = try container.decodeIfPresent([MuPDFStructuredLine].self, forKey: .lines) ?? []
     }
+
+    // MARK: Internal
 
     enum CodingKeys: String, CodingKey {
         case type
         case lines
     }
+
+    let type: String?
+    let lines: [MuPDFStructuredLine]
 }
+
+// MARK: - MuPDFStructuredLine
 
 struct MuPDFStructuredLine: Decodable {
     let text: String?
@@ -40,6 +52,8 @@ struct MuPDFStructuredLine: Decodable {
     let y: Double?
     let font: MuPDFStructuredFont?
 }
+
+// MARK: - MuPDFStructuredFont
 
 struct MuPDFStructuredFont: Decodable {
     let size: Double?
@@ -102,21 +116,25 @@ private func isPotentialTitleLine(_ text: String) -> Bool {
     }
 
     let lower = trimmed.lowercased()
-    if lower.hasPrefix("doi:")
+    if
+        lower.hasPrefix("doi:")
         || lower.contains("arxiv:")
         || lower.hasPrefix("http://")
-        || lower.hasPrefix("https://") {
+        || lower.hasPrefix("https://")
+    {
         return false
     }
 
-    if DOIParsing.normalizeCandidate(trimmed) != nil
+    if
+        DOIParsing.normalizeCandidate(trimmed) != nil
         || ArXivParsing.normalizeCandidate(trimmed) != nil
-        || ISBNParsing.normalizeCandidate(trimmed) != nil {
+        || ISBNParsing.normalizeCandidate(trimmed) != nil
+    {
         return false
     }
 
-    let letters = trimmed.unicodeScalars.filter { CharacterSet.letters.contains($0) }.count
-    let digits = trimmed.unicodeScalars.filter { CharacterSet.decimalDigits.contains($0) }.count
+    let letters = trimmed.unicodeScalars.count(where: { CharacterSet.letters.contains($0) })
+    let digits = trimmed.unicodeScalars.count(where: { CharacterSet.decimalDigits.contains($0) })
     guard letters >= 10 else {
         return false
     }

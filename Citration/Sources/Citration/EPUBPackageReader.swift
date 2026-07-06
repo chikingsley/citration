@@ -1,11 +1,15 @@
 import Foundation
 
+// MARK: - EPUBPublication
+
 struct EPUBPublication: Equatable {
     var rootDirectory: URL
     var packageDocumentURL: URL
     var initialDocumentURL: URL
     var title: String?
 }
+
+// MARK: - EPUBPackageReaderError
 
 enum EPUBPackageReaderError: Error, LocalizedError {
     case missingUnzipTool
@@ -15,28 +19,30 @@ enum EPUBPackageReaderError: Error, LocalizedError {
     case packageDocumentMissing
     case initialDocumentMissing
 
+    // MARK: Internal
+
     var errorDescription: String? {
         switch self {
         case .missingUnzipTool:
-            return "The system unzip tool is not available."
+            "The system unzip tool is not available."
         case .invalidArchive:
-            return "The EPUB archive could not be read."
-        case .unsafeArchiveEntry(let entry):
-            return "The EPUB archive contains an unsafe path: \(entry)"
-        case .extractionFailed(let details):
-            return "The EPUB archive could not be unpacked: \(details)"
+            "The EPUB archive could not be read."
+        case let .unsafeArchiveEntry(entry):
+            "The EPUB archive contains an unsafe path: \(entry)"
+        case let .extractionFailed(details):
+            "The EPUB archive could not be unpacked: \(details)"
         case .packageDocumentMissing:
-            return "The EPUB package document could not be found."
+            "The EPUB package document could not be found."
         case .initialDocumentMissing:
-            return "The EPUB reading order could not be resolved."
+            "The EPUB reading order could not be resolved."
         }
     }
 }
 
+// MARK: - EPUBPackageReader
+
 struct EPUBPackageReader {
-    private let unpackRoot: URL
-    private let unzipURL: URL
-    private let fileManager: FileManager
+    // MARK: Lifecycle
 
     init(
         unpackRoot: URL = Self.defaultUnpackRoot(),
@@ -47,6 +53,8 @@ struct EPUBPackageReader {
         self.unzipURL = unzipURL
         self.fileManager = fileManager
     }
+
+    // MARK: Internal
 
     static func defaultUnpackRoot() -> URL {
         FileManager.default.temporaryDirectory
@@ -74,12 +82,17 @@ struct EPUBPackageReader {
         do {
             try extract(epubURL, to: rootDirectory)
             return try publication(in: rootDirectory)
-        }
-        catch {
+        } catch {
             try? fileManager.removeItem(at: rootDirectory)
             throw error
         }
     }
+
+    // MARK: Private
+
+    private let unpackRoot: URL
+    private let unzipURL: URL
+    private let fileManager: FileManager
 
     private func publication(in rootDirectory: URL) throws -> EPUBPublication {
         let containerURL = rootDirectory
@@ -258,17 +271,19 @@ struct EPUBPackageReader {
     }
 
     private func matches(pattern: String, text: String) -> [[String]] {
-        guard let regex = try? NSRegularExpression(
-            pattern: pattern,
-            options: [.caseInsensitive, .dotMatchesLineSeparators]
-        ) else {
+        guard
+            let regex = try? NSRegularExpression(
+                pattern: pattern,
+                options: [.caseInsensitive, .dotMatchesLineSeparators]
+            )
+        else {
             return []
         }
 
         let nsText = text as NSString
         let range = NSRange(location: 0, length: nsText.length)
         return regex.matches(in: text, range: range).map { match in
-            (0..<match.numberOfRanges).compactMap { index in
+            (0 ..< match.numberOfRanges).compactMap { index in
                 let range = match.range(at: index)
                 guard range.location != NSNotFound else {
                     return nil
@@ -311,19 +326,24 @@ struct EPUBPackageReader {
     }
 }
 
+// MARK: - EPUBManifestItem
+
 private struct EPUBManifestItem {
     var href: String
     var mediaType: String?
 
     var isReadableDocument: Bool {
         switch mediaType?.lowercased() {
-        case "application/xhtml+xml", "text/html":
-            return true
+        case "application/xhtml+xml",
+             "text/html":
+            true
         default:
-            return false
+            false
         }
     }
 }
+
+// MARK: - EPUBProcessResult
 
 private struct EPUBProcessResult {
     var exitStatus: Int32
@@ -339,7 +359,7 @@ private extension String {
             ("&lt;", "<"),
             ("&gt;", ">"),
             ("&quot;", "\""),
-            ("&#39;", "'")
+            ("&#39;", "'"),
         ]
         for (entity, replacement) in replacements {
             value = value.replacingOccurrences(of: entity, with: replacement)

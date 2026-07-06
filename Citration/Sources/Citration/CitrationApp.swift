@@ -1,16 +1,22 @@
-import SwiftUI
 import AppKit
 import CitrationCore
+import SwiftUI
+
+// MARK: - CitrationAppDelegate
 
 final class CitrationAppDelegate: NSObject, NSApplicationDelegate {
-    func applicationDidFinishLaunching(_ notification: Notification) {
+    // MARK: Internal
+
+    func applicationDidFinishLaunching(_: Notification) {
         NSApp.setActivationPolicy(.regular)
         focusPrimaryWindow()
     }
 
-    func applicationDidBecomeActive(_ notification: Notification) {
+    func applicationDidBecomeActive(_: Notification) {
         focusPrimaryWindow()
     }
+
+    // MARK: Private
 
     private func focusPrimaryWindow() {
         DispatchQueue.main.async {
@@ -23,14 +29,17 @@ final class CitrationAppDelegate: NSObject, NSApplicationDelegate {
     }
 }
 
+// MARK: - CitrationAppMain
+
 @main
 struct CitrationAppMain: App {
-    @NSApplicationDelegateAdaptor(CitrationAppDelegate.self) private var appDelegate
-    @State private var model = AppModel.bootstrap()
+    // MARK: Lifecycle
 
     init() {
         NSWindow.allowsAutomaticWindowTabbing = false
     }
+
+    // MARK: Internal
 
     var body: some Scene {
         WindowGroup {
@@ -39,4 +48,9 @@ struct CitrationAppMain: App {
         }
         .windowToolbarStyle(.unified)
     }
+
+    // MARK: Private
+
+    @NSApplicationDelegateAdaptor(CitrationAppDelegate.self) private var appDelegate
+    @State private var model: AppModel = .bootstrap()
 }

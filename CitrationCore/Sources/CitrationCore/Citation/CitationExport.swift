@@ -1,38 +1,54 @@
 import Foundation
 
+// MARK: - CitationExportFormat
+
 public enum CitationExportFormat: String, Codable, CaseIterable, Sendable {
     case cslJSON
     case bibTeX
 
+    // MARK: Public
+
     public var displayName: String {
         switch self {
         case .cslJSON:
-            return "CSL JSON"
+            "CSL JSON"
         case .bibTeX:
-            return "BibTeX"
+            "BibTeX"
         }
     }
 }
 
+// MARK: - CitationExportResult
+
 public struct CitationExportResult: Hashable, Codable, Sendable {
-    public var format: CitationExportFormat
-    public var text: String
+    // MARK: Lifecycle
 
     public init(format: CitationExportFormat, text: String) {
         self.format = format
         self.text = text
     }
+
+    // MARK: Public
+
+    public var format: CitationExportFormat
+    public var text: String
 }
 
+// MARK: - CitationExporter
+
 public struct CitationExporter: Sendable {
+    // MARK: Lifecycle
+
     public init() {}
+
+    // MARK: Public
 
     public func export(items: [BCItem], format: CitationExportFormat) throws -> CitationExportResult {
         switch format {
         case .cslJSON:
-            return CitationExportResult(format: format, text: try cslJSON(for: items))
+            try CitationExportResult(format: format, text: cslJSON(for: items))
         case .bibTeX:
-            return CitationExportResult(format: format, text: bibTeX(for: items))
+            CitationExportResult(format: format, text: bibTeX(for: items))
         }
     }
 
@@ -56,6 +72,15 @@ public struct CitationExporter: Sendable {
             .joined(separator: "\n\n")
     }
 
+    // MARK: Private
+
+    private static func escapeBibTeX(_ value: String) -> String {
+        value
+            .replacingOccurrences(of: "\\", with: "\\textbackslash{}")
+            .replacingOccurrences(of: "{", with: "\\{")
+            .replacingOccurrences(of: "}", with: "\\}")
+    }
+
     private func bibTeXEntry(for item: BCItem, citationKey: String) -> String {
         var fields = [(String, String)]()
         fields.append(("title", item.title.bcCollapsedWhitespace()))
@@ -73,13 +98,17 @@ public struct CitationExporter: Sendable {
             switch identifier.type {
             case .doi:
                 fields.append(("doi", identifier.value))
+
             case .isbn:
                 fields.append(("isbn", identifier.value))
+
             case .pmid:
                 fields.append(("pmid", identifier.value))
+
             case .arxiv:
                 fields.append(("eprint", identifier.value))
                 fields.append(("archivePrefix", "arXiv"))
+
             case .url:
                 fields.append(("url", identifier.value))
             }
@@ -100,7 +129,7 @@ public struct CitationExporter: Sendable {
         let creator = item.creators.first?.citationKeyComponent
         let year = item.publicationYear.map(String.init)
         let title = item.title.bcCitationKeyComponent
-        let rawKey = [creator, year, title].compactMap { $0 }.joined()
+        let rawKey = [creator, year, title].compactMap(\.self).joined()
         let baseKey = rawKey.isEmpty ? String(item.id.uuidString.prefix(8)).lowercased() : rawKey
 
         var key = baseKey
@@ -112,27 +141,12 @@ public struct CitationExporter: Sendable {
         usedKeys.insert(key)
         return key
     }
-
-    private static func escapeBibTeX(_ value: String) -> String {
-        value
-            .replacingOccurrences(of: "\\", with: "\\textbackslash{}")
-            .replacingOccurrences(of: "{", with: "\\{")
-            .replacingOccurrences(of: "}", with: "\\}")
-    }
 }
 
+// MARK: - CSLItem
+
 private struct CSLItem: Codable {
-    var id: String
-    var type: String
-    var title: String
-    var author: [CSLCreator]?
-    var issued: CSLDate?
-    var doi: String?
-    var isbn: String?
-    var pmid: String?
-    var url: String?
-    var archive: String?
-    var archiveLocation: String?
+    // MARK: Lifecycle
 
     init(item: BCItem) {
         id = item.id.uuidString
@@ -159,6 +173,22 @@ private struct CSLItem: Codable {
         }
     }
 
+    // MARK: Internal
+
+    var id: String
+    var type: String
+    var title: String
+    var author: [CSLCreator]?
+    var issued: CSLDate?
+    var doi: String?
+    var isbn: String?
+    var pmid: String?
+    var url: String?
+    var archive: String?
+    var archiveLocation: String?
+
+    // MARK: Private
+
     private enum CodingKeys: String, CodingKey {
         case id
         case type
@@ -174,10 +204,10 @@ private struct CSLItem: Codable {
     }
 }
 
+// MARK: - CSLCreator
+
 private struct CSLCreator: Codable {
-    var given: String?
-    var family: String?
-    var literal: String?
+    // MARK: Lifecycle
 
     init(creator: Creator) {
         if let literalName = creator.literalName?.bcTrimmedNonEmpty {
@@ -187,14 +217,28 @@ private struct CSLCreator: Codable {
             family = creator.familyName?.bcTrimmedNonEmpty
         }
     }
+
+    // MARK: Internal
+
+    var given: String?
+    var family: String?
+    var literal: String?
 }
 
+// MARK: - CSLDate
+
 private struct CSLDate: Codable {
-    var dateParts: [[Int]]
+    // MARK: Lifecycle
 
     init(year: Int) {
         dateParts = [[year]]
     }
+
+    // MARK: Internal
+
+    var dateParts: [[Int]]
+
+    // MARK: Private
 
     private enum CodingKeys: String, CodingKey {
         case dateParts = "date-parts"
@@ -205,32 +249,35 @@ private extension ItemType {
     var cslType: String {
         switch self {
         case .article:
-            return "article-journal"
+            "article-journal"
         case .book:
-            return "book"
+            "book"
         case .preprint:
-            return "article"
+            "article"
         case .thesis:
-            return "thesis"
+            "thesis"
         case .dataset:
-            return "dataset"
+            "dataset"
         case .webpage:
-            return "webpage"
+            "webpage"
         case .unknown:
-            return "document"
+            "document"
         }
     }
 
     var bibTeXType: String {
         switch self {
-        case .article, .preprint:
-            return "article"
+        case .article,
+             .preprint:
+            "article"
         case .book:
-            return "book"
+            "book"
         case .thesis:
-            return "phdthesis"
-        case .dataset, .webpage, .unknown:
-            return "misc"
+            "phdthesis"
+        case .dataset,
+             .webpage,
+             .unknown:
+            "misc"
         }
     }
 }

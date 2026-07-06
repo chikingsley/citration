@@ -1,17 +1,38 @@
-# SwiftLint configuration for citration Swift targets
+# SwiftLint configuration for the citration repo.
+# Division of labor: SwiftLint enforces semantic and safety rules;
+# all layout/formatting is owned by SwiftFormat (.swiftformat).
 strict: true
 
-included:
-  - Citration
-  - CitrationCore
-  - Tools
+excluded:
+  - .build
+  - .swiftpm
+  - "**/.build"
+  - "**/Package.resolved"
+  - .swiftlint_cache
+  - SourcePackages
+  - DerivedData
+  - Citration.xcworkspace
 
+# Formatting rules owned by SwiftFormat — disabled here so the tools
+# never fight. Do not re-enable without removing the SwiftFormat rule.
 disabled_rules:
-  - trailing_whitespace
-  - identifier_name
-  - type_name
-  # This codebase intentionally keeps else/catch on a new line.
+  - attribute_name_spacing
+  - closing_brace
+  - closure_parameter_position
+  - colon
+  - comma
+  - comment_spacing
+  - leading_whitespace
+  - opening_brace
+  - operator_whitespace
+  - return_arrow_whitespace
   - statement_position
+  - switch_case_alignment
+  - trailing_comma
+  - trailing_newline
+  - trailing_whitespace
+  - vertical_parameter_alignment
+  - vertical_whitespace
 
 opt_in_rules:
   # Crash prevention (high priority)
@@ -19,25 +40,33 @@ opt_in_rules:
   - implicitly_unwrapped_optional
   - unowned_variable_capture
   - fatal_error_message
-  # Code quality
-  - empty_count
-  - closure_spacing
-  - collection_alignment
+  # Correctness
+  - async_without_await
+  - identical_operands
+  - unneeded_throws_rethrows
+  - overridden_super_call
+  - redundant_nil_coalescing
+  - yoda_condition
+  # Idiomatic Swift
   - contains_over_first_not_nil
+  - empty_count
   - empty_string
+  - explicit_init
   - first_where
   - last_where
-  - multiline_function_chains
-  - multiline_parameters
-  - operator_usage_whitespace
-  - overridden_super_call
+  - opaque_over_existential
   - prefer_self_type_over_type_of_self
-  - redundant_nil_coalescing
   - sorted_first_last
-  - trailing_closure
-  - unneeded_parentheses_in_closure_argument
-  - vertical_parameter_alignment_on_call
-  - yoda_condition
+  - toggle_bool
+  - unavailable_function
+  # Naming / organization
+  # - file_name  # enable after the repo restructure renames grouping files
+
+# Dead-code rules; run via `swiftlint analyze --compiler-log-path <log>`
+# against a clean build log (too slow for every commit).
+analyzer_rules:
+  - unused_declaration
+  - unused_import
 
 # Crash-risk rules — flag prominently
 force_cast:
@@ -49,15 +78,14 @@ force_unwrapping:
 implicitly_unwrapped_optional:
   severity: error
 
-excluded:
-  - .build
-  - .swiftpm
-  - "**/.build"
-  - "**/Package.resolved"
-  - .swiftlint_cache
-  - SourcePackages
-  - DerivedData
-  - Citration.xcworkspace
+identifier_name:
+  min_length:
+    warning: 2
+  excluded:
+    - id
+    - x
+    - y
+    - i
 
 line_length:
   warning: 150

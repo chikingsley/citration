@@ -1,15 +1,19 @@
 import Foundation
 
 public struct LocalObjectStore: AttachmentObjectStore {
-    public let connector: StorageConnector
-    public let baseDirectory: URL
+    // MARK: Lifecycle
 
     public init(connector: StorageConnector, baseDirectory: URL) {
         self.connector = connector
         self.baseDirectory = baseDirectory
     }
 
-    public func presignUpload(request: PresignUploadRequest) async throws -> PresignUploadResponse {
+    // MARK: Public
+
+    public let connector: StorageConnector
+    public let baseDirectory: URL
+
+    public func presignUpload(request: PresignUploadRequest) throws -> PresignUploadResponse {
         guard request.contentLength >= 0 else {
             throw ObjectStoreError.invalidRequest("contentLength must be non-negative")
         }
@@ -25,12 +29,12 @@ public struct LocalObjectStore: AttachmentObjectStore {
         )
     }
 
-    public func presignDownload(objectKey: String) async throws -> URL {
+    public func presignDownload(objectKey: String) throws -> URL {
         let validatedKey = try validateObjectKey(objectKey)
         return baseDirectory.appendingPathComponent(validatedKey)
     }
 
-    public func completeMultipartUpload(_ request: CompleteMultipartUploadRequest) async throws {
+    public func completeMultipartUpload(_ request: CompleteMultipartUploadRequest) throws {
         _ = try validateObjectKey(request.objectKey)
         guard !request.uploadID.isEmpty else {
             throw ObjectStoreError.invalidRequest("uploadID is required")
@@ -40,19 +44,21 @@ public struct LocalObjectStore: AttachmentObjectStore {
         }
     }
 
-    public func deleteObject(objectKey: String) async throws {
+    public func deleteObject(objectKey: String) throws {
         _ = try validateObjectKey(objectKey)
     }
+
+    // MARK: Private
 
     private func sanitizeFilename(_ filename: String) throws -> String {
         let trimmed = filename.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else {
             throw ObjectStoreError.invalidRequest("filename is required")
         }
-        guard !trimmed.contains("/") && !trimmed.contains("\\") else {
+        guard !trimmed.contains("/"), !trimmed.contains("\\") else {
             throw ObjectStoreError.invalidRequest("filename must not contain path separators")
         }
-        guard trimmed != "." && trimmed != ".." else {
+        guard trimmed != ".", trimmed != ".." else {
             throw ObjectStoreError.invalidRequest("filename is invalid")
         }
         return trimmed

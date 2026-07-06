@@ -1,7 +1,9 @@
-import Testing
-import Foundation
 @testable import Citration
 import CitrationCore
+import Foundation
+import Testing
+
+// MARK: - ImportMetadataFallbackTests
 
 @Suite("Import Metadata Fallback")
 @MainActor
@@ -142,8 +144,10 @@ private extension ImportMetadataFallbackTests {
     }
 }
 
+// MARK: - TitleMetadataRequestRecorder
+
 private actor TitleMetadataRequestRecorder {
-    private var storedRequests: [MetadataResolutionRequest] = []
+    // MARK: Internal
 
     func append(_ request: MetadataResolutionRequest) {
         storedRequests.append(request)
@@ -152,14 +156,20 @@ private actor TitleMetadataRequestRecorder {
     func requests() -> [MetadataResolutionRequest] {
         storedRequests
     }
+
+    // MARK: Private
+
+    private var storedRequests: [MetadataResolutionRequest] = []
 }
+
+// MARK: - TitleResolutionProvider
 
 private struct TitleResolutionProvider: MetadataProvider {
     let name: String = "title-resolution"
     let recorder: TitleMetadataRequestRecorder
     let query: String
 
-    func resolve(_ request: MetadataResolutionRequest) async throws -> [CanonicalMetadataRecord] {
+    func resolve(_ request: MetadataResolutionRequest) async -> [CanonicalMetadataRecord] {
         await recorder.append(request)
         guard request.identifiers.isEmpty, request.freeTextQuery == query else {
             return []

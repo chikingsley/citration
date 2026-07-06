@@ -1,25 +1,36 @@
-import Foundation
 import CitrationCore
+import Foundation
+
+// MARK: - OpenAlexAPIKeyProviding
 
 protocol OpenAlexAPIKeyProviding: Sendable {
     func apiKey() async -> String?
 }
 
+// MARK: - StaticOpenAlexAPIKeyProvider
+
 struct StaticOpenAlexAPIKeyProvider: OpenAlexAPIKeyProviding {
-    private let value: String?
+    // MARK: Lifecycle
 
     init(_ value: String?) {
         self.value = value?.bcTrimmedNonEmpty
     }
 
-    func apiKey() async -> String? {
+    // MARK: Internal
+
+    func apiKey() -> String? {
         value
     }
+
+    // MARK: Private
+
+    private let value: String?
 }
 
+// MARK: - OpenAlexCredentialSource
+
 struct OpenAlexCredentialSource: OpenAlexAPIKeyProviding {
-    private let keyStore: any OpenAlexAPIKeyStore
-    private let environment: [String: String]
+    // MARK: Lifecycle
 
     init(
         keyStore: any OpenAlexAPIKeyStore,
@@ -29,6 +40,8 @@ struct OpenAlexCredentialSource: OpenAlexAPIKeyProviding {
         self.environment = environment
     }
 
+    // MARK: Internal
+
     func apiKey() async -> String? {
         if let keychainKey = await keyStore.loadAPIKey() {
             return keychainKey
@@ -36,4 +49,9 @@ struct OpenAlexCredentialSource: OpenAlexAPIKeyProviding {
 
         return environment["OPENALEX_API_KEY"]?.bcTrimmedNonEmpty
     }
+
+    // MARK: Private
+
+    private let keyStore: any OpenAlexAPIKeyStore
+    private let environment: [String: String]
 }

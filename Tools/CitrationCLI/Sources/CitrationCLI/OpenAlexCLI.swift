@@ -1,5 +1,5 @@
-import Foundation
 import CitrationCore
+import Foundation
 
 extension CitrationCLI {
     func openAlexKey(arguments: [String]) async throws {
@@ -13,24 +13,28 @@ extension CitrationCLI {
         case "status":
             if await store.loadAPIKey() != nil {
                 print("OpenAlex key: configured in Keychain")
-            }
-            else if openAlexAPIKeyFromEnvironmentOrDotEnv() != nil {
+            } else if openAlexAPIKeyFromEnvironmentOrDotEnv() != nil {
                 print("OpenAlex key: available from environment or .env")
-            }
-            else {
+            } else {
                 print("OpenAlex key: not configured")
             }
+
         case "import-env":
             guard let apiKey = openAlexAPIKeyFromEnvironmentOrDotEnv() else {
                 throw cliError("OPENALEX_API_KEY was not found in the process environment or root .env")
             }
             await store.saveAPIKey(apiKey)
             print("Imported OpenAlex key into Keychain")
+
         case "clear":
             await store.saveAPIKey(nil)
             print("Cleared OpenAlex key from Keychain")
-        case "help", "--help", "-h":
+
+        case "help",
+             "--help",
+             "-h":
             printOpenAlexKeyHelp()
+
         default:
             throw cliError("Unknown openalex-key command: \(subcommand)")
         }
@@ -101,8 +105,10 @@ extension CitrationCLI {
         if line.hasPrefix("export ") {
             line.removeFirst("export ".count)
         }
-        guard !line.hasPrefix("#"),
-              let separator = line.firstIndex(of: "=") else {
+        guard
+            !line.hasPrefix("#"),
+            let separator = line.firstIndex(of: "=")
+        else {
             return nil
         }
 
@@ -112,11 +118,13 @@ extension CitrationCLI {
         }
 
         var value = line[line.index(after: separator)...].trimmingCharacters(in: .whitespacesAndNewlines)
-        if value.count >= 2,
-           let first = value.first,
-           let last = value.last,
-           first == last,
-           first == "\"" || first == "'" {
+        if
+            value.count >= 2,
+            let first = value.first,
+            let last = value.last,
+            first == last,
+            first == "\"" || first == "'"
+        {
             value.removeFirst()
             value.removeLast()
         }
@@ -132,7 +140,11 @@ extension CitrationCLI {
     }
 }
 
+// MARK: - OpenAlexSmokeClient
+
 private struct OpenAlexSmokeClient {
+    // MARK: Internal
+
     let apiKey: String
 
     func report(for doi: String) async throws -> OpenAlexSmokeReport {
@@ -140,8 +152,10 @@ private struct OpenAlexSmokeClient {
             filter: "doi:https://doi.org/\(doi)",
             limit: 1
         )
-        guard let source = sourceWorks.first,
-              let sourceWorkID = source.workID else {
+        guard
+            let source = sourceWorks.first,
+            let sourceWorkID = source.workID
+        else {
             throw NSError(
                 domain: "CitrationCLI",
                 code: 5,
@@ -165,6 +179,8 @@ private struct OpenAlexSmokeClient {
             sections: sections
         )
     }
+
+    // MARK: Private
 
     private func filters(
         for source: OpenAlexSmokeWork,
@@ -198,8 +214,10 @@ private struct OpenAlexSmokeClient {
         request.setValue("CitrationCLI/1.0", forHTTPHeaderField: "User-Agent")
 
         let (data, response) = try await URLSession.shared.data(for: request)
-        guard let httpResponse = response as? HTTPURLResponse,
-              (200..<300).contains(httpResponse.statusCode) else {
+        guard
+            let httpResponse = response as? HTTPURLResponse,
+            (200 ..< 300).contains(httpResponse.statusCode)
+        else {
             return []
         }
 
@@ -217,11 +235,13 @@ private struct OpenAlexSmokeClient {
             URLQueryItem(name: "per-page", value: String(max(1, min(limit, 25)))),
             URLQueryItem(name: "select", value: OpenAlexSmokeWork.selectFields),
             URLQueryItem(name: "sort", value: "cited_by_count:desc"),
-            URLQueryItem(name: "api_key", value: apiKey)
+            URLQueryItem(name: "api_key", value: apiKey),
         ]
         return components?.url
     }
 }
+
+// MARK: - OpenAlexSmokeReport
 
 private struct OpenAlexSmokeReport {
     let sourceWorkID: String
@@ -229,29 +249,29 @@ private struct OpenAlexSmokeReport {
     let sections: [OpenAlexSmokeSection]
 }
 
+// MARK: - OpenAlexSmokeSection
+
 private struct OpenAlexSmokeSection {
     let label: String
     let works: [OpenAlexSmokeWorkSummary]
 }
+
+// MARK: - OpenAlexSmokeFilter
 
 private struct OpenAlexSmokeFilter {
     let label: String
     let value: String
 }
 
+// MARK: - OpenAlexSmokeEnvelope
+
 private struct OpenAlexSmokeEnvelope: Decodable {
     let results: [OpenAlexSmokeWork]
 }
 
+// MARK: - OpenAlexSmokeWork
+
 private struct OpenAlexSmokeWork: Decodable {
-    static let selectFields = "id,display_name,doi,publication_year,type,authorships,primary_topic,topics"
-
-    let id: String?
-    let displayName: String?
-    let publicationYear: Int?
-    let authorships: [OpenAlexSmokeAuthorship]?
-    let primaryTopic: OpenAlexSmokeTopic?
-
     enum CodingKeys: String, CodingKey {
         case id
         case displayName = "display_name"
@@ -260,45 +280,87 @@ private struct OpenAlexSmokeWork: Decodable {
         case primaryTopic = "primary_topic"
     }
 
-    var workID: String? { shortOpenAlexID(from: id) }
-    var firstAuthorID: String? { authorships?.compactMap(\.author?.shortID).first }
-    var firstInstitutionID: String? { authorships?.flatMap { $0.institutions ?? [] }.compactMap(\.shortID).first }
-    var primaryTopicID: String? { primaryTopic?.shortID }
+    static let selectFields = "id,display_name,doi,publication_year,type,authorships,primary_topic,topics"
+
+    let id: String?
+    let displayName: String?
+    let publicationYear: Int?
+    let authorships: [OpenAlexSmokeAuthorship]?
+    let primaryTopic: OpenAlexSmokeTopic?
+
+    var workID: String? {
+        shortOpenAlexID(from: id)
+    }
+
+    var firstAuthorID: String? {
+        authorships?.compactMap(\.author?.shortID).first
+    }
+
+    var firstInstitutionID: String? {
+        authorships?.flatMap { $0.institutions ?? [] }.compactMap(\.shortID).first
+    }
+
+    var primaryTopicID: String? {
+        primaryTopic?.shortID
+    }
 }
+
+// MARK: - OpenAlexSmokeAuthorship
 
 private struct OpenAlexSmokeAuthorship: Decodable {
     let author: OpenAlexSmokeAuthor?
     let institutions: [OpenAlexSmokeInstitution]?
 }
 
+// MARK: - OpenAlexSmokeAuthor
+
 private struct OpenAlexSmokeAuthor: Decodable {
     let id: String?
-    var shortID: String? { shortOpenAlexID(from: id) }
+
+    var shortID: String? {
+        shortOpenAlexID(from: id)
+    }
 }
+
+// MARK: - OpenAlexSmokeInstitution
 
 private struct OpenAlexSmokeInstitution: Decodable {
     let id: String?
-    var shortID: String? { shortOpenAlexID(from: id) }
+
+    var shortID: String? {
+        shortOpenAlexID(from: id)
+    }
 }
+
+// MARK: - OpenAlexSmokeTopic
 
 private struct OpenAlexSmokeTopic: Decodable {
     let id: String?
-    var shortID: String? { shortOpenAlexID(from: id) }
+
+    var shortID: String? {
+        shortOpenAlexID(from: id)
+    }
 }
 
+// MARK: - OpenAlexSmokeWorkSummary
+
 private struct OpenAlexSmokeWorkSummary {
-    let workID: String
-    let title: String
-    let yearText: String
+    // MARK: Lifecycle
 
     init?(_ work: OpenAlexSmokeWork) {
         guard let workID = work.workID else {
             return nil
         }
         self.workID = workID
-        self.title = work.displayName ?? "Untitled"
-        self.yearText = work.publicationYear.map(String.init) ?? "n.d."
+        title = work.displayName ?? "Untitled"
+        yearText = work.publicationYear.map(String.init) ?? "n.d."
     }
+
+    // MARK: Internal
+
+    let workID: String
+    let title: String
+    let yearText: String
 }
 
 private func shortOpenAlexID(from id: String?) -> String? {

@@ -1,17 +1,23 @@
-import Foundation
 import CitrationCore
+import Foundation
 #if canImport(PDFKit)
-import PDFKit
+    import PDFKit
 #endif
 
-struct PDFMetadataCandidates: Sendable {
-    var identifiers: [Identifier]
-    var titleHints: [String]
+// MARK: - PDFMetadataCandidates
+
+struct PDFMetadataCandidates {
+    // MARK: Lifecycle
 
     init(identifiers: [Identifier] = [], titleHints: [String] = []) {
         self.identifiers = identifiers
         self.titleHints = titleHints
     }
+
+    // MARK: Internal
+
+    var identifiers: [Identifier]
+    var titleHints: [String]
 
     var detectedDOI: String? {
         identifiers.first { $0.type == .doi }?.value
@@ -21,6 +27,8 @@ struct PDFMetadataCandidates: Sendable {
         identifiers.isEmpty && titleHints.isEmpty
     }
 }
+
+// MARK: - PDFDOIExtracting
 
 protocol PDFDOIExtracting: Sendable {
     func extractDOI(from pdfURL: URL) async -> String?
@@ -39,24 +47,24 @@ extension PDFDOIExtracting {
     }
 }
 
+// MARK: - NullPDFDOIExtractor
+
 struct NullPDFDOIExtractor: PDFDOIExtracting {
-    func extractDOI(from pdfURL: URL) async -> String? {
+    func extractDOI(from pdfURL: URL) -> String? {
         _ = pdfURL
         return nil
     }
 
-    func extractCandidates(from pdfURL: URL) async -> PDFMetadataCandidates {
+    func extractCandidates(from pdfURL: URL) -> PDFMetadataCandidates {
         _ = pdfURL
         return PDFMetadataCandidates()
     }
 }
 
+// MARK: - MuPDFDOIExtractor
+
 actor MuPDFDOIExtractor: PDFDOIExtracting {
-    private static let drawTimeoutSeconds: TimeInterval = 20
-    private let executableURL: URL?
-    private let allowPDFKitFallback: Bool
-    private let verifyWithDOIResolver: Bool
-    private let session: URLSession
+    // MARK: Lifecycle
 
     init(
         executableURL: URL? = MuPDFDOIExtractor.defaultExecutableURL(),
@@ -70,35 +78,40 @@ actor MuPDFDOIExtractor: PDFDOIExtracting {
         self.session = session
     }
 
+    // MARK: Internal
+
     nonisolated static func defaultExecutableURL() -> URL? {
         let fileManager = FileManager.default
 
-        if let envPath = ProcessInfo.processInfo.environment["BETTERCITE_MUTOOL_PATH"],
-           !envPath.isEmpty,
-           isExecutable(atPath: envPath, fileManager: fileManager) {
+        if
+            let envPath = ProcessInfo.processInfo.environment["BETTERCITE_MUTOOL_PATH"],
+            !envPath.isEmpty,
+            isExecutable(atPath: envPath, fileManager: fileManager)
+        {
             return URL(fileURLWithPath: envPath)
         }
 
-        if let bundledTool = Bundle.main.url(forResource: "mutool", withExtension: nil, subdirectory: "Tools"),
-           isExecutable(atPath: bundledTool.path, fileManager: fileManager) {
+        if
+            let bundledTool = Bundle.main.url(forResource: "mutool", withExtension: nil, subdirectory: "Tools"),
+            isExecutable(atPath: bundledTool.path, fileManager: fileManager)
+        {
             return bundledTool
         }
 
-        if let bundledTool = Bundle.main.url(forResource: "mutool", withExtension: nil),
-           isExecutable(atPath: bundledTool.path, fileManager: fileManager) {
+        if
+            let bundledTool = Bundle.main.url(forResource: "mutool", withExtension: nil),
+            isExecutable(atPath: bundledTool.path, fileManager: fileManager)
+        {
             return bundledTool
         }
 
         for path in ["/opt/homebrew/bin/mutool", "/usr/local/bin/mutool", "/usr/bin/mutool"]
-            where isExecutable(atPath: path, fileManager: fileManager) {
+            where isExecutable(atPath: path, fileManager: fileManager)
+        {
             return URL(fileURLWithPath: path)
         }
 
         return nil
-    }
-
-    nonisolated private static func isExecutable(atPath path: String, fileManager: FileManager) -> Bool {
-        fileManager.isExecutableFile(atPath: path)
     }
 
     func extractDOI(from pdfURL: URL) async -> String? {
@@ -123,16 +136,31 @@ actor MuPDFDOIExtractor: PDFDOIExtracting {
         }
 
         #if canImport(PDFKit)
-        if allowPDFKitFallback,
-           let text = extractTextWithPDFKit(from: pdfURL) {
-            let identifiers = await orderedIdentifiers(in: text)
-            if !identifiers.isEmpty {
-                return PDFMetadataCandidates(identifiers: identifiers, titleHints: [])
+            if
+                allowPDFKitFallback,
+                let text = extractTextWithPDFKit(from: pdfURL)
+            {
+                let identifiers = await orderedIdentifiers(in: text)
+                if !identifiers.isEmpty {
+                    return PDFMetadataCandidates(identifiers: identifiers, titleHints: [])
+                }
             }
-        }
         #endif
 
         return PDFMetadataCandidates()
+    }
+
+    // MARK: Private
+
+    private static let drawTimeoutSeconds: TimeInterval = 20
+
+    private let executableURL: URL?
+    private let allowPDFKitFallback: Bool
+    private let verifyWithDOIResolver: Bool
+    private let session: URLSession
+
+    private nonisolated static func isExecutable(atPath path: String, fileManager: FileManager) -> Bool {
+        fileManager.isExecutableFile(atPath: path)
     }
 
     private func extractCandidatesWithMuPDFStructuredText(from pdfURL: URL) async -> PDFMetadataCandidates? {
@@ -269,26 +297,26 @@ actor MuPDFDOIExtractor: PDFDOIExtracting {
     }
 
     #if canImport(PDFKit)
-    private nonisolated func extractTextWithPDFKit(from pdfURL: URL) -> String? {
-        guard let document = PDFDocument(url: pdfURL) else {
-            return nil
-        }
-
-        var chunks = [String]()
-        chunks.reserveCapacity(document.pageCount)
-
-        for index in 0..<document.pageCount {
-            if let pageString = document.page(at: index)?.string, !pageString.isEmpty {
-                chunks.append(pageString)
+        private nonisolated func extractTextWithPDFKit(from pdfURL: URL) -> String? {
+            guard let document = PDFDocument(url: pdfURL) else {
+                return nil
             }
-        }
 
-        guard !chunks.isEmpty else {
-            return nil
-        }
+            var chunks = [String]()
+            chunks.reserveCapacity(document.pageCount)
 
-        return chunks.joined(separator: "\n")
-    }
+            for index in 0 ..< document.pageCount {
+                if let pageString = document.page(at: index)?.string, !pageString.isEmpty {
+                    chunks.append(pageString)
+                }
+            }
+
+            guard !chunks.isEmpty else {
+                return nil
+            }
+
+            return chunks.joined(separator: "\n")
+        }
     #endif
 
     private func verifyDOI(_ doi: String) async -> Bool {
@@ -305,11 +333,10 @@ actor MuPDFDOIExtractor: PDFDOIExtracting {
 
         do {
             let (_, response) = try await session.data(for: request)
-            if let http = response as? HTTPURLResponse, (200..<400).contains(http.statusCode) {
+            if let http = response as? HTTPURLResponse, (200 ..< 400).contains(http.statusCode) {
                 return true
             }
-        }
-        catch {
+        } catch {
             return false
         }
 

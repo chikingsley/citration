@@ -1,7 +1,9 @@
-import SwiftUI
 import CitrationCore
+import SwiftUI
 
 struct ItemRelatedInspectorSection: View {
+    // MARK: Internal
+
     @Bindable var model: AppModel
 
     var body: some View {
@@ -24,7 +26,7 @@ struct ItemRelatedInspectorSection: View {
                 }
 
                 TextField("Relationship note", text: $model.relatedItemNoteDraft, axis: .vertical)
-                    .lineLimit(1...3)
+                    .lineLimit(1 ... 3)
 
                 HStack {
                     Button("Add Link", systemImage: "link.badge.plus") {
@@ -74,7 +76,8 @@ struct ItemRelatedInspectorSection: View {
         }
     }
 
-    @ViewBuilder
+    // MARK: Private
+
     private func relationshipRow(_ relationship: LibraryRelationship) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack {
@@ -103,7 +106,6 @@ struct ItemRelatedInspectorSection: View {
         .padding(.vertical, 4)
     }
 
-    @ViewBuilder
     private func recommendationRow(
         candidate: BCItem,
         recommendation: LibraryRecommendation
@@ -117,7 +119,6 @@ struct ItemRelatedInspectorSection: View {
         }
     }
 
-    @ViewBuilder
     private func discoverySuggestionRow(_ suggestion: WorkDiscoverySuggestion) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack {

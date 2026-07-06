@@ -1,9 +1,11 @@
-import Testing
-import Foundation
 @testable import Citration
+import Foundation
+import Testing
 
 @Suite("PDF DOI Parsing")
 struct PDFDOIExtractorTests {
+    // MARK: Internal
+
     @Test("candidates normalizes DOI from noisy text")
     func candidatesNormalizesDOIFromNoisyText() {
         let text = """
@@ -42,30 +44,31 @@ struct PDFDOIExtractorTests {
         #expect(ISBNParsing.normalizeCandidate("123-4-567-89012-3") == nil)
     }
 
-    @Test("MuPDF extractor finds DOI from sample PDF")
-    func muPDFExtractorFindsDOIFromSamplePDF() async throws {
-        let mutoolPath = "/opt/homebrew/bin/mutool"
-        guard FileManager.default.isExecutableFile(atPath: mutoolPath) else {
-            return
-        }
-
-        let repoRoot = URL(fileURLWithPath: #filePath)
-            .deletingLastPathComponent()
-            .deletingLastPathComponent()
-            .deletingLastPathComponent()
-            .deletingLastPathComponent()
-            .deletingLastPathComponent()
-        let samplePDF = repoRoot
-            .appendingPathComponent("test/tests/data/recognizePDF_test_DOI.pdf")
-        guard FileManager.default.fileExists(atPath: samplePDF.path) else {
-            return
-        }
-
+    @Test(
+        "MuPDF extractor finds DOI from sample PDF",
+        .enabled(if: FileManager.default.isExecutableFile(atPath: Self.mutoolPath)),
+        .enabled(if: FileManager.default.fileExists(atPath: Self.samplePDF.path))
+    )
+    func muPDFExtractorFindsDOIFromSamplePDF() async {
         let extractor = MuPDFDOIExtractor(
-            executableURL: URL(fileURLWithPath: mutoolPath),
+            executableURL: URL(fileURLWithPath: Self.mutoolPath),
             allowPDFKitFallback: false
         )
-        let doi = await extractor.extractDOI(from: samplePDF)
+        let doi = await extractor.extractDOI(from: Self.samplePDF)
         #expect(doi == "10.1371/journal.pntd.0003350")
     }
+
+    // MARK: Private
+
+    private static let mutoolPath = "/opt/homebrew/bin/mutool"
+
+    /// Sample fixture lives in a sibling checkout (~/GitHub/test); the test is
+    /// skipped when it or mutool is absent.
+    private static let samplePDF = URL(fileURLWithPath: #filePath)
+        .deletingLastPathComponent()
+        .deletingLastPathComponent()
+        .deletingLastPathComponent()
+        .deletingLastPathComponent()
+        .deletingLastPathComponent()
+        .appendingPathComponent("test/tests/data/recognizePDF_test_DOI.pdf")
 }

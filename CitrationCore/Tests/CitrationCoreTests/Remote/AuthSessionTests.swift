@@ -1,20 +1,20 @@
-import Testing
-import Foundation
 @testable import CitrationCore
+import Foundation
+import Testing
 
 @Suite("AuthSession")
 struct AuthSessionTests {
     @Test("reports expiration against reference date")
     func expirationChecks() {
-        let now = Date(timeIntervalSince1970: 1_000)
+        let now = Date(timeIntervalSince1970: 1000)
         let session = AuthSession(
             accessToken: "access",
             refreshToken: "refresh",
-            expiresAt: Date(timeIntervalSince1970: 1_500)
+            expiresAt: Date(timeIntervalSince1970: 1500)
         )
 
         #expect(session.isExpired(referenceDate: now) == false)
-        #expect(session.isExpired(referenceDate: Date(timeIntervalSince1970: 1_500)) == true)
+        #expect(session.isExpired(referenceDate: Date(timeIntervalSince1970: 1500)) == true)
     }
 
     @Test("in-memory session store supports load/save/clear")
@@ -25,7 +25,7 @@ struct AuthSessionTests {
         let session = AuthSession(
             accessToken: "token-a",
             refreshToken: "token-r",
-            expiresAt: Date(timeIntervalSince1970: 10_000)
+            expiresAt: Date(timeIntervalSince1970: 10000)
         )
 
         await store.saveSession(session)

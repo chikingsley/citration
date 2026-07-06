@@ -1,5 +1,5 @@
-import Foundation
 import CitrationCore
+import Foundation
 
 extension AppModel {
     static func bootstrap() -> AppModel {
@@ -7,8 +7,7 @@ extension AppModel {
         do {
             let storeURL = try CitrationCorePaths.defaultItemStoreURL()
             store = try SwiftDataItemStore(storeURL: storeURL)
-        }
-        catch {
+        } catch {
             assertionFailure("Failed to initialize SwiftData item store: \(error)")
             store = InMemoryItemStore()
         }
@@ -16,7 +15,7 @@ extension AppModel {
         let providers: [any MetadataProvider] = [
             ArXivMetadataProvider(),
             CrossrefDOIMetadataProvider(),
-            OpenLibraryISBNMetadataProvider()
+            OpenLibraryISBNMetadataProvider(),
         ]
         let metadataRegistry = MetadataProviderRegistry(providers: providers)
         let citationFormatter = StubCitationFormatter()

@@ -1,30 +1,25 @@
-import SwiftUI
 import CitrationCore
+import SwiftUI
+
+// MARK: - TagSummary
 
 private struct TagSummary: Identifiable {
     let tag: String
     let count: Int
 
-    var id: String { tag.lowercased() }
+    var id: String {
+        tag.lowercased()
+    }
 }
 
-struct TagFilterPanel: View {
-    let items: [BCItem]
-    @Binding var selectedTag: String?
+// MARK: - TagFilterPanel
 
-    private var tagSummaries: [TagSummary] {
-        Dictionary(grouping: items.flatMap(\.tags)) { tag in
-            tag.lowercased()
-        }
-        .values
-        .compactMap { tags in
-            guard let displayTag = tags.first else { return nil }
-            return TagSummary(tag: displayTag, count: tags.count)
-        }
-        .sorted { lhs, rhs in
-            lhs.tag.localizedCaseInsensitiveCompare(rhs.tag) == .orderedAscending
-        }
-    }
+struct TagFilterPanel: View {
+    // MARK: Internal
+
+    let items: [BCItem]
+
+    @Binding var selectedTag: String?
 
     var body: some View {
         VStack(spacing: 0) {
@@ -39,6 +34,24 @@ struct TagFilterPanel: View {
             }
             Divider()
             footer
+        }
+    }
+
+    // MARK: Private
+
+    private var tagSummaries: [TagSummary] {
+        Dictionary(grouping: items.flatMap(\.tags)) { tag in
+            tag.lowercased()
+        }
+        .values
+        .compactMap { tags in
+            guard let displayTag = tags.first else {
+                return nil
+            }
+            return TagSummary(tag: displayTag, count: tags.count)
+        }
+        .sorted { lhs, rhs in
+            lhs.tag.localizedCaseInsensitiveCompare(rhs.tag) == .orderedAscending
         }
     }
 

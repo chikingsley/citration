@@ -1,5 +1,5 @@
-import Foundation
 import CitrationCore
+import Foundation
 
 extension AppModel {
     func openReader(for attachment: LocalAttachment) {
@@ -44,8 +44,7 @@ extension AppModel {
             activeReaderProgress = try await readerProgressStore.progress(
                 for: activeReaderAttachment.objectKey
             )
-        }
-        catch {
+        } catch {
             activeReaderProgress = nil
             statusMessage = "Failed to load reader position"
         }
@@ -59,8 +58,7 @@ extension AppModel {
         Task {
             do {
                 activeReaderProgress = try await readerProgressStore.upsert(progress)
-            }
-            catch {
+            } catch {
                 statusMessage = "Failed to save reader position"
             }
         }

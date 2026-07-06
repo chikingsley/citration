@@ -1,6 +1,6 @@
+@testable import CitrationCore
 import Foundation
 import Testing
-@testable import CitrationCore
 
 struct LibraryModelsTests {
     @Test("infers document formats from MIME type and extension")

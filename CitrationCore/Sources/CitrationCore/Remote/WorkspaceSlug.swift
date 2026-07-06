@@ -1,5 +1,7 @@
 import Foundation
 
+// MARK: - WorkspaceSlugError
+
 public enum WorkspaceSlugError: Error, Equatable, Sendable {
     case empty
     case invalidLength(Int)
@@ -8,16 +10,10 @@ public enum WorkspaceSlugError: Error, Equatable, Sendable {
     case reserved(String)
 }
 
+// MARK: - WorkspaceSlug
+
 public struct WorkspaceSlug: Codable, Hashable, Sendable, CustomStringConvertible {
-    public static let defaultReservedWords: Set<String> = [
-        "www", "api", "admin", "status", "support", "help", "app", "root"
-    ]
-
-    public let value: String
-
-    public var description: String {
-        value
-    }
+    // MARK: Lifecycle
 
     public init(_ rawValue: String, reservedWords: Set<String> = WorkspaceSlug.defaultReservedWords) throws {
         let normalized = rawValue
@@ -28,7 +24,7 @@ public struct WorkspaceSlug: Codable, Hashable, Sendable, CustomStringConvertibl
             throw WorkspaceSlugError.empty
         }
 
-        guard (3...63).contains(normalized.count) else {
+        guard (3 ... 63).contains(normalized.count) else {
             throw WorkspaceSlugError.invalidLength(normalized.count)
         }
 
@@ -48,6 +44,18 @@ public struct WorkspaceSlug: Codable, Hashable, Sendable, CustomStringConvertibl
             throw WorkspaceSlugError.reserved(normalized)
         }
 
-        self.value = normalized
+        value = normalized
+    }
+
+    // MARK: Public
+
+    public static let defaultReservedWords: Set<String> = [
+        "www", "api", "admin", "status", "support", "help", "app", "root",
+    ]
+
+    public let value: String
+
+    public var description: String {
+        value
     }
 }

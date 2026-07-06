@@ -1,9 +1,11 @@
-import Foundation
-import Testing
 @testable import Citration
 import CitrationCore
+import Foundation
+import Testing
 
 struct AnnotationStoreTests {
+    // MARK: Internal
+
     @Test("stores and lists annotations on disk")
     func storesAndListsAnnotationsOnDisk() async throws {
         let directory = makeTempDirectory()
@@ -71,6 +73,8 @@ struct AnnotationStoreTests {
         let annotations = try await store.listAnnotations(itemID: itemID)
         #expect(annotations.isEmpty)
     }
+
+    // MARK: Private
 
     private func makeTempDirectory() -> URL {
         let directory = FileManager.default.temporaryDirectory

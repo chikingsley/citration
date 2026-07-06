@@ -1,7 +1,9 @@
-import Testing
-import Foundation
 @testable import Citration
 import CitrationCore
+import Foundation
+import Testing
+
+// MARK: - AttachmentStoreTests
 
 @Suite("LocalAttachmentStore")
 struct AttachmentStoreTests {

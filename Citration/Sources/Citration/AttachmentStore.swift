@@ -1,9 +1,10 @@
+import CitrationCore
 import Foundation
 import UniformTypeIdentifiers
-import CitrationCore
 
-struct LocalAttachment: Identifiable, Hashable, Sendable {
-    var id: String { objectKey }
+// MARK: - LocalAttachment
+
+struct LocalAttachment: Identifiable, Hashable {
     let itemID: UUID
     let fileName: String
     let objectKey: String
@@ -12,10 +13,16 @@ struct LocalAttachment: Identifiable, Hashable, Sendable {
     let size: Int64
     let createdAt: Date
 
+    var id: String {
+        objectKey
+    }
+
     var documentFormat: DocumentFormat {
         DocumentFormat.infer(fileName: fileName, contentType: contentType)
     }
 }
+
+// MARK: - LocalAttachmentStorePaths
 
 enum LocalAttachmentStorePaths {
     static func defaultBaseDirectory(
@@ -36,15 +43,18 @@ enum LocalAttachmentStorePaths {
     }
 }
 
+// MARK: - LocalAttachmentStore
+
 actor LocalAttachmentStore {
-    private let baseDirectory: URL
-    private let fileManager: FileManager
+    // MARK: Lifecycle
 
     init(baseDirectory: URL, fileManager: FileManager = .default) throws {
         self.baseDirectory = baseDirectory
         self.fileManager = fileManager
         try fileManager.createDirectory(at: baseDirectory, withIntermediateDirectories: true)
     }
+
+    // MARK: Internal
 
     func importFile(from sourceURL: URL, for item: BCItem) throws -> LocalAttachment {
         guard sourceURL.isFileURL else {
@@ -109,6 +119,11 @@ actor LocalAttachmentStore {
         }
     }
 
+    // MARK: Private
+
+    private let baseDirectory: URL
+    private let fileManager: FileManager
+
     private func directoryURL(for item: BCItem) -> URL {
         let titleSlug = slugComponent(item.title)
         let safeTitle = titleSlug.isEmpty ? "item" : titleSlug
@@ -119,11 +134,13 @@ actor LocalAttachmentStore {
     private func resolvedDirectoryURL(for itemID: UUID) -> URL {
         let prefix = "\(itemID.uuidString)--"
 
-        if let entries = try? fileManager.contentsOfDirectory(
-            at: baseDirectory,
-            includingPropertiesForKeys: [.isDirectoryKey],
-            options: [.skipsHiddenFiles]
-        ) {
+        if
+            let entries = try? fileManager.contentsOfDirectory(
+                at: baseDirectory,
+                includingPropertiesForKeys: [.isDirectoryKey],
+                options: [.skipsHiddenFiles]
+            )
+        {
             if let match = entries.first(where: { $0.lastPathComponent.hasPrefix(prefix) }) {
                 return match
             }

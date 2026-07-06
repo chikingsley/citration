@@ -1,6 +1,6 @@
+import CitrationCore
 import SwiftUI
 import UniformTypeIdentifiers
-import CitrationCore
 
 struct RootLibrarySidebar: View {
     @Bindable var model: AppModel
@@ -8,6 +8,7 @@ struct RootLibrarySidebar: View {
     @Binding var selectedTag: String?
     @Binding var libraryExpanded: Bool
     @Binding var isImportDropTargeted: Bool
+
     let importDragBorderPhase: CGFloat
     let onDropURLs: ([URL]) -> Void
     let onRemoveCollection: (LibraryCollection) -> Void
@@ -24,8 +25,7 @@ struct RootLibrarySidebar: View {
                     if model.collections.isEmpty {
                         Text("No collections")
                             .foregroundStyle(.secondary)
-                    }
-                    else {
+                    } else {
                         ForEach(model.collections) { collection in
                             Label(collection.name, systemImage: "folder.fill")
                                 .tag(LibrarySelectionIdentifier.value(for: collection))

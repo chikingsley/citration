@@ -1,8 +1,9 @@
-import SwiftUI
 import CitrationCore
+import SwiftUI
 
 struct ItemTagsInspectorSection: View {
     @Bindable var model: AppModel
+
     let item: BCItem
 
     var body: some View {

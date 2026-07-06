@@ -1,22 +1,22 @@
+@testable import CitrationCore
 import Foundation
 import Testing
-@testable import CitrationCore
 
 @Suite("CitationExporter")
 struct CitationExportTests {
     @Test("exports CSL JSON from bibliographic item")
     func exportsCSLJSONFromBibliographicItem() throws {
-        let item = BCItem(
-            id: try #require(UUID(uuidString: "AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE")),
+        let item = try BCItem(
+            id: #require(UUID(uuidString: "AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE")),
             title: "  A   Great   Paper  ",
             identifiers: [
                 Identifier(type: .doi, value: "10.1234/example"),
-                Identifier(type: .url, value: "https://example.test/paper")
+                Identifier(type: .url, value: "https://example.test/paper"),
             ],
             itemType: .article,
             creators: [
                 Creator(givenName: "Ada", familyName: "Lovelace"),
-                Creator(literalName: "Citration Lab")
+                Creator(literalName: "Citration Lab"),
             ],
             publicationYear: 1843
         )
@@ -37,7 +37,7 @@ struct CitationExportTests {
             title: "A Great Paper",
             identifiers: [
                 Identifier(type: .doi, value: "10.1234/example"),
-                Identifier(type: .arxiv, value: "2401.12345")
+                Identifier(type: .arxiv, value: "2401.12345"),
             ],
             itemType: .preprint,
             creators: [Creator(givenName: "Ada", familyName: "Lovelace")],

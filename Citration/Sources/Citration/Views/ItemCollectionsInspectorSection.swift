@@ -1,8 +1,11 @@
-import SwiftUI
 import CitrationCore
+import SwiftUI
 
 struct ItemCollectionsInspectorSection: View {
+    // MARK: Internal
+
     @Bindable var model: AppModel
+
     let item: BCItem
 
     var body: some View {
@@ -23,6 +26,8 @@ struct ItemCollectionsInspectorSection: View {
             }
         }
     }
+
+    // MARK: Private
 
     private func membershipBinding(for collection: LibraryCollection) -> Binding<Bool> {
         Binding {

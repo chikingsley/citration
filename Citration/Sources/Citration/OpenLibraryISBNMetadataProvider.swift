@@ -1,16 +1,10 @@
-import Foundation
 import CitrationCore
+import Foundation
+
+// MARK: - OpenLibraryISBNMetadataProvider
 
 struct OpenLibraryISBNMetadataProvider: MetadataProvider {
-    let name: String = "openlibrary-isbn"
-
-    private static let defaultEndpointBaseURL = requireEndpointURL(
-        "https://openlibrary.org/isbn/",
-        providerName: "OpenLibrary ISBN"
-    )
-
-    private let session: URLSession
-    private let endpointBaseURL: URL
+    // MARK: Lifecycle
 
     init(
         session: URLSession = .shared,
@@ -19,6 +13,10 @@ struct OpenLibraryISBNMetadataProvider: MetadataProvider {
         self.session = session
         self.endpointBaseURL = endpointBaseURL
     }
+
+    // MARK: Internal
+
+    let name: String = "openlibrary-isbn"
 
     func resolve(_ request: MetadataResolutionRequest) async throws -> [CanonicalMetadataRecord] {
         guard
@@ -37,7 +35,7 @@ struct OpenLibraryISBNMetadataProvider: MetadataProvider {
         let (data, response) = try await session.data(for: request)
         guard
             let httpResponse = response as? HTTPURLResponse,
-            (200..<300).contains(httpResponse.statusCode),
+            (200 ..< 300).contains(httpResponse.statusCode),
             let payload = try? JSONDecoder().decode(OpenLibraryISBNResponse.self, from: data)
         else {
             return []
@@ -57,7 +55,7 @@ struct OpenLibraryISBNMetadataProvider: MetadataProvider {
                 sourceRecordID: isbn,
                 fieldSources: [
                     "title": "openlibrary.title",
-                    "publicationYear": "openlibrary.publish_date"
+                    "publicationYear": "openlibrary.publish_date",
                 ]
             ),
             rawPayload: data
@@ -65,6 +63,16 @@ struct OpenLibraryISBNMetadataProvider: MetadataProvider {
 
         return [record]
     }
+
+    // MARK: Private
+
+    private static let defaultEndpointBaseURL = requireEndpointURL(
+        "https://openlibrary.org/isbn/",
+        providerName: "OpenLibrary ISBN"
+    )
+
+    private let session: URLSession
+    private let endpointBaseURL: URL
 
     private func firstYear(in raw: String) -> Int? {
         let pattern = #"(19|20)\d{2}"#
@@ -83,12 +91,14 @@ struct OpenLibraryISBNMetadataProvider: MetadataProvider {
     }
 }
 
-private struct OpenLibraryISBNResponse: Decodable {
-    let title: String
-    let publishDate: String?
+// MARK: - OpenLibraryISBNResponse
 
+private struct OpenLibraryISBNResponse: Decodable {
     enum CodingKeys: String, CodingKey {
         case title
         case publishDate = "publish_date"
     }
+
+    let title: String
+    let publishDate: String?
 }

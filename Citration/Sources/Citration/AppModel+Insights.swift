@@ -36,8 +36,7 @@ extension AppModel {
                 return
             }
             selectedItemDiscoverySuggestions = suggestions
-        }
-        catch {
+        } catch {
             guard selectedItemID == selectedID else {
                 return
             }

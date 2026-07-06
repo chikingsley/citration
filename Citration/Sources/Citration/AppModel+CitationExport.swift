@@ -14,8 +14,7 @@ extension AppModel {
             let result = try CitationExporter().export(items: [selectedItem], format: format)
             citationExportText = result.text
             statusMessage = "Prepared \(format.displayName)"
-        }
-        catch {
+        } catch {
             citationExportText = ""
             statusMessage = "Failed to export citation"
         }

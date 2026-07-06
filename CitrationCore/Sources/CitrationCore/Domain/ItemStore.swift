@@ -1,19 +1,25 @@
 import Foundation
 
+// MARK: - BCItemStore
+
 public protocol BCItemStore: Sendable {
     func listItems() async -> [BCItem]
     func upsert(_ item: BCItem) async
     func removeItem(id: UUID) async
 }
 
+// MARK: - InMemoryItemStore
+
 public actor InMemoryItemStore: BCItemStore {
-    private var itemsByID: [UUID: BCItem]
+    // MARK: Lifecycle
 
     public init(initialItems: [BCItem] = []) {
-        self.itemsByID = Dictionary(uniqueKeysWithValues: initialItems.map { ($0.id, $0) })
+        itemsByID = Dictionary(uniqueKeysWithValues: initialItems.map { ($0.id, $0) })
     }
 
-    public func listItems() async -> [BCItem] {
+    // MARK: Public
+
+    public func listItems() -> [BCItem] {
         itemsByID.values.sorted { lhs, rhs in
             if lhs.updatedAt == rhs.updatedAt {
                 return lhs.title.localizedCaseInsensitiveCompare(rhs.title) == .orderedAscending
@@ -22,7 +28,7 @@ public actor InMemoryItemStore: BCItemStore {
         }
     }
 
-    public func upsert(_ item: BCItem) async {
+    public func upsert(_ item: BCItem) {
         var next = item
         next.updatedAt = .now
         if let existing = itemsByID[item.id] {
@@ -31,7 +37,11 @@ public actor InMemoryItemStore: BCItemStore {
         itemsByID[next.id] = next
     }
 
-    public func removeItem(id: UUID) async {
+    public func removeItem(id: UUID) {
         itemsByID[id] = nil
     }
+
+    // MARK: Private
+
+    private var itemsByID: [UUID: BCItem]
 }

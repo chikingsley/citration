@@ -1,5 +1,7 @@
-import Foundation
 import CitrationCore
+import Foundation
+
+// MARK: - LocalNoteStorePaths
 
 enum LocalNoteStorePaths {
     static func defaultStoreURL(
@@ -19,11 +21,10 @@ enum LocalNoteStorePaths {
     }
 }
 
+// MARK: - LocalNoteStore
+
 actor LocalNoteStore {
-    private let storeURL: URL
-    private let fileManager: FileManager
-    private let encoder: JSONEncoder
-    private let decoder: JSONDecoder
+    // MARK: Lifecycle
 
     init(storeURL: URL, fileManager: FileManager = .default) throws {
         self.storeURL = storeURL
@@ -32,7 +33,7 @@ actor LocalNoteStore {
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
         self.encoder = encoder
-        self.decoder = JSONDecoder()
+        decoder = JSONDecoder()
 
         let directory = storeURL.deletingLastPathComponent()
         try fileManager.createDirectory(at: directory, withIntermediateDirectories: true)
@@ -40,6 +41,8 @@ actor LocalNoteStore {
             try Data("[]".utf8).write(to: storeURL)
         }
     }
+
+    // MARK: Internal
 
     func listNotes(itemID: UUID? = nil) throws -> [LibraryNote] {
         try loadAll()
@@ -79,12 +82,21 @@ actor LocalNoteStore {
 
     func removeNotes(itemIDs: [UUID]) throws {
         let idsToRemove = Set(itemIDs)
-        guard !idsToRemove.isEmpty else { return }
+        guard !idsToRemove.isEmpty else {
+            return
+        }
 
         var notes = try loadAll()
         notes.removeAll { idsToRemove.contains($0.itemID) }
         try saveAll(notes)
     }
+
+    // MARK: Private
+
+    private let storeURL: URL
+    private let fileManager: FileManager
+    private let encoder: JSONEncoder
+    private let decoder: JSONDecoder
 
     private func loadAll() throws -> [LibraryNote] {
         guard fileManager.fileExists(atPath: storeURL.path) else {

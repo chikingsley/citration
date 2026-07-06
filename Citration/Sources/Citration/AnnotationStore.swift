@@ -1,5 +1,7 @@
-import Foundation
 import CitrationCore
+import Foundation
+
+// MARK: - LocalAnnotationStorePaths
 
 enum LocalAnnotationStorePaths {
     static func defaultStoreURL(
@@ -19,11 +21,10 @@ enum LocalAnnotationStorePaths {
     }
 }
 
+// MARK: - LocalAnnotationStore
+
 actor LocalAnnotationStore {
-    private let storeURL: URL
-    private let fileManager: FileManager
-    private let encoder: JSONEncoder
-    private let decoder: JSONDecoder
+    // MARK: Lifecycle
 
     init(storeURL: URL, fileManager: FileManager = .default) throws {
         self.storeURL = storeURL
@@ -32,7 +33,7 @@ actor LocalAnnotationStore {
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
         self.encoder = encoder
-        self.decoder = JSONDecoder()
+        decoder = JSONDecoder()
 
         let directory = storeURL.deletingLastPathComponent()
         try fileManager.createDirectory(at: directory, withIntermediateDirectories: true)
@@ -40,6 +41,8 @@ actor LocalAnnotationStore {
             try Data("[]".utf8).write(to: storeURL)
         }
     }
+
+    // MARK: Internal
 
     func listAnnotations(itemID: UUID, attachmentKey: String? = nil) throws -> [LibraryAnnotation] {
         try loadAll()
@@ -76,6 +79,13 @@ actor LocalAnnotationStore {
         annotations.removeAll { $0.id == id }
         try saveAll(annotations)
     }
+
+    // MARK: Private
+
+    private let storeURL: URL
+    private let fileManager: FileManager
+    private let encoder: JSONEncoder
+    private let decoder: JSONDecoder
 
     private func loadAll() throws -> [LibraryAnnotation] {
         guard fileManager.fileExists(atPath: storeURL.path) else {

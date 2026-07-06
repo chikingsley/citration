@@ -1,5 +1,5 @@
-import Foundation
 import CitrationCore
+import Foundation
 
 extension AppModel {
     func prepareNewItemNote() {
@@ -22,8 +22,7 @@ extension AppModel {
 
         do {
             selectedItemNotes = try await noteStore.listNotes(itemID: selectedItemID)
-        }
-        catch {
+        } catch {
             selectedItemNotes = []
             statusMessage = "Failed to load notes"
         }
@@ -49,8 +48,7 @@ extension AppModel {
                 itemNoteDraft = ""
                 await refreshSelectedItemNotes()
                 statusMessage = "Added note"
-            }
-            catch {
+            } catch {
                 statusMessage = "Failed to add note"
             }
         }
@@ -62,8 +60,7 @@ extension AppModel {
                 try await noteStore.remove(id: note.id)
                 await refreshSelectedItemNotes()
                 statusMessage = "Removed note"
-            }
-            catch {
+            } catch {
                 statusMessage = "Failed to remove note"
             }
         }

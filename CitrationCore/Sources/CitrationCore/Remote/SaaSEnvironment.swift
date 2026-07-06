@@ -1,12 +1,15 @@
 import Foundation
 
+// MARK: - SaaSEnvironmentError
+
 public enum SaaSEnvironmentError: Error, Equatable, Sendable {
     case invalidRootDomain
 }
 
+// MARK: - SaaSEnvironment
+
 public struct SaaSEnvironment: Codable, Equatable, Sendable {
-    public let rootDomain: String
-    public let apiBaseURL: URL
+    // MARK: Lifecycle
 
     public init(rootDomain: String, apiBaseURL: URL? = nil) throws {
         let normalizedDomain = rootDomain
@@ -31,6 +34,11 @@ public struct SaaSEnvironment: Codable, Equatable, Sendable {
         }
     }
 
+    // MARK: Public
+
+    public let rootDomain: String
+    public let apiBaseURL: URL
+
     public func workspaceHost(for slug: WorkspaceSlug) -> String {
         "\(slug.value).\(rootDomain)"
     }
@@ -52,13 +60,17 @@ public struct SaaSEnvironment: Codable, Equatable, Sendable {
             .appending(path: slug.value)
     }
 
+    // MARK: Private
+
     private static func isValidRootDomain(_ value: String) -> Bool {
-        guard value.count >= 3,
-              value.contains("."),
-              !value.hasPrefix("."),
-              !value.hasSuffix("."),
-              !value.contains("/"),
-              !value.contains(" ") else {
+        guard
+            value.count >= 3,
+            value.contains("."),
+            !value.hasPrefix("."),
+            !value.hasSuffix("."),
+            !value.contains("/"),
+            !value.contains(" ")
+        else {
             return false
         }
 

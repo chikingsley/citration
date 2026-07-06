@@ -1,5 +1,5 @@
-import Foundation
 import CitrationCore
+import Foundation
 
 extension AppModel {
     var allTags: [String] {

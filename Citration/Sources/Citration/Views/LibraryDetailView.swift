@@ -1,10 +1,13 @@
-import SwiftUI
 import CitrationCore
+import SwiftUI
 
 struct LibraryDetailView: View {
+    // MARK: Internal
+
     @Bindable var model: AppModel
     let filteredItems: [BCItem]
     @Binding var selectedItemIDs: Set<UUID>
+
     let onSelectionChange: (Set<UUID>) -> Void
 
     var body: some View {
@@ -21,15 +24,13 @@ struct LibraryDetailView: View {
                         model.closeReader()
                     }
                 )
-            }
-            else if filteredItems.isEmpty {
+            } else if filteredItems.isEmpty {
                 ContentUnavailableView(
                     "No Items",
                     systemImage: "tray",
                     description: Text("Your library is empty. Add items to get started.")
                 )
-            }
-            else {
+            } else {
                 Table(filteredItems, selection: $selectedItemIDs) {
                     TableColumn("Title") { item in
                         Label(item.title.bcCollapsedWhitespace(), systemImage: "doc.text")
@@ -54,6 +55,8 @@ struct LibraryDetailView: View {
             }
         }
     }
+
+    // MARK: Private
 
     private func authorSummary(for item: BCItem) -> String {
         let names = item.creators.map(\.displayName).filter { !$0.isEmpty }

@@ -1,71 +1,11 @@
+import CitrationCore
 import Foundation
 import Observation
-import CitrationCore
 
 @MainActor
 @Observable
 final class AppModel {
-    var route: Route = .workspace
-    var doiInput: String = ""
-    var isResolvingDOI: Bool = false
-    var isImportingAttachments: Bool = false
-    var reprocessingItemID: UUID?
-    var isReprocessingAttachments: Bool { reprocessingItemID != nil }
-    var statusMessage: String = "Ready"
-    var metadataWarnings: [String] = []
-    var metadataConflicts: [MetadataResolutionConflict] = []
-    var hasMetadataDiagnostics: Bool {
-        !metadataWarnings.isEmpty || !metadataConflicts.isEmpty
-    }
-
-    var items: [BCItem] = []
-    var selectedItemID: UUID?
-    var citationPreview: String = "Select an item to preview citation output"
-    var citationExportFormat: CitationExportFormat = .cslJSON
-    var citationExportText: String = ""
-    var selectedItemAttachments: [LocalAttachment] = []
-    var activeReaderAttachment: LocalAttachment?
-    var activeReaderProgress: ReaderProgress?
-    var activeReaderAnnotations: [LibraryAnnotation] = []
-    var readerNoteDraft: String = ""
-    var itemNoteDraft: String = ""
-    var selectedItemNotes: [LibraryNote] = []
-    var tagDraft: String = ""
-    var collections: [LibraryCollection] = []
-    var collectionMemberships: [LibraryCollectionMembership] = []
-    var selectedCollectionID: UUID?
-    var selectedItemCollectionIDs = Set<UUID>()
-    var libraryRelationships: [LibraryRelationship] = []
-    var selectedItemRelationships: [LibraryRelationship] = []
-    var selectedItemDiscoverySuggestions: [WorkDiscoverySuggestion] = []
-    var isLoadingDiscoverySuggestions: Bool = false
-    var openAlexAPIKeyDraft: String = ""
-    var hasOpenAlexAPIKey: Bool = false
-    var isSavingOpenAlexAPIKey: Bool = false
-    var relatedItemTargetID: UUID?
-    var relatedItemKind: LibraryRelationshipKind = .userLinked
-    var relatedItemNoteDraft: String = ""
-    var storageConnectors: [StorageConnector]
-
-    // Auth state
-    var isSignedIn: Bool = false
-    var currentUser: User?
-    private(set) var authService: AuthService?
-    private(set) var workspaceService: WorkspaceService?
-    private let sessionStore: AuthSessionStore
-
-    let store: any BCItemStore
-    let metadataRegistry: MetadataProviderRegistry
-    private let citationFormatter: any CitationFormattingEngine
-    let attachmentStore: LocalAttachmentStore
-    let annotationStore: LocalAnnotationStore
-    let collectionStore: LocalCollectionStore
-    let noteStore: LocalNoteStore
-    let relationshipStore: LocalRelationshipStore
-    let readerProgressStore: LocalReaderProgressStore
-    let pdfDOIExtractor: any PDFDOIExtracting
-    let relatedWorkDiscoveryProvider: any RelatedWorkDiscoveryProvider
-    let openAlexAPIKeyStore: any OpenAlexAPIKeyStore
+    // MARK: Lifecycle
 
     init(
         store: any BCItemStore,
@@ -108,42 +48,93 @@ final class AppModel {
         }
     }
 
-    // MARK: - Auth
+    // MARK: Internal
 
-    private func setupAuthServices() async {
-        guard let environment = try? SaaSEnvironment(rootDomain: "citration.app") else { return }
+    var route: Route = .workspace
+    var doiInput: String = ""
+    var isResolvingDOI: Bool = false
+    var isImportingAttachments: Bool = false
+    var reprocessingItemID: UUID?
+    var statusMessage: String = "Ready"
+    var metadataWarnings: [String] = []
+    var metadataConflicts: [MetadataResolutionConflict] = []
+    var items: [BCItem] = []
+    var selectedItemID: UUID?
+    var citationPreview: String = "Select an item to preview citation output"
+    var citationExportFormat: CitationExportFormat = .cslJSON
+    var citationExportText: String = ""
+    var selectedItemAttachments: [LocalAttachment] = []
+    var activeReaderAttachment: LocalAttachment?
+    var activeReaderProgress: ReaderProgress?
+    var activeReaderAnnotations: [LibraryAnnotation] = []
+    var readerNoteDraft: String = ""
+    var itemNoteDraft: String = ""
+    var selectedItemNotes: [LibraryNote] = []
+    var tagDraft: String = ""
+    var collections: [LibraryCollection] = []
+    var collectionMemberships: [LibraryCollectionMembership] = []
+    var selectedCollectionID: UUID?
+    var selectedItemCollectionIDs: Set<UUID> = []
+    var libraryRelationships: [LibraryRelationship] = []
+    var selectedItemRelationships: [LibraryRelationship] = []
+    var selectedItemDiscoverySuggestions: [WorkDiscoverySuggestion] = []
+    var isLoadingDiscoverySuggestions: Bool = false
+    var openAlexAPIKeyDraft: String = ""
+    var hasOpenAlexAPIKey: Bool = false
+    var isSavingOpenAlexAPIKey: Bool = false
+    var relatedItemTargetID: UUID?
+    var relatedItemKind: LibraryRelationshipKind = .userLinked
+    var relatedItemNoteDraft: String = ""
+    var storageConnectors: [StorageConnector]
 
-        let apiClient = APIClient(environment: environment, sessionStore: sessionStore)
-        let authService = AuthService(apiClient: apiClient, sessionStore: sessionStore, environment: environment)
-        let workspaceService = WorkspaceService(apiClient: apiClient)
+    // Auth state
+    var isSignedIn: Bool = false
+    var currentUser: User?
+    private(set) var authService: AuthService?
+    private(set) var workspaceService: WorkspaceService?
+    let store: any BCItemStore
+    let metadataRegistry: MetadataProviderRegistry
+    let attachmentStore: LocalAttachmentStore
+    let annotationStore: LocalAnnotationStore
+    let collectionStore: LocalCollectionStore
+    let noteStore: LocalNoteStore
+    let relationshipStore: LocalRelationshipStore
+    let readerProgressStore: LocalReaderProgressStore
+    let pdfDOIExtractor: any PDFDOIExtracting
+    let relatedWorkDiscoveryProvider: any RelatedWorkDiscoveryProvider
+    let openAlexAPIKeyStore: any OpenAlexAPIKeyStore
 
-        self.authService = authService
-        self.workspaceService = workspaceService
+    var isReprocessingAttachments: Bool {
+        reprocessingItemID != nil
+    }
 
-        // Check for existing session
-        isSignedIn = await authService.hasValidSession()
-        if isSignedIn {
-            currentUser = try? await authService.currentUser()
+    var hasMetadataDiagnostics: Bool {
+        !metadataWarnings.isEmpty || !metadataConflicts.isEmpty
+    }
+
+    var selectedItem: BCItem? {
+        guard let selectedItemID else {
+            return nil
         }
+        return items.first { $0.id == selectedItemID }
     }
 
     func signInWithApple(identityToken: String) async throws {
-        guard let authService else { return }
+        guard let authService else {
+            return
+        }
         _ = try await authService.signInWithApple(identityToken: identityToken)
         isSignedIn = true
         currentUser = try? await authService.currentUser()
     }
 
     func signOut() async {
-        guard let authService else { return }
+        guard let authService else {
+            return
+        }
         try? await authService.signOut()
         isSignedIn = false
         currentUser = nil
-    }
-
-    var selectedItem: BCItem? {
-        guard let selectedItemID else { return nil }
-        return items.first { $0.id == selectedItemID }
     }
 
     func refreshItems() async {
@@ -172,14 +163,18 @@ final class AppModel {
     }
 
     func removeSelectedItem() {
-        guard let selectedItemID else { return }
+        guard let selectedItemID else {
+            return
+        }
 
         removeItems(ids: [selectedItemID])
     }
 
-	func removeItems(ids: [UUID]) {
-		let uniqueIDs = Array(Set(ids))
-		guard !uniqueIDs.isEmpty else { return }
+    func removeItems(ids: [UUID]) {
+        let uniqueIDs = Array(Set(ids))
+        guard !uniqueIDs.isEmpty else {
+            return
+        }
 
         Task { @MainActor in
             for id in uniqueIDs {
@@ -197,9 +192,9 @@ final class AppModel {
                 statusMessage = "Removed item"
             } else {
                 statusMessage = "Removed \(uniqueIDs.count) items"
-			}
-		}
-	}
+            }
+        }
+    }
 
     func selectItem(id: UUID?) {
         if selectedItemID != id {
@@ -227,6 +222,33 @@ final class AppModel {
         }
     }
 
+    // MARK: Private
+
+    private let sessionStore: AuthSessionStore
+
+    private let citationFormatter: any CitationFormattingEngine
+
+    // MARK: - Auth
+
+    private func setupAuthServices() async {
+        guard let environment = try? SaaSEnvironment(rootDomain: "citration.app") else {
+            return
+        }
+
+        let apiClient = APIClient(environment: environment, sessionStore: sessionStore)
+        let authService = AuthService(apiClient: apiClient, sessionStore: sessionStore, environment: environment)
+        let workspaceService = WorkspaceService(apiClient: apiClient)
+
+        self.authService = authService
+        self.workspaceService = workspaceService
+
+        // Check for existing session
+        isSignedIn = await authService.hasValidSession()
+        if isSignedIn {
+            currentUser = try? await authService.currentUser()
+        }
+    }
+
     private func renderCitationPreviewForSelection() async {
         guard let selectedItem else {
             citationPreview = "Select an item to preview citation output"
@@ -242,8 +264,7 @@ final class AppModel {
                 options: CitationRenderOptions(format: .plainText)
             )
             citationPreview = output.text
-        }
-        catch {
+        } catch {
             citationPreview = "Citation preview failed: \(error.localizedDescription)"
         }
     }

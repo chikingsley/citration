@@ -3,10 +3,14 @@ import SwiftUI
 import UniformTypeIdentifiers
 
 extension UTType {
-    static let citrationEPUB = UTType(importedAs: "org.idpf.epub-container")
+    static let citrationEPUB: UTType = .init(importedAs: "org.idpf.epub-container")
 }
 
+// MARK: - FileURLDropDelegate
+
 struct FileURLDropDelegate: DropDelegate {
+    // MARK: Internal
+
     let onTargetedChange: (Bool) -> Void
     let onDropURLs: ([URL]) -> Void
 
@@ -14,15 +18,15 @@ struct FileURLDropDelegate: DropDelegate {
         info.hasItemsConforming(to: [.fileURL])
     }
 
-    func dropEntered(info: DropInfo) {
+    func dropEntered(info _: DropInfo) {
         onTargetedChange(true)
     }
 
-    func dropExited(info: DropInfo) {
+    func dropExited(info _: DropInfo) {
         onTargetedChange(false)
     }
 
-    func dropUpdated(info: DropInfo) -> DropProposal? {
+    func dropUpdated(info _: DropInfo) -> DropProposal? {
         DropProposal(operation: .copy)
     }
 
@@ -38,6 +42,29 @@ struct FileURLDropDelegate: DropDelegate {
             onDropURLs(urls)
         }
         return true
+    }
+
+    // MARK: Private
+
+    private final class URLCollector: @unchecked Sendable {
+        // MARK: Internal
+
+        func append(_ url: URL) {
+            lock.lock()
+            urls.append(url)
+            lock.unlock()
+        }
+
+        func snapshot() -> [URL] {
+            lock.lock()
+            defer { lock.unlock() }
+            return urls
+        }
+
+        // MARK: Private
+
+        private let lock: NSLock = .init()
+        private var urls: [URL] = []
     }
 
     private nonisolated static func loadFileURLs(from providers: [NSItemProvider], completion: @escaping ([URL]) -> Void) {
@@ -65,8 +92,7 @@ struct FileURLDropDelegate: DropDelegate {
             _ = provider.loadObject(ofClass: NSURL.self) { object, _ in
                 if let nsURL = object as? NSURL {
                     completion(nsURL as URL)
-                }
-                else {
+                } else {
                     completion(nil)
                 }
             }
@@ -109,13 +135,17 @@ struct FileURLDropDelegate: DropDelegate {
         if let string = item as? NSString {
             return URL(string: String(string).trimmingCharacters(in: .whitespacesAndNewlines))
         }
-        if let data = item as? Data,
-           let fileURL = URL(dataRepresentation: data, relativeTo: nil),
-           fileURL.isFileURL {
+        if
+            let data = item as? Data,
+            let fileURL = URL(dataRepresentation: data, relativeTo: nil),
+            fileURL.isFileURL
+        {
             return fileURL
         }
-        if let data = item as? Data,
-           let string = String(data: data, encoding: .utf8) {
+        if
+            let data = item as? Data,
+            let string = String(data: data, encoding: .utf8)
+        {
             return URL(string: string.trimmingCharacters(in: .whitespacesAndNewlines))
         }
         return nil
@@ -132,22 +162,5 @@ struct FileURLDropDelegate: DropDelegate {
             }
         }
         return output
-    }
-
-    private final class URLCollector: @unchecked Sendable {
-        private let lock = NSLock()
-        private var urls = [URL]()
-
-        func append(_ url: URL) {
-            lock.lock()
-            urls.append(url)
-            lock.unlock()
-        }
-
-        func snapshot() -> [URL] {
-            lock.lock()
-            defer { lock.unlock() }
-            return urls
-        }
     }
 }

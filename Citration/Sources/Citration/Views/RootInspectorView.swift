@@ -1,10 +1,13 @@
+import CitrationCore
 import Foundation
 import SwiftUI
 import UniformTypeIdentifiers
-import CitrationCore
 
 struct RootInspectorView: View {
+    // MARK: Internal
+
     @Bindable var model: AppModel
+
     let isAttachDropTargeted: Bool
     let attachDragBorderPhase: CGFloat
     let onTargetedChange: (Bool) -> Void
@@ -42,6 +45,8 @@ struct RootInspectorView: View {
             }
     }
 
+    // MARK: Private
+
     @ViewBuilder
     private var inspectorContent: some View {
         if let item = model.selectedItem {
@@ -64,8 +69,7 @@ struct RootInspectorView: View {
                 }
                 .formStyle(.grouped)
             }
-        }
-        else {
+        } else {
             ScrollView {
                 Form {
                     Section {
@@ -78,24 +82,6 @@ struct RootInspectorView: View {
                     OpenAlexSettingsInspectorSection(model: model)
                 }
                 .formStyle(.grouped)
-            }
-        }
-    }
-
-    private func itemInfoSection(_ item: BCItem) -> some View {
-        Section("Info") {
-            LabeledContent("Title") {
-                Text(item.title.bcCollapsedWhitespace()).textSelection(.enabled)
-            }
-            if let doi = item.doi {
-                LabeledContent("DOI") {
-                    Text(doi).textSelection(.enabled)
-                }
-            }
-            LabeledContent("Year", value: item.publicationYear.map(String.init) ?? "n.d.")
-            LabeledContent("Creator", value: item.creators.first?.displayName ?? "Unknown")
-            if item.creators.count > 1 {
-                LabeledContent("Authors", value: item.creators.map(\.displayName).joined(separator: ", "))
             }
         }
     }
@@ -121,11 +107,51 @@ struct RootInspectorView: View {
             if model.selectedItemAttachments.isEmpty {
                 Text("No attachments yet. Use Attach or drag a PDF into this sidebar.")
                     .foregroundStyle(.secondary)
-            }
-            else {
+            } else {
                 ForEach(model.selectedItemAttachments) { attachment in
                     attachmentRow(attachment)
                 }
+            }
+        }
+    }
+
+    private var readerNotesSection: some View {
+        Section("Reader Notes") {
+            TextField("Add a note", text: $model.readerNoteDraft, axis: .vertical)
+                .lineLimit(2 ... 5)
+            HStack {
+                Button("Add Note", systemImage: "note.text.badge.plus") {
+                    model.addReaderNote()
+                }
+                .disabled(model.readerNoteDraft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                Spacer()
+            }
+
+            if model.activeReaderAnnotations.isEmpty {
+                Text("No notes for this attachment yet.")
+                    .foregroundStyle(.secondary)
+            } else {
+                ForEach(model.activeReaderAnnotations) { annotation in
+                    readerAnnotationRow(annotation)
+                }
+            }
+        }
+    }
+
+    private func itemInfoSection(_ item: BCItem) -> some View {
+        Section("Info") {
+            LabeledContent("Title") {
+                Text(item.title.bcCollapsedWhitespace()).textSelection(.enabled)
+            }
+            if let doi = item.doi {
+                LabeledContent("DOI") {
+                    Text(doi).textSelection(.enabled)
+                }
+            }
+            LabeledContent("Year", value: item.publicationYear.map(String.init) ?? "n.d.")
+            LabeledContent("Creator", value: item.creators.first?.displayName ?? "Unknown")
+            if item.creators.count > 1 {
+                LabeledContent("Authors", value: item.creators.map(\.displayName).joined(separator: ", "))
             }
         }
     }
@@ -158,30 +184,6 @@ struct RootInspectorView: View {
         }
     }
 
-    private var readerNotesSection: some View {
-        Section("Reader Notes") {
-            TextField("Add a note", text: $model.readerNoteDraft, axis: .vertical)
-                .lineLimit(2...5)
-            HStack {
-                Button("Add Note", systemImage: "note.text.badge.plus") {
-                    model.addReaderNote()
-                }
-                .disabled(model.readerNoteDraft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                Spacer()
-            }
-
-            if model.activeReaderAnnotations.isEmpty {
-                Text("No notes for this attachment yet.")
-                    .foregroundStyle(.secondary)
-            }
-            else {
-                ForEach(model.activeReaderAnnotations) { annotation in
-                    readerAnnotationRow(annotation)
-                }
-            }
-        }
-    }
-
     private func readerAnnotationRow(_ annotation: LibraryAnnotation) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             HStack {
@@ -209,9 +211,13 @@ struct RootInspectorView: View {
         switch attachment.documentFormat {
         case .pdf:
             return "\(format) · In-app reader · \(size)"
-        case .epub, .html, .plainText:
+        case .epub,
+             .html,
+             .plainText:
             return "\(format) · Reader pending · \(size)"
-        case .image, .audio, .unknown:
+        case .image,
+             .audio,
+             .unknown:
             return "\(format) · \(size)"
         }
     }
@@ -219,19 +225,19 @@ struct RootInspectorView: View {
     private func iconName(for format: DocumentFormat) -> String {
         switch format {
         case .pdf:
-            return "doc.richtext"
+            "doc.richtext"
         case .epub:
-            return "book"
+            "book"
         case .html:
-            return "safari"
+            "safari"
         case .plainText:
-            return "doc.plaintext"
+            "doc.plaintext"
         case .image:
-            return "photo"
+            "photo"
         case .audio:
-            return "waveform"
+            "waveform"
         case .unknown:
-            return "doc"
+            "doc"
         }
     }
 }

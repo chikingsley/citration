@@ -2,55 +2,67 @@ import Foundation
 import Security
 
 public actor KeychainAuthSessionStore: AuthSessionStore {
-	private let service: String
-	private let account: String
+    // MARK: Lifecycle
 
-	public init(service: String = "app.citration.auth", account: String = "session") {
-		self.service = service
-		self.account = account
-	}
+    public init(service: String = "app.citration.auth", account: String = "session") {
+        self.service = service
+        self.account = account
+    }
 
-	public func loadSession() async -> AuthSession? {
-		let query: [String: Any] = [
-			kSecClass as String: kSecClassGenericPassword,
-			kSecAttrService as String: service,
-			kSecAttrAccount as String: account,
-			kSecReturnData as String: true,
-			kSecMatchLimit as String: kSecMatchLimitOne
-		]
+    // MARK: Public
 
-		var result: AnyObject?
-		let status = SecItemCopyMatching(query as CFDictionary, &result)
+    public func loadSession() -> AuthSession? {
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: service,
+            kSecAttrAccount as String: account,
+            kSecReturnData as String: true,
+            kSecMatchLimit as String: kSecMatchLimitOne,
+        ]
 
-		guard status == errSecSuccess,
-			  let data = result as? Data else {
-			return nil
-		}
+        var result: AnyObject?
+        let status = SecItemCopyMatching(query as CFDictionary, &result)
 
-		return try? JSONDecoder().decode(AuthSession.self, from: data)
-	}
+        guard
+            status == errSecSuccess,
+            let data = result as? Data
+        else {
+            return nil
+        }
 
-	public func saveSession(_ session: AuthSession?) async {
-		// Delete existing item first
-		let deleteQuery: [String: Any] = [
-			kSecClass as String: kSecClassGenericPassword,
-			kSecAttrService as String: service,
-			kSecAttrAccount as String: account
-		]
-		SecItemDelete(deleteQuery as CFDictionary)
+        return try? JSONDecoder().decode(AuthSession.self, from: data)
+    }
 
-		guard let session else { return }
+    public func saveSession(_ session: AuthSession?) {
+        // Delete existing item first
+        let deleteQuery: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: service,
+            kSecAttrAccount as String: account,
+        ]
+        SecItemDelete(deleteQuery as CFDictionary)
 
-		guard let data = try? JSONEncoder().encode(session) else { return }
+        guard let session else {
+            return
+        }
 
-		let addQuery: [String: Any] = [
-			kSecClass as String: kSecClassGenericPassword,
-			kSecAttrService as String: service,
-			kSecAttrAccount as String: account,
-			kSecValueData as String: data,
-			kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlock
-		]
+        guard let data = try? JSONEncoder().encode(session) else {
+            return
+        }
 
-		SecItemAdd(addQuery as CFDictionary, nil)
-	}
+        let addQuery: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: service,
+            kSecAttrAccount as String: account,
+            kSecValueData as String: data,
+            kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlock,
+        ]
+
+        SecItemAdd(addQuery as CFDictionary, nil)
+    }
+
+    // MARK: Private
+
+    private let service: String
+    private let account: String
 }

@@ -1,19 +1,27 @@
 import Foundation
 
+// MARK: - IdentifierType
+
 public enum IdentifierType: String, Codable, CaseIterable, Sendable {
-	case doi
-	case isbn
-	case pmid
-	case arxiv
-	case url
+    case doi
+    case isbn
+    case pmid
+    case arxiv
+    case url
 }
 
-public struct Identifier: Hashable, Codable, Sendable {
-	public var type: IdentifierType
-	public var value: String
+// MARK: - Identifier
 
-	public init(type: IdentifierType, value: String) {
-		self.type = type
-		self.value = value
-	}
+public struct Identifier: Hashable, Codable, Sendable {
+    // MARK: Lifecycle
+
+    public init(type: IdentifierType, value: String) {
+        self.type = type
+        self.value = value
+    }
+
+    // MARK: Public
+
+    public var type: IdentifierType
+    public var value: String
 }

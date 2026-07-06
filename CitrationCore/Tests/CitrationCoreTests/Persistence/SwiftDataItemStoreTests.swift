@@ -1,6 +1,8 @@
-import Testing
-import Foundation
 @testable import CitrationCore
+import Foundation
+import Testing
+
+// MARK: - SwiftDataItemStoreTests
 
 @Suite("SwiftDataItemStore")
 struct SwiftDataItemStoreTests {
@@ -10,17 +12,17 @@ struct SwiftDataItemStoreTests {
         defer { cleanupStoreArtifacts(for: storeURL) }
 
         let itemID = try #require(UUID(uuidString: "AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE"))
-		let inputItem = BCItem(
-			id: itemID,
-			title: "Persistent Item",
-			identifiers: [Identifier(type: .doi, value: "10.1000/persist")],
-			itemType: .article,
-			creators: [Creator(givenName: "Ada", familyName: "Lovelace")],
-			publicationYear: 1843,
-			tags: ["mathematics", "notes"],
-			createdAt: Date(timeIntervalSince1970: 1_000),
-			updatedAt: Date(timeIntervalSince1970: 2_000)
-		)
+        let inputItem = BCItem(
+            id: itemID,
+            title: "Persistent Item",
+            identifiers: [Identifier(type: .doi, value: "10.1000/persist")],
+            itemType: .article,
+            creators: [Creator(givenName: "Ada", familyName: "Lovelace")],
+            publicationYear: 1843,
+            tags: ["mathematics", "notes"],
+            createdAt: Date(timeIntervalSince1970: 1000),
+            updatedAt: Date(timeIntervalSince1970: 2000)
+        )
 
         let firstStore = try SwiftDataItemStore(storeURL: storeURL)
         await firstStore.upsert(inputItem)
@@ -33,12 +35,12 @@ struct SwiftDataItemStoreTests {
         #expect(fetched.id == inputItem.id)
         #expect(fetched.title == inputItem.title)
         #expect(fetched.identifiers == inputItem.identifiers)
-		#expect(fetched.itemType == inputItem.itemType)
-		#expect(fetched.creators == inputItem.creators)
-		#expect(fetched.publicationYear == inputItem.publicationYear)
-		#expect(fetched.tags == inputItem.tags)
-		#expect(fetched.createdAt == inputItem.createdAt)
-	}
+        #expect(fetched.itemType == inputItem.itemType)
+        #expect(fetched.creators == inputItem.creators)
+        #expect(fetched.publicationYear == inputItem.publicationYear)
+        #expect(fetched.tags == inputItem.tags)
+        #expect(fetched.createdAt == inputItem.createdAt)
+    }
 
     @Test("upsert preserves createdAt for existing records")
     func upsertPreservesCreatedAt() async throws {
@@ -46,7 +48,7 @@ struct SwiftDataItemStoreTests {
         defer { cleanupStoreArtifacts(for: storeURL) }
 
         let itemID = UUID()
-        let createdAt = Date(timeIntervalSince1970: 1_234)
+        let createdAt = Date(timeIntervalSince1970: 1234)
         let store = try SwiftDataItemStore(storeURL: storeURL)
 
         let firstVersion = BCItem(
@@ -57,27 +59,27 @@ struct SwiftDataItemStoreTests {
             creators: [Creator(givenName: "Grace", familyName: "Hopper")],
             publicationYear: 1952,
             createdAt: createdAt,
-            updatedAt: Date(timeIntervalSince1970: 2_000)
+            updatedAt: Date(timeIntervalSince1970: 2000)
         )
 
         await store.upsert(firstVersion)
         try await Task.sleep(nanoseconds: 5_000_000)
 
-		var secondVersion = firstVersion
-		secondVersion.title = "Version Two"
-		secondVersion.publicationYear = 1953
-		secondVersion.tags = ["compiler"]
-		secondVersion.updatedAt = Date(timeIntervalSince1970: 2_100)
+        var secondVersion = firstVersion
+        secondVersion.title = "Version Two"
+        secondVersion.publicationYear = 1953
+        secondVersion.tags = ["compiler"]
+        secondVersion.updatedAt = Date(timeIntervalSince1970: 2100)
 
-		await store.upsert(secondVersion)
+        await store.upsert(secondVersion)
 
         let fetched = try #require(await store.listItems().first)
-		#expect(fetched.title == "Version Two")
-		#expect(fetched.publicationYear == 1953)
-		#expect(fetched.tags == ["compiler"])
-		#expect(fetched.createdAt == createdAt)
-		#expect(fetched.updatedAt > firstVersion.updatedAt)
-	}
+        #expect(fetched.title == "Version Two")
+        #expect(fetched.publicationYear == 1953)
+        #expect(fetched.tags == ["compiler"])
+        #expect(fetched.createdAt == createdAt)
+        #expect(fetched.updatedAt > firstVersion.updatedAt)
+    }
 
     @Test("removeItem deletes persisted record")
     func removeItemDeletesPersistedRecord() async throws {
@@ -115,7 +117,7 @@ private extension SwiftDataItemStoreTests {
         let candidates = [
             storeURL,
             URL(fileURLWithPath: basePath + "-wal"),
-            URL(fileURLWithPath: basePath + "-shm")
+            URL(fileURLWithPath: basePath + "-shm"),
         ]
 
         for candidate in candidates where fileManager.fileExists(atPath: candidate.path) {

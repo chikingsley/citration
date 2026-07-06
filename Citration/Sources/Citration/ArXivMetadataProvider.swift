@@ -1,16 +1,10 @@
-import Foundation
 import CitrationCore
+import Foundation
+
+// MARK: - ArXivMetadataProvider
 
 struct ArXivMetadataProvider: MetadataProvider {
-    let name: String = "arxiv"
-
-    private static let defaultEndpointBaseURL = requireEndpointURL(
-        "https://export.arxiv.org/api/query",
-        providerName: "arXiv"
-    )
-
-    private let session: URLSession
-    private let endpointBaseURL: URL
+    // MARK: Lifecycle
 
     init(
         session: URLSession = .shared,
@@ -19,6 +13,10 @@ struct ArXivMetadataProvider: MetadataProvider {
         self.session = session
         self.endpointBaseURL = endpointBaseURL
     }
+
+    // MARK: Internal
+
+    let name: String = "arxiv"
 
     func resolve(_ request: MetadataResolutionRequest) async throws -> [CanonicalMetadataRecord] {
         guard
@@ -31,7 +29,7 @@ struct ArXivMetadataProvider: MetadataProvider {
         var components = URLComponents(url: endpointBaseURL, resolvingAgainstBaseURL: false)
         components?.queryItems = [
             URLQueryItem(name: "id_list", value: arXiv),
-            URLQueryItem(name: "max_results", value: "1")
+            URLQueryItem(name: "max_results", value: "1"),
         ]
 
         guard let url = components?.url else {
@@ -46,7 +44,7 @@ struct ArXivMetadataProvider: MetadataProvider {
         let (data, response) = try await session.data(for: request)
         guard
             let httpResponse = response as? HTTPURLResponse,
-            (200..<300).contains(httpResponse.statusCode),
+            (200 ..< 300).contains(httpResponse.statusCode),
             let entry = ArXivAtomParser.parseFirstEntry(from: data)
         else {
             return []
@@ -57,8 +55,10 @@ struct ArXivMetadataProvider: MetadataProvider {
         let publicationYear = entry.publishedYear
 
         var identifiers = [Identifier(type: .arxiv, value: arXiv)]
-        if let doi = entry.doi,
-           let normalizedDOI = DOIParsing.normalizeCandidate(doi) {
+        if
+            let doi = entry.doi,
+            let normalizedDOI = DOIParsing.normalizeCandidate(doi)
+        {
             identifiers.append(Identifier(type: .doi, value: normalizedDOI))
         }
 
@@ -76,7 +76,7 @@ struct ArXivMetadataProvider: MetadataProvider {
                 fieldSources: [
                     "title": "arxiv.entry.title",
                     "creators": "arxiv.entry.author.name",
-                    "publicationYear": "arxiv.entry.published"
+                    "publicationYear": "arxiv.entry.published",
                 ]
             ),
             rawPayload: data
@@ -84,6 +84,16 @@ struct ArXivMetadataProvider: MetadataProvider {
 
         return [record]
     }
+
+    // MARK: Private
+
+    private static let defaultEndpointBaseURL = requireEndpointURL(
+        "https://export.arxiv.org/api/query",
+        providerName: "arXiv"
+    )
+
+    private let session: URLSession
+    private let endpointBaseURL: URL
 
     private func makeCreator(from displayName: String) -> Creator? {
         let cleaned = displayName.bcTrimmedNonEmpty
@@ -103,6 +113,8 @@ struct ArXivMetadataProvider: MetadataProvider {
     }
 }
 
+// MARK: - ArXivEntry
+
 private struct ArXivEntry {
     let title: String?
     let authors: [String]
@@ -110,17 +122,23 @@ private struct ArXivEntry {
     let doi: String?
 }
 
+// MARK: - ArXivAtomParser
+
 private enum ArXivAtomParser {
+    // MARK: Internal
+
     static func parseFirstEntry(from data: Data) -> ArXivEntry? {
         guard let xml = String(data: data, encoding: .utf8) else {
             return nil
         }
 
-        guard let entryXML = firstMatch(
-            pattern: #"<entry\b[^>]*>(.*?)</entry>"#,
-            in: xml,
-            captureGroup: 1
-        ) else {
+        guard
+            let entryXML = firstMatch(
+                pattern: #"<entry\b[^>]*>(.*?)</entry>"#,
+                in: xml,
+                captureGroup: 1
+            )
+        else {
             return nil
         }
 
@@ -136,12 +154,10 @@ private enum ArXivAtomParser {
             captureGroup: 1
         )?.decodedXMLEntities().bcCollapsedWhitespace()
 
-        let publishedYear: Int?
-        if let publishedRaw, publishedRaw.count >= 4 {
-            publishedYear = Int(publishedRaw.prefix(4))
-        }
-        else {
-            publishedYear = nil
+        let publishedYear: Int? = if let publishedRaw, publishedRaw.count >= 4 {
+            Int(publishedRaw.prefix(4))
+        } else {
+            nil
         }
 
         let doi =
@@ -171,6 +187,8 @@ private enum ArXivAtomParser {
         )
     }
 
+    // MARK: Private
+
     private static func firstMatch(
         pattern: String,
         in text: String,
@@ -198,10 +216,12 @@ private enum ArXivAtomParser {
         in text: String,
         captureGroup: Int
     ) -> [String] {
-        guard let regex = try? NSRegularExpression(
-            pattern: pattern,
-            options: [.dotMatchesLineSeparators, .caseInsensitive]
-        ) else {
+        guard
+            let regex = try? NSRegularExpression(
+                pattern: pattern,
+                options: [.dotMatchesLineSeparators, .caseInsensitive]
+            )
+        else {
             return []
         }
 
@@ -227,7 +247,7 @@ private extension String {
             ("&lt;", "<"),
             ("&gt;", ">"),
             ("&quot;", "\""),
-            ("&#39;", "'")
+            ("&#39;", "'"),
         ]
         for (entity, replacement) in replacements {
             value = value.replacingOccurrences(of: entity, with: replacement)

@@ -3,14 +3,18 @@ extension AppModel {
         case workspace
         case components
 
-        var id: String { rawValue }
+        // MARK: Internal
+
+        var id: String {
+            rawValue
+        }
 
         var title: String {
             switch self {
             case .workspace:
-                return "Workspace"
+                "Workspace"
             case .components:
-                return "Components"
+                "Components"
             }
         }
     }

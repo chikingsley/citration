@@ -1,6 +1,8 @@
+@testable import Citration
 import Foundation
 import Testing
-@testable import Citration
+
+// MARK: - EPUBPackageReaderTests
 
 @Suite("EPUB Package Reader")
 struct EPUBPackageReaderTests {
@@ -35,8 +37,7 @@ struct EPUBPackageReaderTests {
         do {
             _ = try EPUBPackageReader(unpackRoot: unpackRoot).publication(from: unsafeURL)
             Issue.record("Expected unsafe EPUB archive to be rejected")
-        }
-        catch let error as EPUBPackageReaderError {
+        } catch let error as EPUBPackageReaderError {
             guard case .unsafeArchiveEntry = error else {
                 Issue.record("Expected unsafeArchiveEntry, got \(error)")
                 return

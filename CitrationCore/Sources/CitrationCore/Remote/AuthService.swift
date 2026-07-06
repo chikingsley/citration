@@ -1,102 +1,122 @@
 import Foundation
 
-public enum AuthServiceError: Error, LocalizedError, Sendable {
-	case invalidIdentityToken
-	case signInFailed(String)
-	case signOutFailed(String)
-	case sessionExpired
+// MARK: - AuthServiceError
 
-	public var errorDescription: String? {
-		switch self {
-		case .invalidIdentityToken:
-			return "Invalid Apple identity token"
-		case .signInFailed(let details):
-			return "Sign in failed: \(details)"
-		case .signOutFailed(let details):
-			return "Sign out failed: \(details)"
-		case .sessionExpired:
-			return "Session has expired"
-		}
-	}
+public enum AuthServiceError: Error, LocalizedError, Sendable {
+    case invalidIdentityToken
+    case signInFailed(String)
+    case signOutFailed(String)
+    case sessionExpired
+
+    // MARK: Public
+
+    public var errorDescription: String? {
+        switch self {
+        case .invalidIdentityToken:
+            "Invalid Apple identity token"
+        case let .signInFailed(details):
+            "Sign in failed: \(details)"
+        case let .signOutFailed(details):
+            "Sign out failed: \(details)"
+        case .sessionExpired:
+            "Session has expired"
+        }
+    }
 }
+
+// MARK: - AuthService
 
 public actor AuthService {
-	private let apiClient: APIClient
-	private let sessionStore: AuthSessionStore
-	private let environment: SaaSEnvironment
+    // MARK: Lifecycle
 
-	public init(apiClient: APIClient, sessionStore: AuthSessionStore, environment: SaaSEnvironment) {
-		self.apiClient = apiClient
-		self.sessionStore = sessionStore
-		self.environment = environment
-	}
+    public init(apiClient: APIClient, sessionStore: AuthSessionStore, environment: SaaSEnvironment) {
+        self.apiClient = apiClient
+        self.sessionStore = sessionStore
+        self.environment = environment
+    }
 
-	public func signInWithApple(identityToken: String) async throws -> AuthSession {
-		guard !identityToken.isEmpty else {
-			throw AuthServiceError.invalidIdentityToken
-		}
+    // MARK: Public
 
-		let body = AppleSignInRequest(identityToken: identityToken)
-		let response: AuthResponse = try await apiClient.post(path: "auth/apple", body: body)
+    public func signInWithApple(identityToken: String) async throws -> AuthSession {
+        guard !identityToken.isEmpty else {
+            throw AuthServiceError.invalidIdentityToken
+        }
 
-		let session = AuthSession(
-			accessToken: response.accessToken,
-			refreshToken: response.refreshToken,
-			expiresAt: ISO8601DateFormatter().date(from: response.expiresAt) ?? Date()
-		)
-		await sessionStore.saveSession(session)
-		return session
-	}
+        let body = AppleSignInRequest(identityToken: identityToken)
+        let response: AuthResponse = try await apiClient.post(path: "auth/apple", body: body)
 
-	public func refreshSession() async throws -> AuthSession {
-		guard let session = await sessionStore.loadSession() else {
-			throw AuthServiceError.sessionExpired
-		}
+        let session = AuthSession(
+            accessToken: response.accessToken,
+            refreshToken: response.refreshToken,
+            expiresAt: ISO8601DateFormatter().date(from: response.expiresAt) ?? Date()
+        )
+        await sessionStore.saveSession(session)
+        return session
+    }
 
-		let body = RefreshTokenRequest(refreshToken: session.refreshToken)
-		let response: AuthResponse = try await apiClient.post(path: "auth/refresh", body: body)
+    public func refreshSession() async throws -> AuthSession {
+        guard let session = await sessionStore.loadSession() else {
+            throw AuthServiceError.sessionExpired
+        }
 
-		let newSession = AuthSession(
-			accessToken: response.accessToken,
-			refreshToken: response.refreshToken,
-			expiresAt: ISO8601DateFormatter().date(from: response.expiresAt) ?? Date()
-		)
-		await sessionStore.saveSession(newSession)
-		return newSession
-	}
+        let body = RefreshTokenRequest(refreshToken: session.refreshToken)
+        let response: AuthResponse = try await apiClient.post(path: "auth/refresh", body: body)
 
-	public func signOut() async throws {
-		if let session = await sessionStore.loadSession() {
-			let body = RevokeRequest(refreshToken: session.refreshToken)
-			let _: SuccessResponse = try await apiClient.post(path: "auth/revoke", body: body)
-		}
-		await sessionStore.saveSession(nil)
-	}
+        let newSession = AuthSession(
+            accessToken: response.accessToken,
+            refreshToken: response.refreshToken,
+            expiresAt: ISO8601DateFormatter().date(from: response.expiresAt) ?? Date()
+        )
+        await sessionStore.saveSession(newSession)
+        return newSession
+    }
 
-	public func currentUser() async throws -> User {
-		try await apiClient.get(path: "auth/me")
-	}
+    public func signOut() async throws {
+        if let session = await sessionStore.loadSession() {
+            let body = RevokeRequest(refreshToken: session.refreshToken)
+            let _: SuccessResponse = try await apiClient.post(path: "auth/revoke", body: body)
+        }
+        await sessionStore.saveSession(nil)
+    }
 
-	public func hasValidSession() async -> Bool {
-		guard let session = await sessionStore.loadSession() else {
-			return false
-		}
-		return !session.isExpired()
-	}
+    public func currentUser() async throws -> User {
+        try await apiClient.get(path: "auth/me")
+    }
+
+    public func hasValidSession() async -> Bool {
+        guard let session = await sessionStore.loadSession() else {
+            return false
+        }
+        return !session.isExpired()
+    }
+
+    // MARK: Private
+
+    private let apiClient: APIClient
+    private let sessionStore: AuthSessionStore
+    private let environment: SaaSEnvironment
 }
 
-private struct AppleSignInRequest: Encodable, Sendable {
-	let identityToken: String
+// MARK: - AppleSignInRequest
+
+private struct AppleSignInRequest: Encodable {
+    let identityToken: String
 }
 
-private struct RefreshTokenRequest: Encodable, Sendable {
-	let refreshToken: String
+// MARK: - RefreshTokenRequest
+
+private struct RefreshTokenRequest: Encodable {
+    let refreshToken: String
 }
 
-private struct RevokeRequest: Encodable, Sendable {
-	let refreshToken: String
+// MARK: - RevokeRequest
+
+private struct RevokeRequest: Encodable {
+    let refreshToken: String
 }
 
-private struct SuccessResponse: Decodable, Sendable {
-	let success: Bool
+// MARK: - SuccessResponse
+
+private struct SuccessResponse: Decodable {
+    let success: Bool
 }

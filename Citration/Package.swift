@@ -11,31 +11,31 @@ let package = Package(
     ],
     dependencies: [
         .package(path: "../CitrationCore"),
-        .package(url: "https://github.com/krzysztofzablocki/Inject.git", from: "1.5.2")
+        .package(url: "https://github.com/krzysztofzablocki/Inject.git", from: "1.5.2"),
     ],
     targets: [
         .executableTarget(
             name: "Citration",
             dependencies: [
                 "CitrationCore",
-                .product(name: "Inject", package: "Inject")
+                .product(name: "Inject", package: "Inject"),
             ],
             linkerSettings: [
                 .unsafeFlags([
                     "-Xlinker", "-sectcreate",
                     "-Xlinker", "__TEXT",
                     "-Xlinker", "__info_plist",
-                    "-Xlinker", "Config/Citration-Info.plist"
+                    "-Xlinker", "Config/Citration-Info.plist",
                 ]),
-                .unsafeFlags(["-Xlinker", "-interposable"], .when(configuration: .debug))
+                .unsafeFlags(["-Xlinker", "-interposable"], .when(configuration: .debug)),
             ]
         ),
         .testTarget(
             name: "CitrationTests",
             dependencies: [
                 "Citration",
-                "CitrationCore"
+                "CitrationCore",
             ]
-        )
+        ),
     ]
 )

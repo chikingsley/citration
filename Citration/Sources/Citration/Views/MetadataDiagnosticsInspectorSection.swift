@@ -1,7 +1,11 @@
-import SwiftUI
 import CitrationCore
+import SwiftUI
+
+// MARK: - MetadataDiagnosticsInspectorSection
 
 struct MetadataDiagnosticsInspectorSection: View {
+    // MARK: Internal
+
     @Bindable var model: AppModel
 
     var body: some View {
@@ -15,6 +19,8 @@ struct MetadataDiagnosticsInspectorSection: View {
             }
         }
     }
+
+    // MARK: Private
 
     private func conflictRow(_ conflict: MetadataResolutionConflict) -> some View {
         VStack(alignment: .leading, spacing: 4) {
@@ -45,11 +51,11 @@ private extension MetadataConflictField {
     var displayName: String {
         switch self {
         case .title:
-            return "Title conflict"
+            "Title conflict"
         case .publicationYear:
-            return "Year conflict"
+            "Year conflict"
         case .itemType:
-            return "Item type conflict"
+            "Item type conflict"
         }
     }
 }

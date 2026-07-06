@@ -1,5 +1,5 @@
-import Foundation
 import CitrationCore
+import Foundation
 
 extension AppModel {
     var relatedItemCandidates: [BCItem] {
@@ -13,8 +13,7 @@ extension AppModel {
         do {
             libraryRelationships = try await relationshipStore.listRelationships()
             await refreshSelectedItemRelationships()
-        }
-        catch {
+        } catch {
             libraryRelationships = []
             selectedItemRelationships = []
             relatedItemTargetID = nil
@@ -22,7 +21,7 @@ extension AppModel {
         }
     }
 
-    func refreshSelectedItemRelationships() async {
+    func refreshSelectedItemRelationships() {
         guard let selectedItemID else {
             selectedItemRelationships = []
             relatedItemTargetID = nil
@@ -69,8 +68,7 @@ extension AppModel {
                 relatedItemNoteDraft = ""
                 await refreshRelationships()
                 statusMessage = "Linked related item"
-            }
-            catch {
+            } catch {
                 statusMessage = "Failed to link related item"
             }
         }
@@ -82,8 +80,7 @@ extension AppModel {
                 try await relationshipStore.remove(id: relationship.id)
                 await refreshRelationships()
                 statusMessage = "Removed related item"
-            }
-            catch {
+            } catch {
                 statusMessage = "Failed to remove related item"
             }
         }
@@ -103,8 +100,10 @@ extension AppModel {
 
     private func setDefaultRelatedItemTargetIfNeeded() {
         let candidateIDs = Set(relatedItemCandidates.map(\.id))
-        if let relatedItemTargetID,
-           candidateIDs.contains(relatedItemTargetID) {
+        if
+            let relatedItemTargetID,
+            candidateIDs.contains(relatedItemTargetID)
+        {
             return
         }
 

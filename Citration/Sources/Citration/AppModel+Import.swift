@@ -1,5 +1,5 @@
-import Foundation
 import CitrationCore
+import Foundation
 
 extension AppModel {
     func importAttachments(urls: [URL], mode: AttachmentImportMode = .auto) {
@@ -24,12 +24,10 @@ extension AppModel {
                 isImportingAttachments = false
             }
 
-            let summary: AttachmentImportSummary
-            if let targetItem = plan.targetItem {
-                summary = await importFiles(fileURLs, attachingTo: targetItem)
-            }
-            else {
-                summary = await importFilesAsNewItems(fileURLs)
+            let summary: AttachmentImportSummary = if let targetItem = plan.targetItem {
+                await importFiles(fileURLs, attachingTo: targetItem)
+            } else {
+                await importFilesAsNewItems(fileURLs)
             }
 
             await refreshItems()
@@ -65,8 +63,7 @@ extension AppModel {
                 }
                 await refreshSelectedItemAttachments()
                 statusMessage = "Removed attachment"
-            }
-            catch {
+            } catch {
                 statusMessage = "Failed to remove attachment"
             }
         }
@@ -80,13 +77,14 @@ extension AppModel {
 
         do {
             selectedItemAttachments = try await attachmentStore.listAttachments(for: selectedItemID)
-            if let activeReaderAttachment,
-               !selectedItemAttachments.contains(where: { $0.id == activeReaderAttachment.id }) {
+            if
+                let activeReaderAttachment,
+                !selectedItemAttachments.contains(where: { $0.id == activeReaderAttachment.id })
+            {
                 self.activeReaderAttachment = nil
                 activeReaderProgress = nil
             }
-        }
-        catch {
+        } catch {
             selectedItemAttachments = []
             activeReaderAttachment = nil
             activeReaderProgress = nil
@@ -99,11 +97,11 @@ private extension AppModel {
     func attachmentImportPlan(mode: AttachmentImportMode) -> AttachmentImportPlan? {
         switch mode {
         case .attachToSelectedItem:
-            return selectedItem.map { AttachmentImportPlan(targetItem: $0) }
+            selectedItem.map { AttachmentImportPlan(targetItem: $0) }
         case .auto:
-            return AttachmentImportPlan(targetItem: selectedItem)
+            AttachmentImportPlan(targetItem: selectedItem)
         case .createNewItemPerFile:
-            return AttachmentImportPlan(targetItem: nil)
+            AttachmentImportPlan(targetItem: nil)
         }
     }
 
@@ -123,8 +121,7 @@ private extension AppModel {
                 let enrichment = await enrichImportedAttachment(item: currentItem, attachment: attachment)
                 currentItem = enrichment.item
                 summary.recordSuccessfulImport(enrichment)
-            }
-            catch {
+            } catch {
                 summary.failedFiles.append(url.lastPathComponent)
             }
         }
@@ -152,8 +149,7 @@ private extension AppModel {
                 await addItemToSelectedCollectionIfNeeded(item.id)
                 selectedItemID = item.id
                 summary.recordSuccessfulImport(enrichment)
-            }
-            catch {
+            } catch {
                 await store.removeItem(id: item.id)
                 await refreshItems()
                 summary.failedFiles.append(url.lastPathComponent)
@@ -193,11 +189,9 @@ private extension AppModel {
         if summary.importedCount > 0, summary.failedFiles.isEmpty {
             let importedNoun = summary.importedCount == 1 ? "file" : "files"
             statusMessage = "Imported \(summary.importedCount) \(importedNoun)"
-        }
-        else if summary.importedCount > 0 {
+        } else if summary.importedCount > 0 {
             statusMessage = "Imported \(summary.importedCount), failed \(summary.failedFiles.count)"
-        }
-        else {
+        } else {
             statusMessage = "Import failed"
         }
 
@@ -227,14 +221,18 @@ private extension AppModel {
     }
 }
 
+// MARK: - AttachmentImportPlan
+
 private struct AttachmentImportPlan {
     var targetItem: BCItem?
 }
 
+// MARK: - AttachmentImportSummary
+
 private struct AttachmentImportSummary {
     var importedCount = 0
-    var failedFiles = [String]()
-    var detectedDOIs = Set<String>()
+    var failedFiles: [String] = []
+    var detectedDOIs: Set<String> = []
 
     mutating func recordSuccessfulImport(_ enrichment: AttachmentEnrichment) {
         importedCount += 1
@@ -244,9 +242,11 @@ private struct AttachmentImportSummary {
     }
 }
 
+// MARK: - AttachmentReprocessSummary
+
 private struct AttachmentReprocessSummary {
     var processedCount = 0
-    var detectedDOIs = Set<String>()
+    var detectedDOIs: Set<String> = []
 
     mutating func recordProcessedAttachment(_ enrichment: AttachmentEnrichment) {
         processedCount += 1

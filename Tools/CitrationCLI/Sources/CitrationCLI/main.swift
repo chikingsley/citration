@@ -1,5 +1,7 @@
 import Foundation
 
+// MARK: - CommandFailed
+
 struct CommandFailed: Error, CustomStringConvertible {
     let command: [String]
     let status: Int32
@@ -9,14 +11,20 @@ struct CommandFailed: Error, CustomStringConvertible {
     }
 }
 
+// MARK: - CitrationCLI
+
 struct CitrationCLI {
-    let arguments: [String]
-    let workspaceRoot: URL
+    // MARK: Lifecycle
 
     init(arguments: [String]) {
         self.arguments = arguments
-        self.workspaceRoot = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
+        workspaceRoot = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
     }
+
+    // MARK: Internal
+
+    let arguments: [String]
+    let workspaceRoot: URL
 
     func run() async throws {
         guard let command = arguments.first else {
@@ -25,23 +33,33 @@ struct CitrationCLI {
         }
 
         switch command {
-        case "help", "--help", "-h":
+        case "help",
+             "--help",
+             "-h":
             printHelp()
+
         case "package-dirs":
             try printPackageDirectories()
+
         case "lint":
             try lint(fix: arguments.dropFirst().contains("--fix"))
+
         case "lint-fix":
             try lint(fix: true)
+
         case "test":
             try test()
+
         case "check":
             try lint(fix: false)
             try test()
+
         case "openalex-key":
             try await openAlexKey(arguments: Array(arguments.dropFirst()))
+
         case "openalex-smoke":
             try await openAlexSmoke(arguments: Array(arguments.dropFirst()))
+
         default:
             throw NSError(
                 domain: "CitrationCLI",
@@ -50,6 +68,24 @@ struct CitrationCLI {
             )
         }
     }
+
+    func test() throws {
+        let directories = try packageDirectories()
+        guard !directories.isEmpty else {
+            throw NSError(
+                domain: "CitrationCLI",
+                code: 3,
+                userInfo: [NSLocalizedDescriptionKey: "No Swift packages found under Citration or CitrationCore"]
+            )
+        }
+
+        for directory in directories {
+            print("-> swift test (\(relativePath(for: directory)))")
+            try runOrThrow(["swift", "test", "--parallel"], in: directory)
+        }
+    }
+
+    // MARK: Private
 
     private func printHelp() {
         print("""
@@ -82,7 +118,7 @@ struct CitrationCLI {
             "--strict",
             "--quiet",
             "--cache-path",
-            workspaceRoot.appendingPathComponent(".swiftlint_cache").path
+            workspaceRoot.appendingPathComponent(".swiftlint_cache").path,
         ]
 
         if fix {
@@ -92,23 +128,7 @@ struct CitrationCLI {
         try runOrThrow(command, in: workspaceRoot)
     }
 
-    private func test() throws {
-        let directories = try packageDirectories()
-        guard !directories.isEmpty else {
-            throw NSError(
-                domain: "CitrationCLI",
-                code: 3,
-                userInfo: [NSLocalizedDescriptionKey: "No Swift packages found under Citration or CitrationCore"]
-            )
-        }
-
-        for directory in directories {
-            print("-> swift test (\(relativePath(for: directory)))")
-            try runOrThrow(["swift", "test", "--parallel"], in: directory)
-        }
-    }
-
-    private func packageDirectories() throws -> [URL] {
+    private func packageDirectories() -> [URL] {
         let fileManager = FileManager.default
         var directories = Set<URL>()
 
@@ -118,11 +138,13 @@ struct CitrationCLI {
                 continue
             }
 
-            guard let enumerator = fileManager.enumerator(
-                at: root,
-                includingPropertiesForKeys: [.isRegularFileKey],
-                options: [.skipsHiddenFiles]
-            ) else {
+            guard
+                let enumerator = fileManager.enumerator(
+                    at: root,
+                    includingPropertiesForKeys: [.isRegularFileKey],
+                    options: [.skipsHiddenFiles]
+                )
+            else {
                 continue
             }
 
@@ -179,8 +201,7 @@ struct CitrationCLI {
 
 do {
     try await CitrationCLI(arguments: Array(CommandLine.arguments.dropFirst())).run()
-}
-catch {
+} catch {
     fputs("error: \(error)\n", stderr)
     exit(1)
 }

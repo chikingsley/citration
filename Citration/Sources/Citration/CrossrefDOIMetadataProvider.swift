@@ -1,16 +1,10 @@
-import Foundation
 import CitrationCore
+import Foundation
+
+// MARK: - CrossrefDOIMetadataProvider
 
 struct CrossrefDOIMetadataProvider: MetadataProvider {
-    let name: String = "crossref-doi"
-
-    private static let defaultEndpointBaseURL = requireEndpointURL(
-        "https://api.crossref.org/works/",
-        providerName: "Crossref DOI"
-    )
-
-    private let session: URLSession
-    private let endpointBaseURL: URL
+    // MARK: Lifecycle
 
     init(
         session: URLSession = .shared,
@@ -20,9 +14,15 @@ struct CrossrefDOIMetadataProvider: MetadataProvider {
         self.endpointBaseURL = endpointBaseURL
     }
 
+    // MARK: Internal
+
+    let name: String = "crossref-doi"
+
     func resolve(_ request: MetadataResolutionRequest) async throws -> [CanonicalMetadataRecord] {
-        if let rawDOI = request.identifiers.first(where: { $0.type == .doi })?.value,
-           let doi = DOIParsing.normalizeCandidate(rawDOI) {
+        if
+            let rawDOI = request.identifiers.first(where: { $0.type == .doi })?.value,
+            let doi = DOIParsing.normalizeCandidate(rawDOI)
+        {
             return try await resolveByDOI(doi)
         }
 
@@ -32,6 +32,16 @@ struct CrossrefDOIMetadataProvider: MetadataProvider {
 
         return []
     }
+
+    // MARK: Private
+
+    private static let defaultEndpointBaseURL = requireEndpointURL(
+        "https://api.crossref.org/works/",
+        providerName: "Crossref DOI"
+    )
+
+    private let session: URLSession
+    private let endpointBaseURL: URL
 
     private func resolveByDOI(_ doi: String) async throws -> [CanonicalMetadataRecord] {
         guard
@@ -49,7 +59,7 @@ struct CrossrefDOIMetadataProvider: MetadataProvider {
         let (data, response) = try await session.data(for: request)
         guard
             let httpResponse = response as? HTTPURLResponse,
-            (200..<300).contains(httpResponse.statusCode),
+            (200 ..< 300).contains(httpResponse.statusCode),
             let message = try? JSONDecoder().decode(CrossrefEnvelope.self, from: data).message
         else {
             return []
@@ -72,7 +82,7 @@ struct CrossrefDOIMetadataProvider: MetadataProvider {
         var components = URLComponents(url: worksURL, resolvingAgainstBaseURL: false)
         components?.queryItems = [
             URLQueryItem(name: "query.bibliographic", value: query),
-            URLQueryItem(name: "rows", value: "1")
+            URLQueryItem(name: "rows", value: "1"),
         ]
 
         guard let url = components?.url else {
@@ -87,7 +97,7 @@ struct CrossrefDOIMetadataProvider: MetadataProvider {
         let (data, response) = try await session.data(for: request)
         guard
             let httpResponse = response as? HTTPURLResponse,
-            (200..<300).contains(httpResponse.statusCode),
+            (200 ..< 300).contains(httpResponse.statusCode),
             let search = try? JSONDecoder().decode(CrossrefSearchEnvelope.self, from: data),
             let message = search.message.items.first
         else {
@@ -137,7 +147,7 @@ struct CrossrefDOIMetadataProvider: MetadataProvider {
                 fieldSources: [
                     "title": "crossref.message.title",
                     "creators": "crossref.message.author",
-                    "publicationYear": "crossref.message.issued|published-*"
+                    "publicationYear": "crossref.message.issued|published-*",
                 ]
             ),
             rawPayload: nil
@@ -160,48 +170,50 @@ struct CrossrefDOIMetadataProvider: MetadataProvider {
 
     private func mapItemType(_ rawType: String?) -> ItemType {
         switch rawType?.lowercased() {
-        case "journal-article", "proceedings-article", "reference-entry":
-            return .article
-        case "book", "book-chapter", "book-part":
-            return .book
+        case "journal-article",
+             "proceedings-article",
+             "reference-entry":
+            .article
+        case "book",
+             "book-chapter",
+             "book-part":
+            .book
         case "posted-content":
-            return .preprint
+            .preprint
         case "dissertation":
-            return .thesis
+            .thesis
         case "dataset":
-            return .dataset
-        case "report", "standard":
-            return .webpage
+            .dataset
+        case "report",
+             "standard":
+            .webpage
         default:
-            return .unknown
+            .unknown
         }
     }
 }
+
+// MARK: - CrossrefEnvelope
 
 private struct CrossrefEnvelope: Decodable {
     let message: CrossrefMessage
 }
 
+// MARK: - CrossrefSearchEnvelope
+
 private struct CrossrefSearchEnvelope: Decodable {
     let message: CrossrefSearchMessage
 }
+
+// MARK: - CrossrefSearchMessage
 
 private struct CrossrefSearchMessage: Decodable {
     let items: [CrossrefMessage]
 }
 
-private struct CrossrefMessage: Decodable {
-    let doi: String?
-    let title: [String]
-    let author: [CrossrefAuthor]
-    let type: String?
-    let abstract: String?
-    let url: String?
-    let issued: CrossrefDateParts?
-    let publishedPrint: CrossrefDateParts?
-    let publishedOnline: CrossrefDateParts?
-    let created: CrossrefDateParts?
+// MARK: - CrossrefMessage
 
+private struct CrossrefMessage: Decodable {
     enum CodingKeys: String, CodingKey {
         case doi = "DOI"
         case title
@@ -215,6 +227,17 @@ private struct CrossrefMessage: Decodable {
         case created
     }
 
+    let doi: String?
+    let title: [String]
+    let author: [CrossrefAuthor]
+    let type: String?
+    let abstract: String?
+    let url: String?
+    let issued: CrossrefDateParts?
+    let publishedPrint: CrossrefDateParts?
+    let publishedOnline: CrossrefDateParts?
+    let created: CrossrefDateParts?
+
     var publicationYear: Int? {
         publishedPrint?.firstYear
             ?? publishedOnline?.firstYear
@@ -223,18 +246,22 @@ private struct CrossrefMessage: Decodable {
     }
 }
 
+// MARK: - CrossrefAuthor
+
 private struct CrossrefAuthor: Decodable {
     let given: String?
     let family: String?
     let name: String?
 }
 
-private struct CrossrefDateParts: Decodable {
-    let dateParts: [[Int]]
+// MARK: - CrossrefDateParts
 
+private struct CrossrefDateParts: Decodable {
     enum CodingKeys: String, CodingKey {
         case dateParts = "date-parts"
     }
+
+    let dateParts: [[Int]]
 
     var firstYear: Int? {
         dateParts.first?.first

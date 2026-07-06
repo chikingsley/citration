@@ -1,6 +1,6 @@
-import Testing
-import Foundation
 @testable import CitrationCore
+import Foundation
+import Testing
 
 @Suite("SaaSEnvironment")
 struct SaaSEnvironmentTests {
@@ -13,7 +13,7 @@ struct SaaSEnvironmentTests {
         #expect(environment.workspaceAppURL(for: slug).absoluteString == "https://acme-lab.citration.app/")
         #expect(
             environment.workspaceAPIBaseURL(for: slug).absoluteString ==
-            "https://api.citration.app/v1/workspaces/acme-lab"
+                "https://api.citration.app/v1/workspaces/acme-lab"
         )
     }
 

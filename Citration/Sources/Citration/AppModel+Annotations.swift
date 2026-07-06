@@ -1,5 +1,5 @@
-import Foundation
 import CitrationCore
+import Foundation
 
 extension AppModel {
     func refreshActiveReaderAnnotations() async {
@@ -13,8 +13,7 @@ extension AppModel {
                 itemID: activeReaderAttachment.itemID,
                 attachmentKey: activeReaderAttachment.objectKey
             )
-        }
-        catch {
+        } catch {
             activeReaderAnnotations = []
             statusMessage = "Failed to load notes"
         }
@@ -44,8 +43,7 @@ extension AppModel {
                 readerNoteDraft = ""
                 await refreshActiveReaderAnnotations()
                 statusMessage = "Added note"
-            }
-            catch {
+            } catch {
                 statusMessage = "Failed to add note"
             }
         }
@@ -57,8 +55,7 @@ extension AppModel {
                 try await annotationStore.remove(id: annotation.id)
                 await refreshActiveReaderAnnotations()
                 statusMessage = "Removed note"
-            }
-            catch {
+            } catch {
                 statusMessage = "Failed to remove note"
             }
         }

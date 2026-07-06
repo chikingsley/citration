@@ -1,18 +1,10 @@
-import Foundation
 import CitrationCore
+import Foundation
+
+// MARK: - DOIParsing
 
 enum DOIParsing {
-    private static let candidateRegex = makeStaticRegex(
-        pattern: #"(?i)\b10\.\d{4,9}/[^\s"<>]+"#,
-        name: "DOI candidate"
-    )
-
-    private static let validationRegex = makeStaticRegex(
-        pattern: #"(?i)^10\.\d{4,9}/\S+$"#,
-        name: "DOI validation"
-    )
-
-    private static let trailingNoiseCharacters = CharacterSet(charactersIn: ".,;:!?\"'`»”’]}>)")
+    // MARK: Internal
 
     static func candidates(in text: String) -> [String] {
         guard !text.isEmpty else {
@@ -66,23 +58,26 @@ enum DOIParsing {
 
         return value.lowercased()
     }
+
+    // MARK: Private
+
+    private static let candidateRegex = makeStaticRegex(
+        pattern: #"(?i)\b10\.\d{4,9}/[^\s"<>]+"#,
+        name: "DOI candidate"
+    )
+
+    private static let validationRegex = makeStaticRegex(
+        pattern: #"(?i)^10\.\d{4,9}/\S+$"#,
+        name: "DOI validation"
+    )
+
+    private static let trailingNoiseCharacters: CharacterSet = .init(charactersIn: ".,;:!?\"'`»”’]}>)")
 }
 
+// MARK: - ArXivParsing
+
 enum ArXivParsing {
-    private static let candidateRegex = makeStaticRegex(
-        pattern: #"(?i)\b(?:arxiv\s*:\s*)?((?:[-a-z.]+/\d{7}(?:v\d+)?)|(?:\d{4}\.\d{4,5}(?:v\d+)?))\b"#,
-        name: "arXiv candidate"
-    )
-
-    private static let modernValidationRegex = makeStaticRegex(
-        pattern: #"(?i)^\d{4}\.\d{4,5}$"#,
-        name: "arXiv modern validation"
-    )
-
-    private static let classicValidationRegex = makeStaticRegex(
-        pattern: #"(?i)^[-a-z.]+/\d{7}$"#,
-        name: "arXiv classic validation"
-    )
+    // MARK: Internal
 
     static func candidates(in text: String) -> [String] {
         guard !text.isEmpty else {
@@ -136,13 +131,29 @@ enum ArXivParsing {
 
         return nil
     }
+
+    // MARK: Private
+
+    private static let candidateRegex = makeStaticRegex(
+        pattern: #"(?i)\b(?:arxiv\s*:\s*)?((?:[-a-z.]+/\d{7}(?:v\d+)?)|(?:\d{4}\.\d{4,5}(?:v\d+)?))\b"#,
+        name: "arXiv candidate"
+    )
+
+    private static let modernValidationRegex = makeStaticRegex(
+        pattern: #"(?i)^\d{4}\.\d{4,5}$"#,
+        name: "arXiv modern validation"
+    )
+
+    private static let classicValidationRegex = makeStaticRegex(
+        pattern: #"(?i)^[-a-z.]+/\d{7}$"#,
+        name: "arXiv classic validation"
+    )
 }
 
+// MARK: - ISBNParsing
+
 enum ISBNParsing {
-    private static let candidateRegex = makeStaticRegex(
-        pattern: #"(?i)\b(?:isbn(?:-1[03])?\s*:?)?\s*((?:97[89][\d\-\s]{10,20})|(?:[\dX][\d\-\s]{8,20}))\b"#,
-        name: "ISBN candidate"
-    )
+    // MARK: Internal
 
     static func candidates(in text: String) -> [String] {
         guard !text.isEmpty else {
@@ -187,6 +198,13 @@ enum ISBNParsing {
         return nil
     }
 
+    // MARK: Private
+
+    private static let candidateRegex = makeStaticRegex(
+        pattern: #"(?i)\b(?:isbn(?:-1[03])?\s*:?)?\s*((?:97[89][\d\-\s]{10,20})|(?:[\dX][\d\-\s]{8,20}))\b"#,
+        name: "ISBN candidate"
+    )
+
     private static func isValidISBN10(_ value: String) -> Bool {
         guard value.count == 10 else {
             return false
@@ -195,7 +213,7 @@ enum ISBNParsing {
         let chars = Array(value)
         var total = 0
 
-        for index in 0..<9 {
+        for index in 0 ..< 9 {
             guard let digit = chars[index].wholeNumberValue else {
                 return false
             }
@@ -205,11 +223,9 @@ enum ISBNParsing {
         let checksum: Int
         if chars[9] == "X" {
             checksum = 10
-        }
-        else if let digit = chars[9].wholeNumberValue {
+        } else if let digit = chars[9].wholeNumberValue {
             checksum = digit
-        }
-        else {
+        } else {
             return false
         }
 
@@ -225,7 +241,7 @@ enum ISBNParsing {
         let chars = Array(value)
         var total = 0
 
-        for index in 0..<12 {
+        for index in 0 ..< 12 {
             guard let digit = chars[index].wholeNumberValue else {
                 return false
             }

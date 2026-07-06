@@ -1,5 +1,7 @@
 import SwiftUI
 
+// MARK: - RootImportDropZone
+
 struct RootImportDropZone: View {
     let targeted: Bool
     let dragBorderPhase: CGFloat
@@ -46,6 +48,8 @@ struct RootImportDropZone: View {
     }
 }
 
+// MARK: - DropTargetBadge
+
 struct DropTargetBadge: View {
     let title: String
     let targeted: Bool
@@ -69,6 +73,8 @@ struct DropTargetBadge: View {
         .animation(.easeInOut(duration: 0.14), value: targeted)
     }
 }
+
+// MARK: - AttachmentDropOverlay
 
 struct AttachmentDropOverlay: View {
     let targeted: Bool

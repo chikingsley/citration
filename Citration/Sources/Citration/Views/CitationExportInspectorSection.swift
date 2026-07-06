@@ -1,5 +1,5 @@
-import SwiftUI
 import CitrationCore
+import SwiftUI
 
 struct CitationExportInspectorSection: View {
     @Bindable var model: AppModel

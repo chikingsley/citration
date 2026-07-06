@@ -1,5 +1,5 @@
-import Foundation
 import CitrationCore
+import Foundation
 
 extension AppModel {
     var selectedCollectionItems: [BCItem] {
@@ -21,14 +21,15 @@ extension AppModel {
             collections = snapshot.collections.sorted(by: sortCollections)
             collectionMemberships = snapshot.memberships
 
-            if let selectedCollectionID,
-               !collections.contains(where: { $0.id == selectedCollectionID }) {
+            if
+                let selectedCollectionID,
+                !collections.contains(where: { $0.id == selectedCollectionID })
+            {
                 self.selectedCollectionID = nil
             }
 
             await refreshSelectedItemCollections()
-        }
-        catch {
+        } catch {
             collections = []
             collectionMemberships = []
             selectedCollectionID = nil
@@ -48,8 +49,7 @@ extension AppModel {
                 await refreshCollections()
                 selectedCollectionID = collection.id
                 statusMessage = "Created collection"
-            }
-            catch {
+            } catch {
                 statusMessage = "Failed to create collection"
             }
         }
@@ -61,8 +61,7 @@ extension AppModel {
                 try await collectionStore.removeCollection(id: collection.id)
                 await refreshCollections()
                 statusMessage = "Removed collection"
-            }
-            catch {
+            } catch {
                 statusMessage = "Failed to remove collection"
             }
         }
@@ -78,14 +77,13 @@ extension AppModel {
                 }
                 await refreshCollections()
                 statusMessage = isMember ? "Added to collection" : "Removed from collection"
-            }
-            catch {
+            } catch {
                 statusMessage = "Failed to update collection"
             }
         }
     }
 
-    func refreshSelectedItemCollections() async {
+    func refreshSelectedItemCollections() {
         guard let selectedItemID else {
             selectedItemCollectionIDs = []
             return
@@ -106,8 +104,7 @@ extension AppModel {
         do {
             _ = try await collectionStore.addItem(itemID, to: selectedCollectionID)
             await refreshCollections()
-        }
-        catch {
+        } catch {
             statusMessage = "Imported, but failed to file in collection"
         }
     }

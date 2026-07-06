@@ -1,5 +1,7 @@
-import Foundation
 import CitrationCore
+import Foundation
+
+// MARK: - LocalReaderProgressStorePaths
 
 enum LocalReaderProgressStorePaths {
     static func defaultStoreURL(
@@ -19,11 +21,10 @@ enum LocalReaderProgressStorePaths {
     }
 }
 
+// MARK: - LocalReaderProgressStore
+
 actor LocalReaderProgressStore {
-    private let storeURL: URL
-    private let fileManager: FileManager
-    private let encoder: JSONEncoder
-    private let decoder: JSONDecoder
+    // MARK: Lifecycle
 
     init(storeURL: URL, fileManager: FileManager = .default) throws {
         self.storeURL = storeURL
@@ -32,7 +33,7 @@ actor LocalReaderProgressStore {
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
         self.encoder = encoder
-        self.decoder = JSONDecoder()
+        decoder = JSONDecoder()
 
         let directory = storeURL.deletingLastPathComponent()
         try fileManager.createDirectory(at: directory, withIntermediateDirectories: true)
@@ -40,6 +41,8 @@ actor LocalReaderProgressStore {
             try Data("[]".utf8).write(to: storeURL)
         }
     }
+
+    // MARK: Internal
 
     func progress(for attachmentKey: String) throws -> ReaderProgress? {
         try loadAll().first { $0.attachmentKey == attachmentKey }
@@ -81,12 +84,21 @@ actor LocalReaderProgressStore {
 
     func removeProgress(itemIDs: [UUID]) throws {
         let idsToRemove = Set(itemIDs)
-        guard !idsToRemove.isEmpty else { return }
+        guard !idsToRemove.isEmpty else {
+            return
+        }
 
         var allProgress = try loadAll()
         allProgress.removeAll { idsToRemove.contains($0.itemID) }
         try saveAll(allProgress)
     }
+
+    // MARK: Private
+
+    private let storeURL: URL
+    private let fileManager: FileManager
+    private let encoder: JSONEncoder
+    private let decoder: JSONDecoder
 
     private func loadAll() throws -> [ReaderProgress] {
         guard fileManager.fileExists(atPath: storeURL.path) else {

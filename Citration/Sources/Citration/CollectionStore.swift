@@ -1,5 +1,7 @@
-import Foundation
 import CitrationCore
+import Foundation
+
+// MARK: - LocalCollectionStorePaths
 
 enum LocalCollectionStorePaths {
     static func defaultStoreURL(
@@ -19,11 +21,10 @@ enum LocalCollectionStorePaths {
     }
 }
 
+// MARK: - LocalCollectionStore
+
 actor LocalCollectionStore {
-    private let storeURL: URL
-    private let fileManager: FileManager
-    private let encoder: JSONEncoder
-    private let decoder: JSONDecoder
+    // MARK: Lifecycle
 
     init(storeURL: URL, fileManager: FileManager = .default) throws {
         self.storeURL = storeURL
@@ -32,7 +33,7 @@ actor LocalCollectionStore {
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
         self.encoder = encoder
-        self.decoder = JSONDecoder()
+        decoder = JSONDecoder()
 
         let directory = storeURL.deletingLastPathComponent()
         try fileManager.createDirectory(at: directory, withIntermediateDirectories: true)
@@ -41,6 +42,8 @@ actor LocalCollectionStore {
             try data.write(to: storeURL, options: [.atomic])
         }
     }
+
+    // MARK: Internal
 
     func snapshot() throws -> LibraryCollectionSnapshot {
         try loadSnapshot()
@@ -65,9 +68,11 @@ actor LocalCollectionStore {
 
     func addItem(_ itemID: UUID, to collectionID: UUID) throws -> LibraryCollectionMembership {
         var snapshot = try loadSnapshot()
-        if let existing = snapshot.memberships.first(where: { membership in
-            membership.collectionID == collectionID && membership.itemID == itemID
-        }) {
+        if
+            let existing = snapshot.memberships.first(where: { membership in
+                membership.collectionID == collectionID && membership.itemID == itemID
+            })
+        {
             return existing
         }
 
@@ -87,12 +92,21 @@ actor LocalCollectionStore {
 
     func removeItems(ids itemIDs: [UUID]) throws {
         let idsToRemove = Set(itemIDs)
-        guard !idsToRemove.isEmpty else { return }
+        guard !idsToRemove.isEmpty else {
+            return
+        }
 
         var snapshot = try loadSnapshot()
         snapshot.memberships.removeAll { idsToRemove.contains($0.itemID) }
         try saveSnapshot(snapshot)
     }
+
+    // MARK: Private
+
+    private let storeURL: URL
+    private let fileManager: FileManager
+    private let encoder: JSONEncoder
+    private let decoder: JSONDecoder
 
     private func loadSnapshot() throws -> LibraryCollectionSnapshot {
         guard fileManager.fileExists(atPath: storeURL.path) else {

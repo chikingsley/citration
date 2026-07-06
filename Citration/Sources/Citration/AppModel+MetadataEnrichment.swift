@@ -1,5 +1,5 @@
-import Foundation
 import CitrationCore
+import Foundation
 
 extension AppModel {
     func addByDOI() {
@@ -285,6 +285,8 @@ private extension AppModel {
         return "\(identifier.type.rawValue):\(identifier.value.lowercased())"
     }
 }
+
+// MARK: - AttachmentEnrichment
 
 struct AttachmentEnrichment {
     var item: BCItem

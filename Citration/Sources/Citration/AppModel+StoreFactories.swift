@@ -5,15 +5,13 @@ extension AppModel {
         do {
             let baseDirectory = try LocalAttachmentStorePaths.defaultBaseDirectory()
             return try LocalAttachmentStore(baseDirectory: baseDirectory)
-        }
-        catch {
+        } catch {
             let fallback = FileManager.default.temporaryDirectory
                 .appendingPathComponent("citration", isDirectory: true)
                 .appendingPathComponent("attachments", isDirectory: true)
             do {
                 return try LocalAttachmentStore(baseDirectory: fallback)
-            }
-            catch {
+            } catch {
                 fatalError("Unable to initialize attachment store: \(error)")
             }
         }
@@ -23,15 +21,13 @@ extension AppModel {
         do {
             let storeURL = try LocalAnnotationStorePaths.defaultStoreURL()
             return try LocalAnnotationStore(storeURL: storeURL)
-        }
-        catch {
+        } catch {
             let fallback = FileManager.default.temporaryDirectory
                 .appendingPathComponent("citration", isDirectory: true)
                 .appendingPathComponent("annotations.json")
             do {
                 return try LocalAnnotationStore(storeURL: fallback)
-            }
-            catch {
+            } catch {
                 fatalError("Unable to initialize annotation store: \(error)")
             }
         }
@@ -41,15 +37,13 @@ extension AppModel {
         do {
             let storeURL = try LocalCollectionStorePaths.defaultStoreURL()
             return try LocalCollectionStore(storeURL: storeURL)
-        }
-        catch {
+        } catch {
             let fallback = FileManager.default.temporaryDirectory
                 .appendingPathComponent("citration", isDirectory: true)
                 .appendingPathComponent("collections.json")
             do {
                 return try LocalCollectionStore(storeURL: fallback)
-            }
-            catch {
+            } catch {
                 fatalError("Unable to initialize collection store: \(error)")
             }
         }
@@ -59,15 +53,13 @@ extension AppModel {
         do {
             let storeURL = try LocalNoteStorePaths.defaultStoreURL()
             return try LocalNoteStore(storeURL: storeURL)
-        }
-        catch {
+        } catch {
             let fallback = FileManager.default.temporaryDirectory
                 .appendingPathComponent("citration", isDirectory: true)
                 .appendingPathComponent("notes.json")
             do {
                 return try LocalNoteStore(storeURL: fallback)
-            }
-            catch {
+            } catch {
                 fatalError("Unable to initialize note store: \(error)")
             }
         }
@@ -77,15 +69,13 @@ extension AppModel {
         do {
             let storeURL = try LocalRelationshipStorePaths.defaultStoreURL()
             return try LocalRelationshipStore(storeURL: storeURL)
-        }
-        catch {
+        } catch {
             let fallback = FileManager.default.temporaryDirectory
                 .appendingPathComponent("citration", isDirectory: true)
                 .appendingPathComponent("relationships.json")
             do {
                 return try LocalRelationshipStore(storeURL: fallback)
-            }
-            catch {
+            } catch {
                 fatalError("Unable to initialize relationship store: \(error)")
             }
         }
@@ -95,15 +85,13 @@ extension AppModel {
         do {
             let storeURL = try LocalReaderProgressStorePaths.defaultStoreURL()
             return try LocalReaderProgressStore(storeURL: storeURL)
-        }
-        catch {
+        } catch {
             let fallback = FileManager.default.temporaryDirectory
                 .appendingPathComponent("citration", isDirectory: true)
                 .appendingPathComponent("reader-progress.json")
             do {
                 return try LocalReaderProgressStore(storeURL: fallback)
-            }
-            catch {
+            } catch {
                 fatalError("Unable to initialize reader progress store: \(error)")
             }
         }

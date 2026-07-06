@@ -42,7 +42,7 @@ extension AppModel {
         return await environmentOpenAlexAPIKey()
     }
 
-    private func environmentOpenAlexAPIKey() async -> String? {
+    private func environmentOpenAlexAPIKey() -> String? {
         ProcessInfo.processInfo.environment["OPENALEX_API_KEY"]?.bcTrimmedNonEmpty
     }
 }
