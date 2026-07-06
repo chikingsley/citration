@@ -18,7 +18,7 @@ struct CitrationCLI {
 
     init(arguments: [String]) {
         self.arguments = arguments
-        repoRoot = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
+        repoRoot = Self.resolveRepoRoot()
     }
 
     // MARK: Internal
@@ -74,8 +74,17 @@ struct CitrationCLI {
     }
 
     func test() throws {
-        print("-> swift test --parallel (CitrationCore + CLI)")
-        try runOrThrow(["swift", "test", "--parallel"], in: repoRoot)
+        print("-> swift test --parallel (CitrationCore)")
+        try runOrThrow(
+            ["swift", "test", "--parallel"],
+            in: repoRoot.appendingPathComponent("packages/citration-core-swift", isDirectory: true)
+        )
+
+        print("-> swift build (citration CLI)")
+        try runOrThrow(
+            ["swift", "build"],
+            in: repoRoot.appendingPathComponent("tools/citration-cli", isDirectory: true)
+        )
 
         try generateAppProjectIfMissing()
         print("-> xcodebuild test (Citration app)")
@@ -85,6 +94,7 @@ struct CitrationCLI {
                 "-project", appProjectURL.path,
                 "-scheme", "Citration",
                 "-configuration", "Debug",
+                "-destination", "platform=macOS,arch=arm64",
                 "-quiet",
             ],
             in: repoRoot
@@ -94,7 +104,28 @@ struct CitrationCLI {
     // MARK: Private
 
     private var appProjectURL: URL {
-        repoRoot.appendingPathComponent("App/Citration.xcodeproj")
+        repoRoot.appendingPathComponent("Citration.xcodeproj")
+    }
+
+    private static func resolveRepoRoot() -> URL {
+        var directory = URL(fileURLWithPath: FileManager.default.currentDirectoryPath, isDirectory: true)
+
+        while true {
+            let projectSpec = directory.appendingPathComponent("project.yml")
+            let gitDirectory = directory.appendingPathComponent(".git", isDirectory: true)
+            if
+                FileManager.default.fileExists(atPath: projectSpec.path),
+                FileManager.default.fileExists(atPath: gitDirectory.path)
+            {
+                return directory
+            }
+
+            let parent = directory.deletingLastPathComponent()
+            if parent.path == directory.path {
+                return URL(fileURLWithPath: FileManager.default.currentDirectoryPath, isDirectory: true)
+            }
+            directory = parent
+        }
     }
 
     private func printHelp() {
@@ -102,15 +133,15 @@ struct CitrationCLI {
         Citration repo commands
 
         Usage:
-          swift run citration check           # format --lint, lint, test
-          swift run citration test            # package tests + app tests
-          swift run citration format [--lint]
-          swift run citration lint [--fix]
-          swift run citration generate        # regenerate App/Citration.xcodeproj
-          swift run citration openalex-key status
-          swift run citration openalex-key import-env
-          swift run citration openalex-key clear
-          swift run citration openalex-smoke <doi>
+          cd tools/citration-cli && swift run citration check
+          cd tools/citration-cli && swift run citration test
+          cd tools/citration-cli && swift run citration format [--lint]
+          cd tools/citration-cli && swift run citration lint [--fix]
+          cd tools/citration-cli && swift run citration generate
+          cd tools/citration-cli && swift run citration openalex-key status
+          cd tools/citration-cli && swift run citration openalex-key import-env
+          cd tools/citration-cli && swift run citration openalex-key clear
+          cd tools/citration-cli && swift run citration openalex-smoke <doi>
         """)
     }
 
@@ -142,11 +173,8 @@ struct CitrationCLI {
     }
 
     private func generateAppProject() throws {
-        print("-> xcodegen generate (App/Citration.xcodeproj)")
-        try runOrThrow(
-            ["xcodegen", "generate", "--spec", "App/project.yml", "--project", "App"],
-            in: repoRoot
-        )
+        print("-> xcodegen generate (Citration.xcodeproj)")
+        try runOrThrow(["xcodegen", "generate"], in: repoRoot)
     }
 
     private func generateAppProjectIfMissing() throws {

@@ -11,8 +11,8 @@ settings:
     CODE_SIGN_STYLE: Automatic
     GENERATE_INFOPLIST_FILE: NO
 packages:
-  citration:
-    path: ../
+  citrationCore:
+    path: packages/citration-core-swift
   Inject:
     url: https://github.com/krzysztofzablocki/Inject.git
     from: 1.5.2
@@ -21,13 +21,13 @@ targets:
     type: application
     platform: macOS
     info:
-      path: Citration/Config/Citration-Info.plist
+      path: apps/mac/Config/Citration-Info.plist
     sources:
-      - path: Citration
-      - path: Resources
+      - path: apps/mac/Sources
+      - path: apps/mac/Resources
         buildPhase: resources
     dependencies:
-      - package: citration
+      - package: citrationCore
         product: CitrationCore
       - package: Inject
     settings:
@@ -46,10 +46,10 @@ targets:
     type: bundle.unit-test
     platform: macOS
     sources:
-      - path: CitrationTests
+      - path: apps/mac/Tests
     dependencies:
       - target: Citration
-      - package: citration
+      - package: citrationCore
         product: CitrationCore
     settings:
       base:

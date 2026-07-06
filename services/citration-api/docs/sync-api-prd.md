@@ -4,8 +4,8 @@ Status: draft for task #14, updated 2026-07-06.
 
 ## Decision Summary
 
-- Name the Cloudflare package `CitrationAPI`, not `CitrationServer`. The deployed shape is a Worker-backed HTTP API at `https://api.citration.app/v1`, not a conventional always-on server process.
-- Keep the repo as a monorepo with the Swift app/package at the root and the Worker package in `CitrationAPI/`.
+- Name the Cloudflare service `citration-api`, not `CitrationServer`. The deployed shape is a Worker-backed HTTP API at `https://api.citration.app/v1`, not a conventional always-on server process.
+- Keep the repo as a monorepo with Apple apps in `apps/`, shared Swift code in `packages/citration-core-swift/`, shared API contracts in `packages/citration-contracts/`, and the Worker package in `services/citration-api/`.
 - Follow the Toy Local Cloudflare API precedent: pnpm, Hono, Zod, `@hono/zod-openapi`, Scalar API docs, Ultracite/Biome, Vitest contract tests, Wrangler, D1, and R2.
 - Use `library`, not `workspace`, in Citration's public API. A user may eventually have personal and shared libraries, but the product concept is "my library", not a generic SaaS workspace.
 - Use D1 for account/library metadata, object versions, sync objects, tombstones, idempotency keys, auth/session state, entitlement snapshots, and query projections.
@@ -455,7 +455,7 @@ Decision:
 Use a single Worker package first:
 
 ```text
-CitrationAPI/
+services/citration-api/
   src/
   migrations/
   docs/
@@ -489,7 +489,7 @@ Cloudflare docs that informed the shape:
 
 ## Implementation Order
 
-1. Create the `CitrationAPI` package with pnpm, Hono, Zod/OpenAPI, Scalar docs, Ultracite/Biome, Vitest contract tests, health route, reserved sync routes, D1 migration, and R2 binding.
+1. Create the `services/citration-api` package with pnpm, Hono, Zod/OpenAPI, Scalar docs, Ultracite/Biome, Vitest contract tests, health route, reserved sync routes, D1 migration, and R2 binding.
 2. Add sync object/envelope types in `CitrationCore`.
 3. Rename client-facing remote "workspace" concepts to "library" where they cross API boundaries.
 4. Add local sync metadata/change tracking around items, notes, collections, and memberships.

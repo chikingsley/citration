@@ -11,7 +11,8 @@ excluded:
   - .swiftlint_cache
   - SourcePackages
   - DerivedData
-  - Citration.xcworkspace
+  - "**/*.xcodeproj"
+  - "**/*.xcworkspace"
 
 # Formatting rules owned by SwiftFormat — disabled here so the tools
 # never fight. Do not re-enable without removing the SwiftFormat rule.

@@ -42,7 +42,7 @@ extension CitrationCLI {
 
     func openAlexSmoke(arguments: [String]) async throws {
         guard let doi = arguments.first?.trimmedNonEmpty else {
-            throw cliError("Usage: swift run citration openalex-smoke <doi>")
+            throw cliError("Usage: cd tools/citration-cli && swift run citration openalex-smoke <doi>")
         }
 
         let apiKey = try await resolvedOpenAlexAPIKey()
@@ -64,9 +64,9 @@ extension CitrationCLI {
         OpenAlex key commands
 
         Usage:
-          swift run citration openalex-key status
-          swift run citration openalex-key import-env
-          swift run citration openalex-key clear
+          cd tools/citration-cli && swift run citration openalex-key status
+          cd tools/citration-cli && swift run citration openalex-key import-env
+          cd tools/citration-cli && swift run citration openalex-key clear
         """)
     }
 

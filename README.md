@@ -6,49 +6,46 @@ research documents.
 ## Layout
 
 ```
-Package.swift          Root package: CitrationCore library + citration CLI
-Sources/
-  CitrationCore/       Shared domain, persistence, metadata, storage, citation code
-  CitrationCLI/        Repo tooling + OpenAlex utilities (swift run citration ...)
-Tests/
-  CitrationCoreTests/  Core tests (mirrors Sources/CitrationCore)
-App/
-  project.yml          XcodeGen spec — the single build definition for the app
-  Citration/           macOS app target (feature folders + Providers/Stores/Parsing)
-  CitrationTests/      App tests (mirrors App/Citration)
-CitrationAPI/          Cloudflare Worker package for the sync API
-docs/                  Product direction and app-wide task list
+project.yml                         XcodeGen source of truth for the app project
+apps/mac/Sources/                   macOS app target
+apps/mac/Tests/                     macOS app tests
+apps/mac/Resources/                 bundled app resources
+apps/mac/Config/                    app Info.plist and build config
+packages/citration-core-swift/      shared Apple-native Swift core package
+packages/citration-contracts/       shared API contract package placeholder
+services/citration-api/             Cloudflare Worker package for the sync API
+tools/citration-cli/                repo tooling + OpenAlex utilities
+docs/                               product direction, standards, and task list
 ```
 
-`App/Citration.xcodeproj` is generated, not committed.
+`Citration.xcodeproj` is generated from `project.yml`, not committed.
 
 ## Setup
 
 ```bash
 brew install swiftlint swiftformat xcodegen lefthook
 lefthook install                     # git hooks: swiftformat + swiftlint on commit
-swift run citration generate         # generate App/Citration.xcodeproj
-open Citration.xcworkspace           # select the Citration scheme and run
+xcodegen generate                    # generate Citration.xcodeproj
+open Citration.xcodeproj             # select the Citration scheme and run
 ```
 
 ## Commands
 
 ```bash
-swift run citration check            # format --lint, lint, package + app tests
-swift run citration test
-swift run citration format [--lint]
-swift run citration lint [--fix]
-swift run citration generate
-swift run citration openalex-key status
-swift run citration openalex-key import-env
-swift run citration openalex-smoke 10.7717/peerj.4375
+just check
+just open
+cd packages/citration-core-swift && swift test --parallel
+cd tools/citration-cli && swift run citration openalex-key status
+cd tools/citration-cli && swift run citration openalex-key import-env
+cd tools/citration-cli && swift run citration openalex-smoke 10.7717/peerj.4375
+cd services/citration-api && pnpm run check
 ```
 
 Formatting is owned by SwiftFormat (`.swiftformat`); SwiftLint (`.swiftlint.yml`)
 enforces semantic and safety rules only. Both run on every commit via lefthook.
 
 Citation previews and bibliographies are rendered by citeproc-js (the CSL
-processor Zotero uses, vendored at `App/Resources/CSL/` with APA/Chicago/MLA
+processor Zotero uses, vendored at `apps/mac/Resources/CSL/` with APA/Chicago/MLA
 styles; dual-licensed CPAL/AGPL) running in JavaScriptCore.
 
 Scanned PDFs with no text layer are OCRed through Mistral
@@ -60,7 +57,7 @@ document never repeats an API call.
 
 OpenAlex API keys are user-provided credentials. For local development, copy
 `.env.example` to `.env` (git-ignored), set `OPENALEX_API_KEY`, then run
-`swift run citration openalex-key import-env` to store it in a local file
+`cd tools/citration-cli && swift run citration openalex-key import-env` to store it in a local file
 (`~/Library/Application Support/Citration/openalex-api-key`, mode 0600 —
 deliberately not the Keychain, which re-prompts for every unsigned debug
 rebuild). The app also exposes an OpenAlex key field in the inspector.
@@ -74,7 +71,7 @@ Product direction and reader/import architecture notes are in
 Apple app repo layout conventions are in `docs/repo-structure-standard.md`.
 
 The current task list is in `docs/tasks.md`. Sync/API task #14 is planned in
-`CitrationAPI/docs/sync-api-prd.md`, with scratch product notes in
-`CitrationAPI/docs/sync-product-scratch.md`, reference-manager gap notes in
-`CitrationAPI/docs/reference-manager-market-gaps.md`, and the initial
-Cloudflare Worker scaffold in `CitrationAPI/`.
+`services/citration-api/docs/sync-api-prd.md`, with scratch product notes in
+`services/citration-api/docs/sync-product-scratch.md`, reference-manager gap notes in
+`services/citration-api/docs/reference-manager-market-gaps.md`, and the initial
+Cloudflare Worker scaffold in `services/citration-api/`.

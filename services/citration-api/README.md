@@ -1,9 +1,9 @@
-# CitrationAPI
+# Citration API
 
 Cloudflare Worker package for the Citration sync API.
 
 This package owns the API surface at `https://api.citration.app/v1`. It is named
-`CitrationAPI` because the deployed shape is a Worker/API, not a traditional
+`citration-api` because the deployed shape is a Worker/API, not a traditional
 server process.
 
 ## Commands

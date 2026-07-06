@@ -4,7 +4,7 @@ Status: locked standard, created 2026-07-06.
 
 ## Purpose
 
-This is the default structure for Apple app monorepos that may grow to include a macOS app, iOS/iPadOS app, web app, API service, shared Swift core, shared API contracts, tools, and package-specific documentation.
+This is the default structure for product monorepos that may grow to include a macOS app, iOS/iPadOS app, Expo/React Native mobile app, web app, Cloudflare API service, shared Apple-native Swift core, shared API contracts, tools, and package-specific documentation.
 
 The goal is one repeatable shape:
 
@@ -102,7 +102,10 @@ repo/
       Tests/
       Resources/
       Config/
+    mobile/
+      README.md
     web/
+      README.md
 
   packages/
     product-core-swift/
@@ -110,6 +113,10 @@ repo/
       Sources/ProductCore/
       Tests/ProductCoreTests/
     product-contracts/
+      README.md
+    product-client-ts/
+      package.json
+      src/
 
   services/
     product-api/
@@ -139,17 +146,33 @@ This is the source of truth for Xcode.
 
 ### `apps/`
 
-Owns platform app targets.
+Owns platform app targets and client surfaces.
 
 Use this when there may be more than one app surface:
 
 - `apps/mac`
 - `apps/ios`
+- `apps/mobile`
 - `apps/web`
 
 Platform apps can share code through `packages/`; they should not depend on each other's app target internals.
 
 `apps/ios` owns the iOS and iPadOS app target by default. Do not create a separate `apps/ipad` unless iPad becomes a materially separate product with a separate target, separate navigation model, or separate release surface.
+
+`apps/mobile` owns Expo/React Native mobile clients. Expo does not import Swift core. It shares API contracts through `packages/product-contracts` and talks to services over HTTP.
+
+`apps/web` owns web clients. Web clients do not import Swift core. They share API contracts through `packages/product-contracts` and talk to services over HTTP.
+
+## Cross-Platform Reuse Contract
+
+There are two different kinds of reuse, and they should not be blurred:
+
+- Apple-native code reuse lives in `packages/product-core-swift`.
+- Cross-platform product/API reuse lives in `packages/product-contracts` and optional TypeScript client packages.
+
+Expo, React Native, web, and Cloudflare do not consume Swift package code. They share the same object model, API schemas, error shapes, sync envelopes, and fixtures through contracts. If reusable TypeScript runtime code is needed for Expo and web, put it in a package such as `packages/product-client-ts/`; keep it separate from the Swift core package.
+
+Swift apps consume the same contract either through generated Swift models, validated hand-written models, or contract tests. The important rule is that the contract is shared, not that every platform imports the same source language.
 
 ## App Source Contract
 
@@ -422,6 +445,8 @@ Examples:
 - TypeScript contracts package generated from or aligned with the API schema.
 - Shared fixtures used by app tests and API tests.
 
+`product-core-swift` is shared only by Apple-native apps. Cross-platform clients use `product-contracts`, not Swift.
+
 For Swift packages, keep normal SwiftPM layout inside the package:
 
 ```text
@@ -561,7 +586,7 @@ Use `api` for an HTTP API service. Use `server` only for an actual long-running 
 
 ## Swift Core Rule
 
-The Swift core package is shared Apple-side product logic, not the backend.
+The Swift core package is shared Apple-side product logic, not the backend and not the cross-platform core.
 
 It can own:
 
@@ -578,6 +603,8 @@ It should not own:
 
 - macOS app UI
 - iOS app UI
+- Expo/React Native code
+- web app code
 - Cloudflare Worker code
 - server database migrations
 - provider secrets
@@ -594,6 +621,16 @@ Preferred options:
 - Swift contract fixtures/tests generated from or validated against OpenAPI.
 
 Do not make web or React Native clients depend on Swift core.
+
+The dependency rule is:
+
+```text
+apps/mac     -> packages/product-core-swift, packages/product-contracts, services/product-api over HTTP
+apps/ios     -> packages/product-core-swift, packages/product-contracts, services/product-api over HTTP
+apps/mobile  -> packages/product-contracts, services/product-api over HTTP
+apps/web     -> packages/product-contracts, services/product-api over HTTP
+services/api -> packages/product-contracts
+```
 
 ## Workspace Rule
 

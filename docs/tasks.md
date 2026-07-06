@@ -23,10 +23,10 @@ Status: current planning list as of 2026-07-06.
 14. Build Citration sync.
     - Goal: sync library data and attachments across macOS, future iOS/web clients, and the web reader.
     - First step: define the versioned object model, Cloudflare API contract, and local sync metadata before implementing batch sync routes.
-    - Design doc: `CitrationAPI/docs/sync-api-prd.md`.
-    - Scratch product notes: `CitrationAPI/docs/sync-product-scratch.md`.
-    - Market gap notes: `CitrationAPI/docs/reference-manager-market-gaps.md`.
-    - API package: `CitrationAPI/`.
+    - Design doc: `services/citration-api/docs/sync-api-prd.md`.
+    - Scratch product notes: `services/citration-api/docs/sync-product-scratch.md`.
+    - Market gap notes: `services/citration-api/docs/reference-manager-market-gaps.md`.
+    - API package: `services/citration-api/`.
 
 15. Deepen EPUB support.
     - Goal: durable EPUB positions, better navigation, and a Readium evaluation before expanding the reader abstraction.
