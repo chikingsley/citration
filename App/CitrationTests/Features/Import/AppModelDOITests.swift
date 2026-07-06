@@ -50,7 +50,7 @@ struct AppModelDOITests {
         #expect(model.items.count == 1)
         #expect(model.items.first?.doi == doi)
         #expect(model.selectedItemID != nil)
-        #expect(model.citationPreview.contains("[apa]"))
+        #expect(model.citation.preview.contains("[apa]"))
     }
 
     @Test("addByDOI no match sets failure status and stops resolving")

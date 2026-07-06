@@ -14,6 +14,12 @@ protocol LibraryContext: AnyObject {
 
     /// Persists an item edit, refreshes the library, and reports status.
     func persistItem(_ item: BCItem, status: String)
+
+    /// Adds a new item to the library and refreshes it.
+    func addItem(_ item: BCItem) async
+
+    /// Full selection change with per-feature cleanup side effects.
+    func selectItem(id: UUID?)
 }
 
 // MARK: - AppModel + LibraryContext

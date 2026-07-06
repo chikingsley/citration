@@ -47,11 +47,11 @@ struct ItemRelatedInspectorSection: View {
             }
 
             Divider()
-            if model.selectedItemRecommendations.isEmpty {
+            if model.insights.recommendations.isEmpty {
                 Text("No related local items yet.")
                     .foregroundStyle(.secondary)
             } else {
-                ForEach(model.selectedItemRecommendations) { recommendation in
+                ForEach(model.insights.recommendations) { recommendation in
                     if let candidate = model.items.first(where: { $0.id == recommendation.candidateItemID }) {
                         recommendationRow(candidate: candidate, recommendation: recommendation)
                     }
@@ -62,16 +62,16 @@ struct ItemRelatedInspectorSection: View {
             Text("OpenAlex")
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(.secondary)
-            if !model.hasOpenAlexAPIKey {
+            if !model.settings.hasKey {
                 Text("OpenAlex key not configured.")
                     .foregroundStyle(.secondary)
-            } else if model.isLoadingDiscoverySuggestions {
+            } else if model.insights.isLoading {
                 ProgressView("Loading related works...")
-            } else if model.selectedItemDiscoverySuggestions.isEmpty {
+            } else if model.insights.suggestions.isEmpty {
                 Text("No OpenAlex suggestions yet.")
                     .foregroundStyle(.secondary)
             } else {
-                ForEach(model.selectedItemDiscoverySuggestions) { suggestion in
+                ForEach(model.insights.suggestions) { suggestion in
                     discoverySuggestionRow(suggestion)
                 }
             }
@@ -128,7 +128,7 @@ struct ItemRelatedInspectorSection: View {
                     .font(.subheadline.weight(.medium))
                 Spacer()
                 Button("Import", systemImage: "square.and.arrow.down") {
-                    model.importDiscoverySuggestion(suggestion)
+                    model.insights.importSuggestion(suggestion)
                 }
                 .buttonStyle(.borderless)
             }

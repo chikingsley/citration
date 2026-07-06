@@ -2,26 +2,26 @@ import CitrationCore
 import SwiftUI
 
 struct CitationExportInspectorSection: View {
-    @Bindable var model: AppModel
+    let citation: CitationModel
 
     var body: some View {
         Section("Citation") {
-            Text(model.citationPreview)
+            Text(citation.preview)
                 .font(.system(.caption, design: .monospaced))
                 .textSelection(.enabled)
 
             HStack {
                 Button("CSL JSON", systemImage: "doc.text") {
-                    model.exportSelectedCitation(format: .cslJSON)
+                    citation.exportSelected(format: .cslJSON)
                 }
                 Button("BibTeX", systemImage: "text.quote") {
-                    model.exportSelectedCitation(format: .bibTeX)
+                    citation.exportSelected(format: .bibTeX)
                 }
                 Spacer()
             }
 
-            if !model.citationExportText.isEmpty {
-                Text(model.citationExportText)
+            if !citation.exportText.isEmpty {
+                Text(citation.exportText)
                     .font(.system(.caption, design: .monospaced))
                     .textSelection(.enabled)
             }

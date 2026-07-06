@@ -30,8 +30,8 @@ struct ItemRelationshipTests {
         #expect(relationship.note == "Sequel paper")
         #expect(model.relationships.noteDraft.isEmpty)
         #expect(model.statusMessage == "Linked related item")
-        #expect(model.selectedItemRecommendations.map(\.candidateItemID) == [target.id])
-        #expect(model.selectedItemRecommendations.first?.reasons == [.userLinked(.series)])
+        #expect(model.insights.recommendations.map(\.candidateItemID) == [target.id])
+        #expect(model.insights.recommendations.first?.reasons == [.userLinked(.series)])
     }
 
     @Test("removeRelationship removes selected link")
@@ -49,7 +49,7 @@ struct ItemRelationshipTests {
         model.relationships.remove(relationship)
         try await waitUntil { model.relationships.selectedItemRelationships.isEmpty }
 
-        #expect(model.selectedItemRecommendations.isEmpty)
+        #expect(model.insights.recommendations.isEmpty)
         #expect(model.statusMessage == "Removed related item")
     }
 

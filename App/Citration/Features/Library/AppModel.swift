@@ -25,7 +25,7 @@ final class AppModel {
     ) {
         self.store = store
         self.metadataRegistry = metadataRegistry
-        self.citationFormatter = citationFormatter
+        citation = CitationModel(formatter: citationFormatter)
         self.storageConnectors = storageConnectors
         self.sessionStore = sessionStore
         self.attachmentStore = attachmentStore ?? AppModel.makeAttachmentStore()
@@ -37,17 +37,20 @@ final class AppModel {
             annotationStore: annotationStore ?? AppModel.makeAnnotationStore()
         )
         self.pdfDOIExtractor = pdfDOIExtractor
-        self.relatedWorkDiscoveryProvider = relatedWorkDiscoveryProvider
-        self.openAlexAPIKeyStore = openAlexAPIKeyStore
+        insights = InsightsModel(discoveryProvider: relatedWorkDiscoveryProvider)
+        settings = OpenAlexSettingsModel(keyStore: openAlexAPIKeyStore)
         collections.bind(context: self)
         notes.bind(context: self)
         tags.bind(context: self)
         relationships.bind(context: self)
         reader.bind(context: self)
+        citation.bind(context: self)
+        insights.bind(context: self, relationships: relationships)
+        settings.bind(context: self, insights: insights)
 
         Task {
             await setupAuthServices()
-            await refreshOpenAlexAPIKeyStatus()
+            await settings.refreshKeyStatus()
             await collections.refresh()
             await refreshItems()
             await relationships.refresh()
@@ -67,15 +70,7 @@ final class AppModel {
     var metadataConflicts: [MetadataResolutionConflict] = []
     var items: [BCItem] = []
     var selectedItemID: UUID?
-    var citationPreview: String = "Select an item to preview citation output"
-    var citationExportFormat: CitationExportFormat = .cslJSON
-    var citationExportText: String = ""
     var selectedItemAttachments: [LocalAttachment] = []
-    var selectedItemDiscoverySuggestions: [WorkDiscoverySuggestion] = []
-    var isLoadingDiscoverySuggestions: Bool = false
-    var openAlexAPIKeyDraft: String = ""
-    var hasOpenAlexAPIKey: Bool = false
-    var isSavingOpenAlexAPIKey: Bool = false
     var storageConnectors: [StorageConnector]
 
     // Auth state
@@ -88,12 +83,13 @@ final class AppModel {
     let tags: TagsModel = .init()
     let relationships: RelationshipsModel
     let reader: ReaderModel
+    let citation: CitationModel
+    let insights: InsightsModel
+    let settings: OpenAlexSettingsModel
     let store: any BCItemStore
     let metadataRegistry: MetadataProviderRegistry
     let attachmentStore: LocalAttachmentStore
     let pdfDOIExtractor: any PDFDOIExtracting
-    let relatedWorkDiscoveryProvider: any RelatedWorkDiscoveryProvider
-    let openAlexAPIKeyStore: any OpenAlexAPIKeyStore
 
     var isReprocessingAttachments: Bool {
         reprocessingItemID != nil
@@ -136,11 +132,11 @@ final class AppModel {
         if !hasValidSelection {
             selectedItemID = items.first?.id
         }
-        await renderCitationPreviewForSelection()
+        await citation.renderPreviewForSelection()
         await refreshSelectedItemAttachments()
         await notes.refreshForSelection()
         relationships.refreshForSelection()
-        await refreshSelectedItemDiscoverySuggestions()
+        await insights.refreshForSelection()
     }
 
     func addEmptyItem() {
@@ -188,21 +184,26 @@ final class AppModel {
     func selectItem(id: UUID?) {
         if selectedItemID != id {
             notes.draft = ""
-            citationExportText = ""
+            citation.clearExport()
             relationships.clearSelectionDrafts()
-            selectedItemDiscoverySuggestions = []
+            insights.clearForSelectionChange()
             clearMetadataDiagnostics()
         }
         reader.clearIfSelectionChanged(to: id)
         selectedItemID = id
         Task {
-            await renderCitationPreviewForSelection()
+            await citation.renderPreviewForSelection()
             await refreshSelectedItemAttachments()
             collections.refreshSelectedItemMemberships()
             await notes.refreshForSelection()
             relationships.refreshForSelection()
-            await refreshSelectedItemDiscoverySuggestions()
+            await insights.refreshForSelection()
         }
+    }
+
+    func addItem(_ item: BCItem) async {
+        await store.upsert(item)
+        await refreshItems()
     }
 
     func persistItem(_ item: BCItem, status: String) {
@@ -218,8 +219,6 @@ final class AppModel {
     // MARK: Private
 
     private let sessionStore: AuthSessionStore
-
-    private let citationFormatter: any CitationFormattingEngine
 
     // MARK: - Auth
 
@@ -239,26 +238,6 @@ final class AppModel {
         isSignedIn = await authService.hasValidSession()
         if isSignedIn {
             currentUser = try? await authService.currentUser()
-        }
-    }
-
-    private func renderCitationPreviewForSelection() async {
-        guard let selectedItem else {
-            citationPreview = "Select an item to preview citation output"
-            return
-        }
-
-        do {
-            let cluster = CitationCluster(items: [CitationItem(itemID: selectedItem.id)])
-            let style = CitationStyle(id: "apa", title: "APA")
-            let output = try await citationFormatter.formatCluster(
-                cluster,
-                style: style,
-                options: CitationRenderOptions(format: .plainText)
-            )
-            citationPreview = output.text
-        } catch {
-            citationPreview = "Citation preview failed: \(error.localizedDescription)"
         }
     }
 }

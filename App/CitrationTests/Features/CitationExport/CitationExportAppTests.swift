@@ -21,11 +21,11 @@ struct CitationExportAppTests {
         await model.refreshItems()
         model.selectItem(id: item.id)
 
-        model.exportSelectedCitation(format: .cslJSON)
+        model.citation.exportSelected(format: .cslJSON)
 
-        #expect(model.citationExportFormat == .cslJSON)
-        #expect(model.citationExportText.contains("\"DOI\" : \"10.1234/example\""))
-        #expect(model.citationExportText.contains("\"title\" : \"Paper\""))
+        #expect(model.citation.exportFormat == .cslJSON)
+        #expect(model.citation.exportText.contains("\"DOI\" : \"10.1234/example\""))
+        #expect(model.citation.exportText.contains("\"title\" : \"Paper\""))
         #expect(model.statusMessage == "Prepared CSL JSON")
     }
 
@@ -43,10 +43,10 @@ struct CitationExportAppTests {
         await model.refreshItems()
         model.selectItem(id: first.id)
 
-        model.exportSelectedCitation(format: .bibTeX)
-        #expect(model.citationExportText.contains("@article{lovelace1843paper,"))
+        model.citation.exportSelected(format: .bibTeX)
+        #expect(model.citation.exportText.contains("@article{lovelace1843paper,"))
 
         model.selectItem(id: second.id)
-        #expect(model.citationExportText.isEmpty)
+        #expect(model.citation.exportText.isEmpty)
     }
 }

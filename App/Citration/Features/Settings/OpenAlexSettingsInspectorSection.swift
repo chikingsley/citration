@@ -1,29 +1,29 @@
 import SwiftUI
 
 struct OpenAlexSettingsInspectorSection: View {
-    @Bindable var model: AppModel
+    @Bindable var settings: OpenAlexSettingsModel
 
     var body: some View {
         Section("OpenAlex") {
-            LabeledContent("Status", value: model.hasOpenAlexAPIKey ? "Configured" : "Not configured")
+            LabeledContent("Status", value: settings.hasKey ? "Configured" : "Not configured")
 
-            SecureField("API key", text: $model.openAlexAPIKeyDraft)
+            SecureField("API key", text: $settings.keyDraft)
                 .textContentType(.password)
 
             HStack {
-                Button(model.isSavingOpenAlexAPIKey ? "Saving..." : "Save Key", systemImage: "key") {
-                    model.saveOpenAlexAPIKey()
+                Button(settings.isSaving ? "Saving..." : "Save Key", systemImage: "key") {
+                    settings.saveKey()
                 }
-                .disabled(model.isSavingOpenAlexAPIKey || model.openAlexAPIKeyDraft.bcTrimmedNonEmpty == nil)
+                .disabled(settings.isSaving || settings.keyDraft.bcTrimmedNonEmpty == nil)
 
                 Button("Clear", systemImage: "xmark.circle") {
-                    model.clearOpenAlexAPIKey()
+                    settings.clearKey()
                 }
-                .disabled(model.isSavingOpenAlexAPIKey || !model.hasOpenAlexAPIKey)
+                .disabled(settings.isSaving || !settings.hasKey)
             }
         }
         .task {
-            await model.refreshOpenAlexAPIKeyStatus()
+            await settings.refreshKeyStatus()
         }
     }
 }

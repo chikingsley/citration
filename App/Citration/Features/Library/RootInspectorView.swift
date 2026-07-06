@@ -59,13 +59,13 @@ struct RootInspectorView: View {
                     ItemTagsInspectorSection(tags: model.tags, item: item)
                     ItemCollectionsInspectorSection(model: model, item: item)
                     ItemNotesInspectorSection(notes: model.notes)
-                    CitationExportInspectorSection(model: model)
+                    CitationExportInspectorSection(citation: model.citation)
                     attachmentsSection
                     if model.reader.activeAttachment?.itemID == item.id {
                         readerNotesSection
                     }
                     ItemRelatedInspectorSection(relationships: model.relationships, model: model)
-                    OpenAlexSettingsInspectorSection(model: model)
+                    OpenAlexSettingsInspectorSection(settings: model.settings)
                 }
                 .formStyle(.grouped)
             }
@@ -79,7 +79,7 @@ struct RootInspectorView: View {
                             description: Text("Select an item to view its details.")
                         )
                     }
-                    OpenAlexSettingsInspectorSection(model: model)
+                    OpenAlexSettingsInspectorSection(settings: model.settings)
                 }
                 .formStyle(.grouped)
             }
