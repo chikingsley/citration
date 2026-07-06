@@ -4,42 +4,44 @@ import SwiftUI
 struct ItemRelatedInspectorSection: View {
     // MARK: Internal
 
-    @Bindable var model: AppModel
+    @Bindable var relationships: RelationshipsModel
+
+    let model: AppModel
 
     var body: some View {
         Section("Related") {
-            if model.relatedItemCandidates.isEmpty {
+            if relationships.candidates.isEmpty {
                 Text("Add another item to link related work.")
                     .foregroundStyle(.secondary)
             } else {
-                Picker("Item", selection: $model.relatedItemTargetID) {
-                    ForEach(model.relatedItemCandidates) { candidate in
+                Picker("Item", selection: $relationships.targetID) {
+                    ForEach(relationships.candidates) { candidate in
                         Text(candidate.title.bcCollapsedWhitespace())
                             .tag(candidate.id as UUID?)
                     }
                 }
 
-                Picker("Kind", selection: $model.relatedItemKind) {
+                Picker("Kind", selection: $relationships.kind) {
                     ForEach(LibraryRelationshipKind.allCases, id: \.self) { kind in
                         Text(kind.displayLabel).tag(kind)
                     }
                 }
 
-                TextField("Relationship note", text: $model.relatedItemNoteDraft, axis: .vertical)
+                TextField("Relationship note", text: $relationships.noteDraft, axis: .vertical)
                     .lineLimit(1 ... 3)
 
                 HStack {
                     Button("Add Link", systemImage: "link.badge.plus") {
-                        model.addRelationshipToSelectedItem()
+                        relationships.addToSelectedItem()
                     }
-                    .disabled(model.relatedItemTargetID == nil)
+                    .disabled(relationships.targetID == nil)
                     Spacer()
                 }
             }
 
-            if !model.selectedItemRelationships.isEmpty {
+            if !relationships.selectedItemRelationships.isEmpty {
                 Divider()
-                ForEach(model.selectedItemRelationships) { relationship in
+                ForEach(relationships.selectedItemRelationships) { relationship in
                     relationshipRow(relationship)
                 }
             }
@@ -81,11 +83,11 @@ struct ItemRelatedInspectorSection: View {
     private func relationshipRow(_ relationship: LibraryRelationship) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack {
-                Text(model.titleForRelatedItem(in: relationship))
+                Text(relationships.titleForRelatedItem(in: relationship))
                     .font(.subheadline.weight(.medium))
                 Spacer()
                 Button {
-                    model.removeRelationship(relationship)
+                    relationships.remove(relationship)
                 } label: {
                     Image(systemName: "trash")
                 }

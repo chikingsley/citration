@@ -8,7 +8,7 @@ extension AppModel {
         return LibraryInsightEngine().recommendations(
             for: selectedItem,
             in: items,
-            relationships: libraryRelationships
+            relationships: relationships.all
         )
     }
 

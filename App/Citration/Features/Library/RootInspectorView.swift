@@ -64,7 +64,7 @@ struct RootInspectorView: View {
                     if model.activeReaderAttachment?.itemID == item.id {
                         readerNotesSection
                     }
-                    ItemRelatedInspectorSection(model: model)
+                    ItemRelatedInspectorSection(relationships: model.relationships, model: model)
                     OpenAlexSettingsInspectorSection(model: model)
                 }
                 .formStyle(.grouped)

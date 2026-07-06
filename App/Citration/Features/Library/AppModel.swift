@@ -32,7 +32,7 @@ final class AppModel {
         self.annotationStore = annotationStore ?? AppModel.makeAnnotationStore()
         collections = CollectionsModel(store: collectionStore ?? AppModel.makeCollectionStore())
         notes = NotesModel(store: noteStore ?? AppModel.makeNoteStore())
-        self.relationshipStore = relationshipStore ?? AppModel.makeRelationshipStore()
+        relationships = RelationshipsModel(store: relationshipStore ?? AppModel.makeRelationshipStore())
         self.readerProgressStore = readerProgressStore ?? AppModel.makeReaderProgressStore()
         self.pdfDOIExtractor = pdfDOIExtractor
         self.relatedWorkDiscoveryProvider = relatedWorkDiscoveryProvider
@@ -40,13 +40,14 @@ final class AppModel {
         collections.bind(context: self)
         notes.bind(context: self)
         tags.bind(context: self)
+        relationships.bind(context: self)
 
         Task {
             await setupAuthServices()
             await refreshOpenAlexAPIKeyStatus()
             await collections.refresh()
             await refreshItems()
-            await refreshRelationships()
+            await relationships.refresh()
             await notes.refreshForSelection()
         }
     }
@@ -71,16 +72,11 @@ final class AppModel {
     var activeReaderProgress: ReaderProgress?
     var activeReaderAnnotations: [LibraryAnnotation] = []
     var readerNoteDraft: String = ""
-    var libraryRelationships: [LibraryRelationship] = []
-    var selectedItemRelationships: [LibraryRelationship] = []
     var selectedItemDiscoverySuggestions: [WorkDiscoverySuggestion] = []
     var isLoadingDiscoverySuggestions: Bool = false
     var openAlexAPIKeyDraft: String = ""
     var hasOpenAlexAPIKey: Bool = false
     var isSavingOpenAlexAPIKey: Bool = false
-    var relatedItemTargetID: UUID?
-    var relatedItemKind: LibraryRelationshipKind = .userLinked
-    var relatedItemNoteDraft: String = ""
     var storageConnectors: [StorageConnector]
 
     // Auth state
@@ -91,11 +87,11 @@ final class AppModel {
     let collections: CollectionsModel
     let notes: NotesModel
     let tags: TagsModel = .init()
+    let relationships: RelationshipsModel
     let store: any BCItemStore
     let metadataRegistry: MetadataProviderRegistry
     let attachmentStore: LocalAttachmentStore
     let annotationStore: LocalAnnotationStore
-    let relationshipStore: LocalRelationshipStore
     let readerProgressStore: LocalReaderProgressStore
     let pdfDOIExtractor: any PDFDOIExtracting
     let relatedWorkDiscoveryProvider: any RelatedWorkDiscoveryProvider
@@ -145,7 +141,7 @@ final class AppModel {
         await renderCitationPreviewForSelection()
         await refreshSelectedItemAttachments()
         await notes.refreshForSelection()
-        refreshSelectedItemRelationships()
+        relationships.refreshForSelection()
         await refreshSelectedItemDiscoverySuggestions()
     }
 
@@ -178,10 +174,9 @@ final class AppModel {
                 await store.removeItem(id: id)
             }
             await notes.removeItems(ids: uniqueIDs)
-            try? await relationshipStore.removeRelationships(itemIDs: uniqueIDs)
             try? await readerProgressStore.removeProgress(itemIDs: uniqueIDs)
             await collections.removeItems(ids: uniqueIDs)
-            await refreshRelationships()
+            await relationships.removeItems(ids: uniqueIDs)
             await refreshItems()
 
             if uniqueIDs.count == 1 {
@@ -196,8 +191,7 @@ final class AppModel {
         if selectedItemID != id {
             notes.draft = ""
             citationExportText = ""
-            relatedItemTargetID = nil
-            relatedItemNoteDraft = ""
+            relationships.clearSelectionDrafts()
             selectedItemDiscoverySuggestions = []
             clearMetadataDiagnostics()
         }
@@ -213,7 +207,7 @@ final class AppModel {
             await refreshSelectedItemAttachments()
             collections.refreshSelectedItemMemberships()
             await notes.refreshForSelection()
-            refreshSelectedItemRelationships()
+            relationships.refreshForSelection()
             await refreshSelectedItemDiscoverySuggestions()
         }
     }
