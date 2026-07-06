@@ -22,11 +22,11 @@ struct RootLibrarySidebar: View {
                     }
                     .tag(LibrarySelectionIdentifier.library)
 
-                    if model.collections.isEmpty {
+                    if model.collections.all.isEmpty {
                         Text("No collections")
                             .foregroundStyle(.secondary)
                     } else {
-                        ForEach(model.collections) { collection in
+                        ForEach(model.collections.all) { collection in
                             Label(collection.name, systemImage: "folder.fill")
                                 .tag(LibrarySelectionIdentifier.value(for: collection))
                                 .contextMenu {
@@ -50,7 +50,7 @@ struct RootLibrarySidebar: View {
                 targeted: isImportDropTargeted,
                 dragBorderPhase: importDragBorderPhase
             )
-            TagFilterPanel(items: model.selectedCollectionItems, selectedTag: $selectedTag)
+            TagFilterPanel(items: model.collections.selectedCollectionItems, selectedTag: $selectedTag)
         }
         .onDrop(
             of: [.fileURL],

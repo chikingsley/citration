@@ -30,18 +30,19 @@ final class AppModel {
         self.sessionStore = sessionStore
         self.attachmentStore = attachmentStore ?? AppModel.makeAttachmentStore()
         self.annotationStore = annotationStore ?? AppModel.makeAnnotationStore()
-        self.collectionStore = collectionStore ?? AppModel.makeCollectionStore()
+        collections = CollectionsModel(store: collectionStore ?? AppModel.makeCollectionStore())
         self.noteStore = noteStore ?? AppModel.makeNoteStore()
         self.relationshipStore = relationshipStore ?? AppModel.makeRelationshipStore()
         self.readerProgressStore = readerProgressStore ?? AppModel.makeReaderProgressStore()
         self.pdfDOIExtractor = pdfDOIExtractor
         self.relatedWorkDiscoveryProvider = relatedWorkDiscoveryProvider
         self.openAlexAPIKeyStore = openAlexAPIKeyStore
+        collections.bind(context: self)
 
         Task {
             await setupAuthServices()
             await refreshOpenAlexAPIKeyStatus()
-            await refreshCollections()
+            await collections.refresh()
             await refreshItems()
             await refreshRelationships()
             await refreshSelectedItemNotes()
@@ -71,10 +72,6 @@ final class AppModel {
     var itemNoteDraft: String = ""
     var selectedItemNotes: [LibraryNote] = []
     var tagDraft: String = ""
-    var collections: [LibraryCollection] = []
-    var collectionMemberships: [LibraryCollectionMembership] = []
-    var selectedCollectionID: UUID?
-    var selectedItemCollectionIDs: Set<UUID> = []
     var libraryRelationships: [LibraryRelationship] = []
     var selectedItemRelationships: [LibraryRelationship] = []
     var selectedItemDiscoverySuggestions: [WorkDiscoverySuggestion] = []
@@ -92,11 +89,11 @@ final class AppModel {
     var currentUser: User?
     private(set) var authService: AuthService?
     private(set) var workspaceService: WorkspaceService?
+    let collections: CollectionsModel
     let store: any BCItemStore
     let metadataRegistry: MetadataProviderRegistry
     let attachmentStore: LocalAttachmentStore
     let annotationStore: LocalAnnotationStore
-    let collectionStore: LocalCollectionStore
     let noteStore: LocalNoteStore
     let relationshipStore: LocalRelationshipStore
     let readerProgressStore: LocalReaderProgressStore
@@ -180,11 +177,10 @@ final class AppModel {
             for id in uniqueIDs {
                 await store.removeItem(id: id)
             }
-            try? await collectionStore.removeItems(ids: uniqueIDs)
             try? await noteStore.removeNotes(itemIDs: uniqueIDs)
             try? await relationshipStore.removeRelationships(itemIDs: uniqueIDs)
             try? await readerProgressStore.removeProgress(itemIDs: uniqueIDs)
-            await refreshCollections()
+            await collections.removeItems(ids: uniqueIDs)
             await refreshRelationships()
             await refreshItems()
 
@@ -215,7 +211,7 @@ final class AppModel {
         Task {
             await renderCitationPreviewForSelection()
             await refreshSelectedItemAttachments()
-            refreshSelectedItemCollections()
+            collections.refreshSelectedItemMemberships()
             await refreshSelectedItemNotes()
             refreshSelectedItemRelationships()
             await refreshSelectedItemDiscoverySuggestions()

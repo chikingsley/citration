@@ -146,7 +146,7 @@ private extension AppModel {
                 await refreshItems()
                 let enrichment = await enrichImportedAttachment(item: item, attachment: attachment)
                 item = enrichment.item
-                await addItemToSelectedCollectionIfNeeded(item.id)
+                await collections.fileInSelectedCollection(item.id)
                 selectedItemID = item.id
                 summary.recordSuccessfulImport(enrichment)
             } catch {

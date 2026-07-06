@@ -35,13 +35,13 @@ struct RootView: View {
                 onRemoveCollection: removeCollection
             )
             .onAppear {
-                model.selectCollection(id: LibrarySelectionIdentifier.collectionID(from: selectedCollection))
+                model.collections.select(id: LibrarySelectionIdentifier.collectionID(from: selectedCollection))
             }
             .onChange(of: selectedCollection) { _, selection in
                 selectedTag = nil
-                model.selectCollection(id: LibrarySelectionIdentifier.collectionID(from: selection))
+                model.collections.select(id: LibrarySelectionIdentifier.collectionID(from: selection))
             }
-            .onChange(of: model.selectedCollectionID) { _, collectionID in
+            .onChange(of: model.collections.selectedID) { _, collectionID in
                 selectedCollection = LibrarySelectionIdentifier.value(for: collectionID)
             }
         } detail: {
@@ -118,7 +118,7 @@ struct RootView: View {
     @ObserveInjection private var inject
 
     private var filteredItems: [BCItem] {
-        let collectionItems = model.selectedCollectionItems
+        let collectionItems = model.collections.selectedCollectionItems
         let scopedItems: [BCItem] = if let selectedTag {
             collectionItems.filter { item in
                 item.tags.contains { $0.localizedCaseInsensitiveCompare(selectedTag) == .orderedSame }
@@ -167,7 +167,7 @@ struct RootView: View {
             }
 
             Button("New Collection", systemImage: "folder.badge.plus") {
-                model.createCollection()
+                model.collections.create()
             }
 
             Button("New Note", systemImage: "note.text.badge.plus") {
@@ -277,6 +277,6 @@ struct RootView: View {
         if selectedCollection == LibrarySelectionIdentifier.value(for: collection) {
             selectedCollection = LibrarySelectionIdentifier.library
         }
-        model.removeCollection(collection)
+        model.collections.remove(collection)
     }
 }

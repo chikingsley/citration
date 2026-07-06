@@ -10,11 +10,11 @@ struct ItemCollectionsInspectorSection: View {
 
     var body: some View {
         Section("Collections") {
-            if model.collections.isEmpty {
+            if model.collections.all.isEmpty {
                 Text("No collections")
                     .foregroundStyle(.secondary)
             } else {
-                ForEach(model.collections) { collection in
+                ForEach(model.collections.all) { collection in
                     Toggle(isOn: membershipBinding(for: collection)) {
                         Label(collection.name, systemImage: "folder")
                     }
@@ -22,7 +22,7 @@ struct ItemCollectionsInspectorSection: View {
             }
 
             Button("New Collection", systemImage: "folder.badge.plus") {
-                model.createCollection()
+                model.collections.create()
             }
         }
     }
@@ -31,9 +31,9 @@ struct ItemCollectionsInspectorSection: View {
 
     private func membershipBinding(for collection: LibraryCollection) -> Binding<Bool> {
         Binding {
-            model.selectedItemCollectionIDs.contains(collection.id)
+            model.collections.selectedItemCollectionIDs.contains(collection.id)
         } set: { isMember in
-            model.setSelectedItem(item, memberOf: collection, isMember: isMember)
+            model.collections.set(item, memberOf: collection, isMember: isMember)
         }
     }
 }
