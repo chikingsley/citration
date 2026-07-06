@@ -1,0 +1,28 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "citration-api",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-07-06",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": true,
+  "vars": {
+    "CITRATION_ENV": "local"
+  },
+  "secrets": {
+    "required": ["JWT_SIGNING_SECRET"]
+  },
+  "d1_databases": [
+    {
+      "binding": "CITRATION_DB",
+      "database_name": "citration",
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "ATTACHMENTS",
+      "bucket_name": "citration-attachments"
+    }
+  ]
+}

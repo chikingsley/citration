@@ -16,6 +16,8 @@ App/
   project.yml          XcodeGen spec — the single build definition for the app
   Citration/           macOS app target (feature folders + Providers/Stores/Parsing)
   CitrationTests/      App tests (mirrors App/Citration)
+CitrationAPI/          Cloudflare Worker package for the sync API
+docs/                  Product direction, task list, and API/data-layer planning
 ```
 
 `App/Citration.xcodeproj` is generated, not committed.
@@ -64,3 +66,7 @@ Zotero is an external behavior reference only. Notes are kept in
 
 Product direction and reader/import architecture notes are in
 `docs/product-direction.md`.
+
+The current task list is in `docs/tasks.md`. Sync/API task #14 is planned in
+`docs/sync-api-prd.md`, with the initial Cloudflare Worker scaffold in
+`CitrationAPI/`.

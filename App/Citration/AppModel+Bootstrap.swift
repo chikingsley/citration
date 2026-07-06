@@ -16,6 +16,7 @@ extension AppModel {
             ArXivMetadataProvider(),
             CrossrefDOIMetadataProvider(),
             OpenLibraryISBNMetadataProvider(),
+            OpenLibraryTitleSearchMetadataProvider(),
         ]
         let metadataRegistry = MetadataProviderRegistry(providers: providers)
         let citationFormatter = StubCitationFormatter()
