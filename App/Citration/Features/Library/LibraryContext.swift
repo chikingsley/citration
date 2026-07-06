@@ -10,6 +10,10 @@ protocol LibraryContext: AnyObject {
     var statusMessage: String { get set }
     var selectedItemID: UUID? { get }
     var items: [BCItem] { get }
+    var selectedItem: BCItem? { get }
+
+    /// Persists an item edit, refreshes the library, and reports status.
+    func persistItem(_ item: BCItem, status: String)
 }
 
 // MARK: - AppModel + LibraryContext

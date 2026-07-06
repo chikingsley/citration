@@ -15,12 +15,12 @@ struct ItemNoteTests {
         await model.refreshItems()
         model.selectItem(id: item.id)
 
-        model.itemNoteDraft = "  Check related work  "
-        model.addNoteToSelectedItem()
-        try await waitUntil { model.selectedItemNotes.count == 1 }
+        model.notes.draft = "  Check related work  "
+        model.notes.addToSelectedItem()
+        try await waitUntil { model.notes.selectedItemNotes.count == 1 }
 
-        #expect(model.itemNoteDraft.isEmpty)
-        #expect(model.selectedItemNotes.first?.text == "Check related work")
+        #expect(model.notes.draft.isEmpty)
+        #expect(model.notes.selectedItemNotes.first?.text == "Check related work")
         #expect(model.statusMessage == "Added note")
     }
 
@@ -31,11 +31,11 @@ struct ItemNoteTests {
         await model.refreshItems()
         model.selectItem(id: item.id)
 
-        model.itemNoteDraft = "   "
-        model.addNoteToSelectedItem()
+        model.notes.draft = "   "
+        model.notes.addToSelectedItem()
 
         #expect(model.statusMessage == "Enter a note first")
-        #expect(model.selectedItemNotes.isEmpty)
+        #expect(model.notes.selectedItemNotes.isEmpty)
     }
 
     @Test("removeSelectedItem removes item notes")
@@ -44,13 +44,13 @@ struct ItemNoteTests {
         let model = makeAppModel(initialItems: [item])
         await model.refreshItems()
         model.selectItem(id: item.id)
-        model.itemNoteDraft = "Delete with item"
-        model.addNoteToSelectedItem()
-        try await waitUntil { model.selectedItemNotes.count == 1 }
+        model.notes.draft = "Delete with item"
+        model.notes.addToSelectedItem()
+        try await waitUntil { model.notes.selectedItemNotes.count == 1 }
 
         model.removeSelectedItem()
         try await waitUntil { model.items.isEmpty }
 
-        #expect(try await model.noteStore.listNotes(itemID: item.id).isEmpty)
+        #expect(try await model.notes.store.listNotes(itemID: item.id).isEmpty)
     }
 }

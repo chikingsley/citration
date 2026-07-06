@@ -171,7 +171,7 @@ struct RootView: View {
             }
 
             Button("New Note", systemImage: "note.text.badge.plus") {
-                model.prepareNewItemNote()
+                model.notes.prepareNewNote()
             }
 
             Button("Attach", systemImage: "paperclip") {

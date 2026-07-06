@@ -2,29 +2,29 @@ import CitrationCore
 import SwiftUI
 
 struct ItemNotesInspectorSection: View {
-    @Bindable var model: AppModel
+    @Bindable var notes: NotesModel
 
     var body: some View {
         Section("Notes") {
-            TextField("Add a note", text: $model.itemNoteDraft, axis: .vertical)
+            TextField("Add a note", text: $notes.draft, axis: .vertical)
                 .lineLimit(2 ... 6)
                 .onSubmit {
-                    model.addNoteToSelectedItem()
+                    notes.addToSelectedItem()
                 }
 
             HStack {
                 Button("Add Note", systemImage: "note.text.badge.plus") {
-                    model.addNoteToSelectedItem()
+                    notes.addToSelectedItem()
                 }
-                .disabled(model.itemNoteDraft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                .disabled(notes.draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 Spacer()
             }
 
-            if model.selectedItemNotes.isEmpty {
+            if notes.selectedItemNotes.isEmpty {
                 Text("No notes")
                     .foregroundStyle(.secondary)
             } else {
-                ForEach(model.selectedItemNotes) { note in
+                ForEach(notes.selectedItemNotes) { note in
                     VStack(alignment: .leading, spacing: 6) {
                         HStack {
                             Text(note.updatedAt, style: .date)
@@ -32,7 +32,7 @@ struct ItemNotesInspectorSection: View {
                                 .foregroundStyle(.secondary)
                             Spacer()
                             Button {
-                                model.removeItemNote(note)
+                                notes.remove(note)
                             } label: {
                                 Image(systemName: "trash")
                             }

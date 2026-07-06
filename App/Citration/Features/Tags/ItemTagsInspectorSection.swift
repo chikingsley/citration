@@ -2,24 +2,24 @@ import CitrationCore
 import SwiftUI
 
 struct ItemTagsInspectorSection: View {
-    @Bindable var model: AppModel
+    @Bindable var tags: TagsModel
 
     let item: BCItem
 
     var body: some View {
         Section("Tags") {
             HStack {
-                TextField("Add tag", text: $model.tagDraft)
+                TextField("Add tag", text: $tags.draft)
                     .onSubmit {
-                        model.addTagToSelectedItem()
+                        tags.addToSelectedItem()
                     }
                 Button {
-                    model.addTagToSelectedItem()
+                    tags.addToSelectedItem()
                 } label: {
                     Image(systemName: "plus.circle")
                 }
                 .buttonStyle(.borderless)
-                .disabled(model.tagDraft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                .disabled(tags.draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 .help("Add tag")
             }
 
@@ -32,7 +32,7 @@ struct ItemTagsInspectorSection: View {
                         Label(tag, systemImage: "tag")
                         Spacer()
                         Button {
-                            model.removeTag(tag, from: item)
+                            tags.remove(tag, from: item)
                         } label: {
                             Image(systemName: "xmark.circle")
                         }

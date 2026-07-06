@@ -31,13 +31,15 @@ final class AppModel {
         self.attachmentStore = attachmentStore ?? AppModel.makeAttachmentStore()
         self.annotationStore = annotationStore ?? AppModel.makeAnnotationStore()
         collections = CollectionsModel(store: collectionStore ?? AppModel.makeCollectionStore())
-        self.noteStore = noteStore ?? AppModel.makeNoteStore()
+        notes = NotesModel(store: noteStore ?? AppModel.makeNoteStore())
         self.relationshipStore = relationshipStore ?? AppModel.makeRelationshipStore()
         self.readerProgressStore = readerProgressStore ?? AppModel.makeReaderProgressStore()
         self.pdfDOIExtractor = pdfDOIExtractor
         self.relatedWorkDiscoveryProvider = relatedWorkDiscoveryProvider
         self.openAlexAPIKeyStore = openAlexAPIKeyStore
         collections.bind(context: self)
+        notes.bind(context: self)
+        tags.bind(context: self)
 
         Task {
             await setupAuthServices()
@@ -45,7 +47,7 @@ final class AppModel {
             await collections.refresh()
             await refreshItems()
             await refreshRelationships()
-            await refreshSelectedItemNotes()
+            await notes.refreshForSelection()
         }
     }
 
@@ -69,9 +71,6 @@ final class AppModel {
     var activeReaderProgress: ReaderProgress?
     var activeReaderAnnotations: [LibraryAnnotation] = []
     var readerNoteDraft: String = ""
-    var itemNoteDraft: String = ""
-    var selectedItemNotes: [LibraryNote] = []
-    var tagDraft: String = ""
     var libraryRelationships: [LibraryRelationship] = []
     var selectedItemRelationships: [LibraryRelationship] = []
     var selectedItemDiscoverySuggestions: [WorkDiscoverySuggestion] = []
@@ -90,11 +89,12 @@ final class AppModel {
     private(set) var authService: AuthService?
     private(set) var workspaceService: WorkspaceService?
     let collections: CollectionsModel
+    let notes: NotesModel
+    let tags: TagsModel = .init()
     let store: any BCItemStore
     let metadataRegistry: MetadataProviderRegistry
     let attachmentStore: LocalAttachmentStore
     let annotationStore: LocalAnnotationStore
-    let noteStore: LocalNoteStore
     let relationshipStore: LocalRelationshipStore
     let readerProgressStore: LocalReaderProgressStore
     let pdfDOIExtractor: any PDFDOIExtracting
@@ -144,7 +144,7 @@ final class AppModel {
         }
         await renderCitationPreviewForSelection()
         await refreshSelectedItemAttachments()
-        await refreshSelectedItemNotes()
+        await notes.refreshForSelection()
         refreshSelectedItemRelationships()
         await refreshSelectedItemDiscoverySuggestions()
     }
@@ -177,7 +177,7 @@ final class AppModel {
             for id in uniqueIDs {
                 await store.removeItem(id: id)
             }
-            try? await noteStore.removeNotes(itemIDs: uniqueIDs)
+            await notes.removeItems(ids: uniqueIDs)
             try? await relationshipStore.removeRelationships(itemIDs: uniqueIDs)
             try? await readerProgressStore.removeProgress(itemIDs: uniqueIDs)
             await collections.removeItems(ids: uniqueIDs)
@@ -194,7 +194,7 @@ final class AppModel {
 
     func selectItem(id: UUID?) {
         if selectedItemID != id {
-            itemNoteDraft = ""
+            notes.draft = ""
             citationExportText = ""
             relatedItemTargetID = nil
             relatedItemNoteDraft = ""
@@ -212,9 +212,19 @@ final class AppModel {
             await renderCitationPreviewForSelection()
             await refreshSelectedItemAttachments()
             collections.refreshSelectedItemMemberships()
-            await refreshSelectedItemNotes()
+            await notes.refreshForSelection()
             refreshSelectedItemRelationships()
             await refreshSelectedItemDiscoverySuggestions()
+        }
+    }
+
+    func persistItem(_ item: BCItem, status: String) {
+        let selectedID = item.id
+        Task { @MainActor in
+            await store.upsert(item)
+            await refreshItems()
+            selectedItemID = selectedID
+            statusMessage = status
         }
     }
 

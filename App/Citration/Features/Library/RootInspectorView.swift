@@ -56,9 +56,9 @@ struct RootInspectorView: View {
                     if model.hasMetadataDiagnostics {
                         MetadataDiagnosticsInspectorSection(model: model)
                     }
-                    ItemTagsInspectorSection(model: model, item: item)
+                    ItemTagsInspectorSection(tags: model.tags, item: item)
                     ItemCollectionsInspectorSection(model: model, item: item)
-                    ItemNotesInspectorSection(model: model)
+                    ItemNotesInspectorSection(notes: model.notes)
                     CitationExportInspectorSection(model: model)
                     attachmentsSection
                     if model.activeReaderAttachment?.itemID == item.id {

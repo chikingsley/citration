@@ -15,11 +15,11 @@ struct TaggingTests {
         await model.refreshItems()
         model.selectItem(id: item.id)
 
-        model.tagDraft = "  Machine   Learning  "
-        model.addTagToSelectedItem()
+        model.tags.draft = "  Machine   Learning  "
+        model.tags.addToSelectedItem()
         try await waitUntil { model.selectedItem?.tags == ["vision", "Machine Learning"] }
 
-        #expect(model.tagDraft.isEmpty)
+        #expect(model.tags.draft.isEmpty)
         #expect(model.statusMessage == "Added tag")
     }
 
@@ -31,7 +31,7 @@ struct TaggingTests {
         model.selectItem(id: item.id)
 
         let selected = try #require(model.selectedItem)
-        model.removeTag("machine learning", from: selected)
+        model.tags.remove("machine learning", from: selected)
         try await waitUntil { model.selectedItem?.tags == ["vision"] }
 
         #expect(model.statusMessage == "Removed tag")
