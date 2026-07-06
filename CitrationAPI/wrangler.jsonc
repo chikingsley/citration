@@ -3,8 +3,13 @@
   "name": "citration-api",
   "main": "src/index.ts",
   "compatibility_date": "2026-07-06",
-  "compatibility_flags": ["nodejs_compat"],
   "workers_dev": true,
+  "routes": [
+    {
+      "pattern": "api.citration.app",
+      "custom_domain": true
+    }
+  ],
   "vars": {
     "CITRATION_ENV": "local"
   },
@@ -13,7 +18,7 @@
   },
   "d1_databases": [
     {
-      "binding": "CITRATION_DB",
+      "binding": "DB",
       "database_name": "citration",
       "database_id": "00000000-0000-0000-0000-000000000000",
       "migrations_dir": "migrations"

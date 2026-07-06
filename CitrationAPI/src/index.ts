@@ -1,76 +1,48 @@
-import { openApiDocument } from "./openapi";
+import { OpenAPIHono } from "@hono/zod-openapi";
+import { apiReference } from "@scalar/hono-api-reference";
 
-export interface Env {
-  CITRATION_DB: D1Database;
-  ATTACHMENTS: R2Bucket;
-  CITRATION_ENV?: string;
-  JWT_SIGNING_SECRET?: string;
-}
+import type { Env } from "./bindings";
+import { jsonError } from "./http/json";
+import { registerHealthRoutes } from "./routes/health";
+import { registerSyncRoutes } from "./routes/sync";
 
-type JsonValue = boolean | number | string | null | JsonValue[] | { [key: string]: JsonValue };
+export const app = new OpenAPIHono<{ Bindings: Env }>({
+  defaultHook: (result, c) =>
+    result.success
+      ? undefined
+      : c.json(
+          {
+            error: "invalid request",
+            issues: result.error.issues,
+          },
+          400
+        ),
+});
 
-interface JsonResponseBody {
-  [key: string]: JsonValue;
-}
+registerHealthRoutes(app);
+registerSyncRoutes(app);
 
-const jsonHeaders = {
-  "content-type": "application/json; charset=utf-8"
-};
+app.get(
+  "/docs",
+  apiReference({
+    spec: { url: "/openapi.json" },
+    theme: "default",
+  })
+);
+
+app.doc("/openapi.json", {
+  info: {
+    description:
+      "Citration Cloudflare Worker API for Apple-first auth, library sync, attachment storage, and future web reading.",
+    title: "Citration API",
+    version: "0.1.0",
+  },
+  openapi: "3.1.0",
+  servers: [{ url: "https://api.citration.app/v1" }],
+});
+
+app.notFound(() => jsonError("not found", 404));
 
 export default {
-  async fetch(request: Request, env: Env): Promise<Response> {
-    return handleRequest(request, env);
-  }
-} satisfies ExportedHandler<Env>;
-
-export async function handleRequest(request: Request, env?: Partial<Env>): Promise<Response> {
-  const url = new URL(request.url);
-  const path = normalizePath(url.pathname);
-
-  if (request.method === "GET" && (path === "/health" || path === "/v1/health")) {
-    return json({
-      ok: true,
-      service: "citration-api",
-      environment: env?.CITRATION_ENV ?? "unknown"
-    });
-  }
-
-  if (request.method === "GET" && (path === "/openapi.json" || path === "/v1/openapi.json")) {
-    return json(openApiDocument);
-  }
-
-  if (path.startsWith("/v1/workspaces/") && path.includes("/sync/")) {
-    return json(
-      {
-        error: "not_implemented",
-        message: "Sync routes are specified in docs/sync-api-prd.md and reserved in OpenAPI, but not implemented yet."
-      },
-      { status: 501 }
-    );
-  }
-
-  return json(
-    {
-      error: "not_found",
-      message: "No route matched the request."
-    },
-    { status: 404 }
-  );
-}
-
-function json(body: JsonResponseBody | typeof openApiDocument, init: ResponseInit = {}): Response {
-  return new Response(JSON.stringify(body, null, 2), {
-    ...init,
-    headers: {
-      ...jsonHeaders,
-      ...init.headers
-    }
-  });
-}
-
-function normalizePath(pathname: string): string {
-  if (pathname.length > 1 && pathname.endsWith("/")) {
-    return pathname.slice(0, -1);
-  }
-  return pathname;
-}
+  fetch: app.fetch,
+};

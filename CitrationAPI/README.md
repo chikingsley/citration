@@ -9,10 +9,10 @@ server process.
 ## Commands
 
 ```bash
-npm install
-npm run check
-npm test
-npm run dev
+pnpm install
+pnpm run check
+pnpm test:contract
+pnpm run dev
 ```
 
 ## Current Scope
@@ -22,14 +22,20 @@ Implemented now:
 - `GET /health`
 - `GET /v1/health`
 - `GET /openapi.json`
-- `GET /v1/openapi.json`
-- initial D1 migration for account/workspace/sync object tables
+- `GET /docs` Scalar API reference
+- reserved `/v1/libraries/{library_id}/sync/*` route contracts
+- initial D1 migration for account/library/sync object tables
+- R2 binding placeholder for attachment storage
 
 Planned next:
 
 - auth routes matching `CitrationCore.Remote.AuthService`
-- workspace routes matching `WorkspaceService`
-- `sync/status`, `sync/changes`, and `sync/batch`
+- library routes replacing the current transitional `WorkspaceService` naming
+- D1 implementations for `sync/status`, `sync/changes`, and `sync/batch`
 - R2-backed attachment upload/download routes
 
-The detailed product and data-layer plan lives in `../docs/sync-api-prd.md`.
+## Docs
+
+- `docs/sync-api-prd.md`: product, API, data-layer, D1/R2, auth, RevenueCat, encryption, and search plan.
+- `docs/sync-product-scratch.md`: working product discussion notes for sync, sharing, search, realtime, and schema choices.
+- `docs/reference-manager-market-gaps.md`: Zotero/Mendeley/Papers/EndNote/Paperpile/Bookends/JabRef gap notes.

@@ -8,6 +8,7 @@
 DerivedData/
 *.xcuserstate
 **/*.xcodeproj/xcuserdata/
+**/*.xcworkspace/xcshareddata/swiftpm/
 **/node_modules/
 **/.wrangler/
 

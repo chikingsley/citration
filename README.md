@@ -17,7 +17,7 @@ App/
   Citration/           macOS app target (feature folders + Providers/Stores/Parsing)
   CitrationTests/      App tests (mirrors App/Citration)
 CitrationAPI/          Cloudflare Worker package for the sync API
-docs/                  Product direction, task list, and API/data-layer planning
+docs/                  Product direction and app-wide task list
 ```
 
 `App/Citration.xcodeproj` is generated, not committed.
@@ -28,7 +28,7 @@ docs/                  Product direction, task list, and API/data-layer planning
 brew install swiftlint swiftformat xcodegen lefthook
 lefthook install                     # git hooks: swiftformat + swiftlint on commit
 swift run citration generate         # generate App/Citration.xcodeproj
-open App/Citration.xcodeproj
+open Citration.xcworkspace           # select the Citration scheme and run
 ```
 
 ## Commands
@@ -71,6 +71,10 @@ Zotero is an external behavior reference only. Notes are kept in
 Product direction and reader/import architecture notes are in
 `docs/product-direction.md`.
 
+Apple app repo layout conventions are in `docs/repo-structure-standard.md`.
+
 The current task list is in `docs/tasks.md`. Sync/API task #14 is planned in
-`docs/sync-api-prd.md`, with the initial Cloudflare Worker scaffold in
-`CitrationAPI/`.
+`CitrationAPI/docs/sync-api-prd.md`, with scratch product notes in
+`CitrationAPI/docs/sync-product-scratch.md`, reference-manager gap notes in
+`CitrationAPI/docs/reference-manager-market-gaps.md`, and the initial
+Cloudflare Worker scaffold in `CitrationAPI/`.
