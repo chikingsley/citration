@@ -8,11 +8,11 @@ extension CitrationCLI {
             return
         }
 
-        let store = KeychainOpenAlexAPIKeyStore()
+        let store = FileOpenAlexAPIKeyStore()
         switch subcommand {
         case "status":
             if await store.loadAPIKey() != nil {
-                print("OpenAlex key: configured in Keychain")
+                print("OpenAlex key: configured")
             } else if openAlexAPIKeyFromEnvironmentOrDotEnv() != nil {
                 print("OpenAlex key: available from environment or .env")
             } else {
@@ -24,11 +24,11 @@ extension CitrationCLI {
                 throw cliError("OPENALEX_API_KEY was not found in the process environment or root .env")
             }
             await store.saveAPIKey(apiKey)
-            print("Imported OpenAlex key into Keychain")
+            print("Imported OpenAlex key")
 
         case "clear":
             await store.saveAPIKey(nil)
-            print("Cleared OpenAlex key from Keychain")
+            print("Cleared OpenAlex key")
 
         case "help",
              "--help",
@@ -71,7 +71,7 @@ extension CitrationCLI {
     }
 
     private func resolvedOpenAlexAPIKey() async throws -> String {
-        let store = KeychainOpenAlexAPIKeyStore()
+        let store = FileOpenAlexAPIKeyStore()
         if let apiKey = await store.loadAPIKey() {
             return apiKey
         }

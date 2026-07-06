@@ -36,8 +36,8 @@ extension AppModel {
     }
 
     private func configuredOpenAlexAPIKey() async -> String? {
-        if let keychainKey = await openAlexAPIKeyStore.loadAPIKey() {
-            return keychainKey
+        if let storedKey = await openAlexAPIKeyStore.loadAPIKey() {
+            return storedKey
         }
         return await environmentOpenAlexAPIKey()
     }

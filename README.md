@@ -47,8 +47,10 @@ enforces semantic and safety rules only. Both run on every commit via lefthook.
 
 OpenAlex API keys are user-provided credentials. For local development, copy
 `.env.example` to `.env` (git-ignored), set `OPENALEX_API_KEY`, then run
-`swift run citration openalex-key import-env` to store it in the macOS
-Keychain. The app also exposes an OpenAlex key field in the inspector.
+`swift run citration openalex-key import-env` to store it in a local file
+(`~/Library/Application Support/Citration/openalex-api-key`, mode 0600 —
+deliberately not the Keychain, which re-prompts for every unsigned debug
+rebuild). The app also exposes an OpenAlex key field in the inspector.
 
 Zotero is an external behavior reference only. Notes are kept in
 `docs/zotero-reference-notes.md`; Zotero source is not vendored here.

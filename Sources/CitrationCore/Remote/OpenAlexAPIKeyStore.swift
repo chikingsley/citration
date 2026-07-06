@@ -1,5 +1,4 @@
 import Foundation
-import Security
 
 // MARK: - OpenAlexAPIKeyStore
 
@@ -42,71 +41,63 @@ public actor InMemoryOpenAlexAPIKeyStore: OpenAlexAPIKeyStore {
     }
 }
 
-// MARK: - KeychainOpenAlexAPIKeyStore
+// MARK: - FileOpenAlexAPIKeyStore
 
-public actor KeychainOpenAlexAPIKeyStore: OpenAlexAPIKeyStore {
+/// Stores the OpenAlex API key in a plain 0600 file under Application
+/// Support. Deliberately not the Keychain: unsigned debug builds get a
+/// fresh keychain identity every rebuild, which makes macOS re-prompt
+/// for access each time.
+public actor FileOpenAlexAPIKeyStore: OpenAlexAPIKeyStore {
     // MARK: Lifecycle
 
-    public init(service: String = "app.citration.openalex", account: String = "api-key") {
-        self.service = service
-        self.account = account
+    public init(fileURL: URL? = nil) {
+        self.fileURL = fileURL ?? Self.defaultFileURL()
     }
 
     // MARK: Public
 
     public func loadAPIKey() -> String? {
-        let query: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: service,
-            kSecAttrAccount as String: account,
-            kSecReturnData as String: true,
-            kSecMatchLimit as String: kSecMatchLimitOne,
-        ]
-
-        var result: AnyObject?
-        let status = SecItemCopyMatching(query as CFDictionary, &result)
-
         guard
-            status == errSecSuccess,
-            let data = result as? Data,
-            let apiKey = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines),
-            !apiKey.isEmpty
+            let fileURL,
+            let raw = try? String(contentsOf: fileURL, encoding: .utf8)
         else {
             return nil
         }
 
-        return apiKey
+        let apiKey = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        return apiKey.isEmpty ? nil : apiKey
     }
 
     public func saveAPIKey(_ apiKey: String?) {
-        let deleteQuery: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: service,
-            kSecAttrAccount as String: account,
-        ]
-        SecItemDelete(deleteQuery as CFDictionary)
-
-        guard
-            let apiKey = apiKey?.trimmingCharacters(in: .whitespacesAndNewlines),
-            !apiKey.isEmpty,
-            let data = apiKey.data(using: .utf8)
-        else {
+        guard let fileURL else {
             return
         }
 
-        let addQuery: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: service,
-            kSecAttrAccount as String: account,
-            kSecValueData as String: data,
-            kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlock,
-        ]
+        let normalized = apiKey?.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let normalized, !normalized.isEmpty else {
+            try? FileManager.default.removeItem(at: fileURL)
+            return
+        }
 
-        SecItemAdd(addQuery as CFDictionary, nil)
+        try? FileManager.default.createDirectory(
+            at: fileURL.deletingLastPathComponent(),
+            withIntermediateDirectories: true
+        )
+        try? Data(normalized.utf8).write(to: fileURL, options: [.atomic])
+        try? FileManager.default.setAttributes(
+            [.posixPermissions: 0o600],
+            ofItemAtPath: fileURL.path
+        )
     }
 
     // MARK: Private
 
-    private let service: String
-    private let account: String
+    private let fileURL: URL?
+
+    private static func defaultFileURL() -> URL? {
+        try? FileManager.default
+            .url(for: .applicationSupportDirectory, in: .userDomainMask, appropriateFor: nil, create: true)
+            .appendingPathComponent("Citration", isDirectory: true)
+            .appendingPathComponent("openalex-api-key")
+    }
 }

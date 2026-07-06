@@ -43,8 +43,8 @@ struct OpenAlexCredentialSource: OpenAlexAPIKeyProviding {
     // MARK: Internal
 
     func apiKey() async -> String? {
-        if let keychainKey = await keyStore.loadAPIKey() {
-            return keychainKey
+        if let storedKey = await keyStore.loadAPIKey() {
+            return storedKey
         }
 
         return environment["OPENALEX_API_KEY"]?.bcTrimmedNonEmpty
