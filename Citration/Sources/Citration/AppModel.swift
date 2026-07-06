@@ -34,6 +34,9 @@ final class AppModel {
     var selectedItemRelationships: [LibraryRelationship] = []
     var selectedItemDiscoverySuggestions: [WorkDiscoverySuggestion] = []
     var isLoadingDiscoverySuggestions: Bool = false
+    var openAlexAPIKeyDraft: String = ""
+    var hasOpenAlexAPIKey: Bool = false
+    var isSavingOpenAlexAPIKey: Bool = false
     var relatedItemTargetID: UUID?
     var relatedItemKind: LibraryRelationshipKind = .userLinked
     var relatedItemNoteDraft: String = ""
@@ -57,6 +60,7 @@ final class AppModel {
     let readerProgressStore: LocalReaderProgressStore
     let pdfDOIExtractor: any PDFDOIExtracting
     let relatedWorkDiscoveryProvider: any RelatedWorkDiscoveryProvider
+    let openAlexAPIKeyStore: any OpenAlexAPIKeyStore
 
     init(
         store: any BCItemStore,
@@ -71,7 +75,8 @@ final class AppModel {
         noteStore: LocalNoteStore? = nil,
         relationshipStore: LocalRelationshipStore? = nil,
         readerProgressStore: LocalReaderProgressStore? = nil,
-        relatedWorkDiscoveryProvider: any RelatedWorkDiscoveryProvider = NoopRelatedWorkDiscoveryProvider()
+        relatedWorkDiscoveryProvider: any RelatedWorkDiscoveryProvider = NoopRelatedWorkDiscoveryProvider(),
+        openAlexAPIKeyStore: any OpenAlexAPIKeyStore = InMemoryOpenAlexAPIKeyStore()
     ) {
         self.store = store
         self.metadataRegistry = metadataRegistry
@@ -86,9 +91,11 @@ final class AppModel {
         self.readerProgressStore = readerProgressStore ?? AppModel.makeReaderProgressStore()
         self.pdfDOIExtractor = pdfDOIExtractor
         self.relatedWorkDiscoveryProvider = relatedWorkDiscoveryProvider
+        self.openAlexAPIKeyStore = openAlexAPIKeyStore
 
         Task {
             await setupAuthServices()
+            await refreshOpenAlexAPIKeyStatus()
             await refreshCollections()
             await refreshItems()
             await refreshRelationships()

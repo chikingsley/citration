@@ -66,6 +66,10 @@ The current app already has a good starting point:
   work fields. Sources:
   https://developers.openalex.org/api-reference/introduction and
   https://developers.openalex.org/guides/recipes
+- OpenAlex API keys are user-provided credentials. The app should store them in
+  macOS Keychain and pass them as the official `api_key` query parameter, with
+  root `.env` only as a local development import path. Source:
+  https://developers.openalex.org/api-reference/authentication
 - CSL should be the citation contract. CSL uses styles, locale files,
   bibliographic item metadata, citing details, and a CSL processor. Source:
   https://docs.citationstyles.org/en/v1.0.2/primer.html

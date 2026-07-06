@@ -57,16 +57,25 @@ struct RootInspectorView: View {
                         readerNotesSection
                     }
                     ItemRelatedInspectorSection(model: model)
+                    OpenAlexSettingsInspectorSection(model: model)
                 }
                 .formStyle(.grouped)
             }
         }
         else {
-            ContentUnavailableView(
-                "No Selection",
-                systemImage: "doc.text",
-                description: Text("Select an item to view its details.")
-            )
+            ScrollView {
+                Form {
+                    Section {
+                        ContentUnavailableView(
+                            "No Selection",
+                            systemImage: "doc.text",
+                            description: Text("Select an item to view its details.")
+                        )
+                    }
+                    OpenAlexSettingsInspectorSection(model: model)
+                }
+                .formStyle(.grouped)
+            }
         }
     }
 

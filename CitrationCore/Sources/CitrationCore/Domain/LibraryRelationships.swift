@@ -64,6 +64,11 @@ public enum RecommendationReason: Hashable, Codable, Sendable {
     case sharedIdentifier(IdentifierType)
     case samePublicationYear(Int)
     case openAlexRelatedWork(String)
+    case openAlexSameAuthor(String)
+    case openAlexSameInstitution(String)
+    case openAlexSameTopic(String)
+    case openAlexCitedBy(String)
+    case openAlexReference(String)
     case userLinked(LibraryRelationshipKind)
 
     public var displayLabel: String {
@@ -78,6 +83,16 @@ public enum RecommendationReason: Hashable, Codable, Sendable {
             return "Same year: \(year)"
         case .openAlexRelatedWork(let workID):
             return "OpenAlex related work: \(workID)"
+        case .openAlexSameAuthor(let author):
+            return "OpenAlex same author: \(author)"
+        case .openAlexSameInstitution(let institution):
+            return "OpenAlex same institution: \(institution)"
+        case .openAlexSameTopic(let topic):
+            return "OpenAlex same topic: \(topic)"
+        case .openAlexCitedBy(let workID):
+            return "OpenAlex cites this work: \(workID)"
+        case .openAlexReference(let workID):
+            return "OpenAlex reference from this work: \(workID)"
         case .userLinked(let kind):
             return "Linked: \(kind.displayLabel)"
         }

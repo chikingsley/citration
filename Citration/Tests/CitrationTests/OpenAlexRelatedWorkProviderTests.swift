@@ -5,7 +5,7 @@ import CitrationCore
 
 @Suite("OpenAlex Related Work Provider")
 struct OpenAlexRelatedWorkProviderTests {
-    @Test("fetches source work by DOI and maps related works")
+    @Test("fetches source work by DOI and maps graph suggestions")
     func fetchesRelatedWorksByDOI() async throws {
         let client = StubOpenAlexHTTPClient { request in
             let url = try #require(request.url)
@@ -29,15 +29,39 @@ struct OpenAlexRelatedWorkProviderTests {
             identifiers: [Identifier(type: .doi, value: "10.5555/source")]
         )
 
-        let suggestions = try await provider.suggestions(for: source, limit: 5)
+        let suggestions = try await provider.suggestions(for: source, limit: 8)
 
-        #expect(suggestions.count == 1)
-        #expect(suggestions.first?.providerRecordID == "https://openalex.org/W2")
-        #expect(suggestions.first?.title == "Related Work")
-        #expect(suggestions.first?.creators.map(\.displayName) == ["Jane Doe"])
-        #expect(suggestions.first?.publicationYear == 2023)
-        #expect(suggestions.first?.identifiers == [Identifier(type: .doi, value: "10.5555/related")])
-        #expect(suggestions.first?.reasons == [.openAlexRelatedWork("W1")])
+        #expect(suggestions.count == 6)
+        assertSuggestion(
+            suggestions,
+            title: "Related Work",
+            reasons: [.openAlexRelatedWork("W1")]
+        )
+        assertSuggestion(
+            suggestions,
+            title: "Same Author Work",
+            reasons: [.openAlexSameAuthor("Source Author")]
+        )
+        assertSuggestion(
+            suggestions,
+            title: "Same Institution Work",
+            reasons: [.openAlexSameInstitution("Source Lab")]
+        )
+        assertSuggestion(
+            suggestions,
+            title: "Same Topic Work",
+            reasons: [.openAlexSameTopic("Bibliometrics")]
+        )
+        assertSuggestion(
+            suggestions,
+            title: "Citing Work",
+            reasons: [.openAlexCitedBy("W1")]
+        )
+        assertSuggestion(
+            suggestions,
+            title: "Reference Work",
+            reasons: [.openAlexReference("W1")]
+        )
     }
 
     private static func payload(for filter: String?) -> String {
@@ -47,6 +71,26 @@ struct OpenAlexRelatedWorkProviderTests {
 
         if filter == "related_to:W1" {
             return relatedWorksPayload
+        }
+
+        if filter == "author.id:A1" {
+            return worksPayload(id: "W3", title: "Same Author Work")
+        }
+
+        if filter == "institutions.id:I1" {
+            return worksPayload(id: "W4", title: "Same Institution Work")
+        }
+
+        if filter == "primary_topic.id:T1" {
+            return worksPayload(id: "W5", title: "Same Topic Work")
+        }
+
+        if filter == "cites:W1" {
+            return worksPayload(id: "W6", title: "Citing Work")
+        }
+
+        if filter == "cited_by:W1" {
+            return worksPayload(id: "W7", title: "Reference Work")
         }
 
         return #"{"results":[]}"#
@@ -61,7 +105,24 @@ struct OpenAlexRelatedWorkProviderTests {
           "doi": "https://doi.org/10.5555/source",
           "publication_year": 2024,
           "type": "article",
-          "authorships": []
+          "authorships": [
+            {
+              "author": {
+                "id": "https://openalex.org/A1",
+                "display_name": "Source Author"
+              },
+              "institutions": [
+                {
+                  "id": "https://openalex.org/I1",
+                  "display_name": "Source Lab"
+                }
+              ]
+            }
+          ],
+          "primary_topic": {
+            "id": "https://openalex.org/T1",
+            "display_name": "Bibliometrics"
+          }
         }
       ]
     }
@@ -84,6 +145,23 @@ struct OpenAlexRelatedWorkProviderTests {
     }
     """
 
+    private static func worksPayload(id: String, title: String) -> String {
+        """
+        {
+          "results": [
+            {
+              "id": "https://openalex.org/\(id)",
+              "display_name": "\(title)",
+              "doi": null,
+              "publication_year": 2022,
+              "type": "article",
+              "authorships": []
+            }
+          ]
+        }
+        """
+    }
+
     @Test("returns no suggestions without DOI")
     func returnsNoSuggestionsWithoutDOI() async throws {
         let client = StubOpenAlexHTTPClient { request in
@@ -97,6 +175,34 @@ struct OpenAlexRelatedWorkProviderTests {
         let suggestions = try await provider.suggestions(for: BCItem(title: "Untitled"), limit: 5)
 
         #expect(suggestions.isEmpty)
+    }
+
+    @Test("returns no suggestions without API key")
+    func returnsNoSuggestionsWithoutAPIKey() async throws {
+        let client = StubOpenAlexHTTPClient { request in
+            Issue.record("Unexpected OpenAlex request: \(request)")
+            let url = try #require(request.url)
+            let response = try Self.response(url: url, statusCode: 500)
+            return (Data(), response)
+        }
+        let provider = OpenAlexRelatedWorkProvider(httpClient: client)
+        let source = BCItem(
+            title: "Source Work",
+            identifiers: [Identifier(type: .doi, value: "10.5555/source")]
+        )
+
+        let suggestions = try await provider.suggestions(for: source, limit: 5)
+
+        #expect(suggestions.isEmpty)
+    }
+
+    private func assertSuggestion(
+        _ suggestions: [WorkDiscoverySuggestion],
+        title: String,
+        reasons: [RecommendationReason]
+    ) {
+        let suggestion = suggestions.first { $0.title == title }
+        #expect(suggestion?.reasons == reasons)
     }
 
     private static func response(url: URL, statusCode: Int) throws -> HTTPURLResponse {

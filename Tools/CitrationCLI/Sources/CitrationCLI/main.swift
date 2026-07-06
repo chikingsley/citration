@@ -18,7 +18,7 @@ struct CitrationCLI {
         self.workspaceRoot = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
     }
 
-    func run() throws {
+    func run() async throws {
         guard let command = arguments.first else {
             printHelp()
             return
@@ -38,6 +38,10 @@ struct CitrationCLI {
         case "check":
             try lint(fix: false)
             try test()
+        case "openalex-key":
+            try await openAlexKey(arguments: Array(arguments.dropFirst()))
+        case "openalex-smoke":
+            try await openAlexSmoke(arguments: Array(arguments.dropFirst()))
         default:
             throw NSError(
                 domain: "CitrationCLI",
@@ -56,6 +60,10 @@ struct CitrationCLI {
           swift run citration test
           swift run citration lint [--fix]
           swift run citration package-dirs
+          swift run citration openalex-key status
+          swift run citration openalex-key import-env
+          swift run citration openalex-key clear
+          swift run citration openalex-smoke <doi>
         """)
     }
 
@@ -170,7 +178,7 @@ struct CitrationCLI {
 }
 
 do {
-    try CitrationCLI(arguments: Array(CommandLine.arguments.dropFirst())).run()
+    try await CitrationCLI(arguments: Array(CommandLine.arguments.dropFirst())).run()
 }
 catch {
     fputs("error: \(error)\n", stderr)

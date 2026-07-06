@@ -9,9 +9,13 @@ let package = Package(
     products: [
         .executable(name: "citration", targets: ["CitrationCLI"])
     ],
+    dependencies: [
+        .package(path: "CitrationCore")
+    ],
     targets: [
         .executableTarget(
             name: "CitrationCLI",
+            dependencies: ["CitrationCore"],
             path: "Tools/CitrationCLI/Sources/CitrationCLI"
         )
     ]

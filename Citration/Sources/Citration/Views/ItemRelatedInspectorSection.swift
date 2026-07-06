@@ -58,7 +58,10 @@ struct ItemRelatedInspectorSection: View {
             Text("OpenAlex")
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(.secondary)
-            if model.isLoadingDiscoverySuggestions {
+            if !model.hasOpenAlexAPIKey {
+                Text("OpenAlex key not configured.")
+                    .foregroundStyle(.secondary)
+            } else if model.isLoadingDiscoverySuggestions {
                 ProgressView("Loading related works...")
             } else if model.selectedItemDiscoverySuggestions.isEmpty {
                 Text("No OpenAlex suggestions yet.")

@@ -14,44 +14,117 @@ struct OpenAlexRelatedWorkProvider: RelatedWorkDiscoveryProvider {
         "https://api.openalex.org/",
         providerName: "OpenAlex"
     )
+    private static let workSelectFields = [
+        "id",
+        "display_name",
+        "doi",
+        "publication_year",
+        "type",
+        "authorships",
+        "primary_topic",
+        "topics"
+    ].joined(separator: ",")
 
     private let httpClient: any OpenAlexHTTPClient
     private let endpointBaseURL: URL
-    private let apiKey: String?
+    private let apiKeyProvider: any OpenAlexAPIKeyProviding
 
     init(
         httpClient: any OpenAlexHTTPClient = URLSession.shared,
         endpointBaseURL: URL = Self.defaultEndpointBaseURL,
         apiKey: String? = nil
     ) {
+        self.init(
+            httpClient: httpClient,
+            endpointBaseURL: endpointBaseURL,
+            apiKeyProvider: StaticOpenAlexAPIKeyProvider(apiKey)
+        )
+    }
+
+    init(
+        httpClient: any OpenAlexHTTPClient = URLSession.shared,
+        endpointBaseURL: URL = Self.defaultEndpointBaseURL,
+        apiKeyProvider: any OpenAlexAPIKeyProviding
+    ) {
         self.httpClient = httpClient
         self.endpointBaseURL = endpointBaseURL
-        self.apiKey = apiKey?.bcTrimmedNonEmpty
+        self.apiKeyProvider = apiKeyProvider
     }
 
     func suggestions(for item: BCItem, limit: Int) async throws -> [WorkDiscoverySuggestion] {
         guard limit > 0,
-              let doi = item.doi?.bcTrimmedNonEmpty else {
-            return []
-        }
-
-        guard let sourceWork = try await workByDOI(doi),
+              await apiKeyProvider.apiKey() != nil,
+              let doi = item.doi?.bcTrimmedNonEmpty,
+              let sourceWork = try await workByDOI(doi),
               let sourceWorkID = sourceWork.shortID else {
             return []
         }
 
-        let relatedWorks = try await works(
-            filter: "related_to:\(sourceWorkID)",
+        let groups = discoveryGroups(for: sourceWork, sourceWorkID: sourceWorkID)
+        return try await suggestions(
+            groups: groups,
+            sourceWorkID: sourceWorkID,
             limit: limit
         )
+    }
 
-        return relatedWorks.compactMap { work in
-            work.discoverySuggestion(
-                providerName: name,
-                sourceWorkID: sourceWorkID,
+    private func discoveryGroups(
+        for sourceWork: OpenAlexWork,
+        sourceWorkID: String
+    ) -> [OpenAlexDiscoveryGroup] {
+        var groups = [
+            OpenAlexDiscoveryGroup(
+                filter: "related_to:\(sourceWorkID)",
+                reason: .openAlexRelatedWork(sourceWorkID),
                 confidence: 0.72
             )
+        ]
+
+        groups.append(contentsOf: sourceWork.authorGroups)
+        groups.append(contentsOf: sourceWork.institutionGroups)
+        if let topicGroup = sourceWork.primaryTopicGroup {
+            groups.append(topicGroup)
         }
+        groups.append(OpenAlexDiscoveryGroup(filter: "cites:\(sourceWorkID)", reason: .openAlexCitedBy(sourceWorkID), confidence: 0.84))
+        groups.append(OpenAlexDiscoveryGroup(filter: "cited_by:\(sourceWorkID)", reason: .openAlexReference(sourceWorkID), confidence: 0.80))
+        return groups
+    }
+
+    private func suggestions(
+        groups: [OpenAlexDiscoveryGroup],
+        sourceWorkID: String,
+        limit: Int
+    ) async throws -> [WorkDiscoverySuggestion] {
+        var suggestionsByID = [String: WorkDiscoverySuggestion]()
+        var orderedIDs = [String]()
+
+        for group in groups {
+            let works = try await works(filter: group.filter, limit: max(2, min(limit, 5)))
+            for work in works where work.shortID != sourceWorkID {
+                guard let suggestion = work.discoverySuggestion(
+                    providerName: name,
+                    reason: group.reason,
+                    confidence: group.confidence
+                ) else {
+                    continue
+                }
+
+                if var existing = suggestionsByID[suggestion.id] {
+                    existing.confidence = max(existing.confidence, suggestion.confidence)
+                    existing.reasons.append(contentsOf: suggestion.reasons.filter { !existing.reasons.contains($0) })
+                    suggestionsByID[suggestion.id] = existing
+                }
+                else {
+                    orderedIDs.append(suggestion.id)
+                    suggestionsByID[suggestion.id] = suggestion
+                }
+            }
+        }
+
+        return orderedIDs
+            .compactMap { suggestionsByID[$0] }
+            .prefix(limit)
+            .map { $0 }
     }
 
     private func workByDOI(_ doi: String) async throws -> OpenAlexWork? {
@@ -63,12 +136,13 @@ struct OpenAlexRelatedWorkProvider: RelatedWorkDiscoveryProvider {
     }
 
     private func works(filter: String, limit: Int) async throws -> [OpenAlexWork] {
-        guard let url = url(
+        guard let url = await url(
             path: "works",
             queryItems: [
                 URLQueryItem(name: "filter", value: filter),
                 URLQueryItem(name: "per-page", value: String(max(1, min(limit, 25)))),
-                URLQueryItem(name: "select", value: "id,display_name,doi,publication_year,type,authorships")
+                URLQueryItem(name: "select", value: Self.workSelectFields),
+                URLQueryItem(name: "sort", value: "cited_by_count:desc")
             ]
         ) else {
             return []
@@ -89,16 +163,22 @@ struct OpenAlexRelatedWorkProvider: RelatedWorkDiscoveryProvider {
         return payload.results
     }
 
-    private func url(path: String, queryItems: [URLQueryItem]) -> URL? {
+    private func url(path: String, queryItems: [URLQueryItem]) async -> URL? {
         let endpointURL = endpointBaseURL.appendingPathComponent(path)
         var components = URLComponents(url: endpointURL, resolvingAgainstBaseURL: false)
         var items = queryItems
-        if let apiKey {
+        if let apiKey = await apiKeyProvider.apiKey() {
             items.append(URLQueryItem(name: "api_key", value: apiKey))
         }
         components?.queryItems = items
         return components?.url
     }
+}
+
+private struct OpenAlexDiscoveryGroup {
+    let filter: String
+    let reason: RecommendationReason
+    let confidence: Double
 }
 
 private struct OpenAlexWorksEnvelope: Decodable {
@@ -112,6 +192,8 @@ private struct OpenAlexWork: Decodable {
     let publicationYear: Int?
     let type: String?
     let authorships: [OpenAlexAuthorship]?
+    let primaryTopic: OpenAlexTopic?
+    let topics: [OpenAlexTopic]?
 
     enum CodingKeys: String, CodingKey {
         case id
@@ -120,18 +202,49 @@ private struct OpenAlexWork: Decodable {
         case publicationYear = "publication_year"
         case type
         case authorships
+        case primaryTopic = "primary_topic"
+        case topics
     }
 
     var shortID: String? {
-        guard let id = id?.bcTrimmedNonEmpty else {
+        openAlexShortID(from: id)
+    }
+
+    var authorGroups: [OpenAlexDiscoveryGroup] {
+        uniqueAuthorInputs.prefix(2).map { author in
+            OpenAlexDiscoveryGroup(
+                filter: "author.id:\(author.id)",
+                reason: .openAlexSameAuthor(author.displayName),
+                confidence: 0.66
+            )
+        }
+    }
+
+    var institutionGroups: [OpenAlexDiscoveryGroup] {
+        uniqueInstitutionInputs.prefix(2).map { institution in
+            OpenAlexDiscoveryGroup(
+                filter: "institutions.id:\(institution.id)",
+                reason: .openAlexSameInstitution(institution.displayName),
+                confidence: 0.62
+            )
+        }
+    }
+
+    var primaryTopicGroup: OpenAlexDiscoveryGroup? {
+        guard let topic = primaryTopic?.filterInput ?? topics?.compactMap(\.filterInput).first else {
             return nil
         }
-        return id.split(separator: "/").last.map(String.init)
+
+        return OpenAlexDiscoveryGroup(
+            filter: "primary_topic.id:\(topic.id)",
+            reason: .openAlexSameTopic(topic.displayName),
+            confidence: 0.58
+        )
     }
 
     func discoverySuggestion(
         providerName: String,
-        sourceWorkID: String,
+        reason: RecommendationReason,
         confidence: Double
     ) -> WorkDiscoverySuggestion? {
         let title = displayName?.bcTrimmedNonEmpty
@@ -150,7 +263,7 @@ private struct OpenAlexWork: Decodable {
             identifiers: identifiers,
             sourceURL: URL(string: id),
             confidence: confidence,
-            reasons: [.openAlexRelatedWork(sourceWorkID)]
+            reasons: [reason]
         )
     }
 
@@ -192,16 +305,92 @@ private struct OpenAlexWork: Decodable {
             return .unknown
         }
     }
+
+    private var uniqueAuthorInputs: [OpenAlexFilterInput] {
+        deduplicated((authorships ?? []).compactMap(\.author?.filterInput))
+    }
+
+    private var uniqueInstitutionInputs: [OpenAlexFilterInput] {
+        deduplicated((authorships ?? []).flatMap { authorship in
+            (authorship.institutions ?? []).compactMap(\.filterInput)
+        })
+    }
+
+    private func deduplicated(_ inputs: [OpenAlexFilterInput]) -> [OpenAlexFilterInput] {
+        var seen = Set<String>()
+        return inputs.filter { input in
+            seen.insert(input.id).inserted
+        }
+    }
+}
+
+private struct OpenAlexFilterInput {
+    let id: String
+    let displayName: String
 }
 
 private struct OpenAlexAuthorship: Decodable {
     let author: OpenAlexAuthor?
+    let institutions: [OpenAlexInstitution]?
 }
 
 private struct OpenAlexAuthor: Decodable {
+    let id: String?
     let displayName: String?
 
     enum CodingKeys: String, CodingKey {
+        case id
         case displayName = "display_name"
     }
+
+    var filterInput: OpenAlexFilterInput? {
+        guard let id = openAlexShortID(from: id),
+              let displayName = displayName?.bcTrimmedNonEmpty else {
+            return nil
+        }
+        return OpenAlexFilterInput(id: id, displayName: displayName)
+    }
+}
+
+private struct OpenAlexInstitution: Decodable {
+    let id: String?
+    let displayName: String?
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case displayName = "display_name"
+    }
+
+    var filterInput: OpenAlexFilterInput? {
+        guard let id = openAlexShortID(from: id),
+              let displayName = displayName?.bcTrimmedNonEmpty else {
+            return nil
+        }
+        return OpenAlexFilterInput(id: id, displayName: displayName)
+    }
+}
+
+private struct OpenAlexTopic: Decodable {
+    let id: String?
+    let displayName: String?
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case displayName = "display_name"
+    }
+
+    var filterInput: OpenAlexFilterInput? {
+        guard let id = openAlexShortID(from: id),
+              let displayName = displayName?.bcTrimmedNonEmpty else {
+            return nil
+        }
+        return OpenAlexFilterInput(id: id, displayName: displayName)
+    }
+}
+
+private func openAlexShortID(from id: String?) -> String? {
+    guard let id = id?.bcTrimmedNonEmpty else {
+        return nil
+    }
+    return id.split(separator: "/").last.map(String.init)
 }
