@@ -24,19 +24,22 @@ final class AppModel {
         openAlexAPIKeyStore: any OpenAlexAPIKeyStore = InMemoryOpenAlexAPIKeyStore()
     ) {
         self.store = store
-        self.metadataRegistry = metadataRegistry
         citation = CitationModel(formatter: citationFormatter)
         self.storageConnectors = storageConnectors
         self.sessionStore = sessionStore
-        self.attachmentStore = attachmentStore ?? AppModel.makeAttachmentStore()
         collections = CollectionsModel(store: collectionStore ?? AppModel.makeCollectionStore())
         notes = NotesModel(store: noteStore ?? AppModel.makeNoteStore())
         relationships = RelationshipsModel(store: relationshipStore ?? AppModel.makeRelationshipStore())
+        importer = ImportModel(
+            store: store,
+            attachmentStore: attachmentStore ?? AppModel.makeAttachmentStore(),
+            metadataRegistry: metadataRegistry,
+            pdfDOIExtractor: pdfDOIExtractor
+        )
         reader = ReaderModel(
             progressStore: readerProgressStore ?? AppModel.makeReaderProgressStore(),
             annotationStore: annotationStore ?? AppModel.makeAnnotationStore()
         )
-        self.pdfDOIExtractor = pdfDOIExtractor
         insights = InsightsModel(discoveryProvider: relatedWorkDiscoveryProvider)
         settings = OpenAlexSettingsModel(keyStore: openAlexAPIKeyStore)
         collections.bind(context: self)
@@ -47,6 +50,7 @@ final class AppModel {
         citation.bind(context: self)
         insights.bind(context: self, relationships: relationships)
         settings.bind(context: self, insights: insights)
+        importer.bind(context: self, collections: collections, reader: reader)
 
         Task {
             await setupAuthServices()
@@ -61,16 +65,9 @@ final class AppModel {
     // MARK: Internal
 
     var route: Route = .workspace
-    var doiInput: String = ""
-    var isResolvingDOI: Bool = false
-    var isImportingAttachments: Bool = false
-    var reprocessingItemID: UUID?
     var statusMessage: String = "Ready"
-    var metadataWarnings: [String] = []
-    var metadataConflicts: [MetadataResolutionConflict] = []
     var items: [BCItem] = []
     var selectedItemID: UUID?
-    var selectedItemAttachments: [LocalAttachment] = []
     var storageConnectors: [StorageConnector]
 
     // Auth state
@@ -83,21 +80,11 @@ final class AppModel {
     let tags: TagsModel = .init()
     let relationships: RelationshipsModel
     let reader: ReaderModel
+    let importer: ImportModel
     let citation: CitationModel
     let insights: InsightsModel
     let settings: OpenAlexSettingsModel
     let store: any BCItemStore
-    let metadataRegistry: MetadataProviderRegistry
-    let attachmentStore: LocalAttachmentStore
-    let pdfDOIExtractor: any PDFDOIExtracting
-
-    var isReprocessingAttachments: Bool {
-        reprocessingItemID != nil
-    }
-
-    var hasMetadataDiagnostics: Bool {
-        !metadataWarnings.isEmpty || !metadataConflicts.isEmpty
-    }
 
     var selectedItem: BCItem? {
         guard let selectedItemID else {
@@ -133,7 +120,7 @@ final class AppModel {
             selectedItemID = items.first?.id
         }
         await citation.renderPreviewForSelection()
-        await refreshSelectedItemAttachments()
+        await importer.refreshSelectedItemAttachments()
         await notes.refreshForSelection()
         relationships.refreshForSelection()
         await insights.refreshForSelection()
@@ -187,18 +174,22 @@ final class AppModel {
             citation.clearExport()
             relationships.clearSelectionDrafts()
             insights.clearForSelectionChange()
-            clearMetadataDiagnostics()
+            importer.clearMetadataDiagnostics()
         }
         reader.clearIfSelectionChanged(to: id)
         selectedItemID = id
         Task {
             await citation.renderPreviewForSelection()
-            await refreshSelectedItemAttachments()
+            await importer.refreshSelectedItemAttachments()
             collections.refreshSelectedItemMemberships()
             await notes.refreshForSelection()
             relationships.refreshForSelection()
             await insights.refreshForSelection()
         }
+    }
+
+    func refreshLibrary() async {
+        await refreshItems()
     }
 
     func addItem(_ item: BCItem) async {

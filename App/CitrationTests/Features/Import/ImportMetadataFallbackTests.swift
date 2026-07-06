@@ -32,7 +32,7 @@ struct ImportMetadataFallbackTests {
         )
         await model.refreshItems()
 
-        model.importAttachments(urls: [sourceFile], mode: .createNewItemPerFile)
+        model.importer.importAttachments(urls: [sourceFile], mode: .createNewItemPerFile)
         try await waitUntil(timeout: 3.0) {
             model.items.first?.title == "Resolved From Filename"
         }

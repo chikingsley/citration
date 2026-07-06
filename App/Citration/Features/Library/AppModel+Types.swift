@@ -18,10 +18,4 @@ extension AppModel {
             }
         }
     }
-
-    enum AttachmentImportMode {
-        case auto
-        case attachToSelectedItem
-        case createNewItemPerFile
-    }
 }

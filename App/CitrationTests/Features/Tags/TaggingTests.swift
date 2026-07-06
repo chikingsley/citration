@@ -70,7 +70,7 @@ struct TaggingTests {
         await model.refreshItems()
         model.selectItem(id: item.id)
 
-        model.importAttachments(urls: [sourceFile], mode: AppModel.AttachmentImportMode.attachToSelectedItem)
+        model.importer.importAttachments(urls: [sourceFile], mode: AttachmentImportMode.attachToSelectedItem)
         try await waitUntil(timeout: 3.0) { model.selectedItem?.doi == doi }
 
         #expect(model.selectedItem?.tags == ["keep"])

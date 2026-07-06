@@ -20,6 +20,9 @@ protocol LibraryContext: AnyObject {
 
     /// Full selection change with per-feature cleanup side effects.
     func selectItem(id: UUID?)
+
+    /// Reloads items and per-selection state across features.
+    func refreshLibrary() async
 }
 
 // MARK: - AppModel + LibraryContext

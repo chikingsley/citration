@@ -6,16 +6,16 @@ import SwiftUI
 struct MetadataDiagnosticsInspectorSection: View {
     // MARK: Internal
 
-    @Bindable var model: AppModel
+    let importer: ImportModel
 
     var body: some View {
         Section("Metadata") {
-            ForEach(model.metadataConflicts) { conflict in
+            ForEach(importer.metadataConflicts) { conflict in
                 conflictRow(conflict)
             }
 
-            ForEach(model.metadataWarnings.indices, id: \.self) { index in
-                warningRow(model.metadataWarnings[index])
+            ForEach(importer.metadataWarnings.indices, id: \.self) { index in
+                warningRow(importer.metadataWarnings[index])
             }
         }
     }

@@ -56,7 +56,7 @@ struct CollectionTests {
         let collectionID = try #require(model.collections.all.first?.id)
         model.collections.select(id: collectionID)
 
-        model.importAttachments(urls: [sourceFile], mode: AppModel.AttachmentImportMode.createNewItemPerFile)
+        model.importer.importAttachments(urls: [sourceFile], mode: AttachmentImportMode.createNewItemPerFile)
         try await waitUntil(timeout: 3.0) { model.items.count == 1 && model.collections.memberships.count == 1 }
 
         #expect(model.collections.memberships.first?.collectionID == collectionID)

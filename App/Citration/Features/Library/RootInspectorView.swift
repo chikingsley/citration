@@ -53,8 +53,8 @@ struct RootInspectorView: View {
             ScrollView {
                 Form {
                     itemInfoSection(item)
-                    if model.hasMetadataDiagnostics {
-                        MetadataDiagnosticsInspectorSection(model: model)
+                    if model.importer.hasMetadataDiagnostics {
+                        MetadataDiagnosticsInspectorSection(importer: model.importer)
                     }
                     ItemTagsInspectorSection(tags: model.tags, item: item)
                     ItemCollectionsInspectorSection(model: model, item: item)
@@ -88,27 +88,27 @@ struct RootInspectorView: View {
 
     private var attachmentsSection: some View {
         Section("Attachments") {
-            let isProcessingThisItem = model.reprocessingItemID == model.selectedItemID
-            let isProcessingOtherItem = model.reprocessingItemID != nil && !isProcessingThisItem
+            let isProcessingThisItem = model.importer.reprocessingItemID == model.selectedItemID
+            let isProcessingOtherItem = model.importer.reprocessingItemID != nil && !isProcessingThisItem
 
             HStack {
                 Button(isProcessingThisItem ? "Processing..." : "Process Metadata") {
-                    model.reprocessSelectedItemAttachments()
+                    model.importer.reprocessSelectedItemAttachments()
                 }
                 .disabled(
                     isProcessingThisItem
                         || isProcessingOtherItem
-                        || model.isImportingAttachments
-                        || model.selectedItemAttachments.isEmpty
+                        || model.importer.isImporting
+                        || model.importer.selectedItemAttachments.isEmpty
                 )
                 Spacer()
             }
 
-            if model.selectedItemAttachments.isEmpty {
+            if model.importer.selectedItemAttachments.isEmpty {
                 Text("No attachments yet. Use Attach or drag a PDF into this sidebar.")
                     .foregroundStyle(.secondary)
             } else {
-                ForEach(model.selectedItemAttachments) { attachment in
+                ForEach(model.importer.selectedItemAttachments) { attachment in
                     attachmentRow(attachment)
                 }
             }
@@ -176,7 +176,7 @@ struct RootInspectorView: View {
             .help("Read in Citration")
             Link("Open", destination: attachment.localURL)
             Button {
-                model.removeAttachment(attachment)
+                model.importer.removeAttachment(attachment)
             } label: {
                 Image(systemName: "trash")
             }

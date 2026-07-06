@@ -15,14 +15,14 @@ struct MetadataDiagnosticsTests {
         let model = makeAppModel(providers: [provider])
         await model.refreshItems()
 
-        model.doiInput = doi
-        model.addByDOI()
-        try await waitUntil { !model.isResolvingDOI }
+        model.importer.doiInput = doi
+        model.importer.addByDOI()
+        try await waitUntil { !model.importer.isResolvingDOI }
 
         #expect(model.statusMessage == "Added: Published Title · check metadata")
         #expect(model.items.first?.title == "Published Title")
-        #expect(Set(model.metadataConflicts.map(\.field)) == [.title, .publicationYear, .itemType])
-        #expect(model.metadataWarnings.isEmpty)
+        #expect(Set(model.importer.metadataConflicts.map(\.field)) == [.title, .publicationYear, .itemType])
+        #expect(model.importer.metadataWarnings.isEmpty)
     }
 }
 

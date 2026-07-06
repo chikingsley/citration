@@ -154,13 +154,14 @@ struct RootView: View {
 
     @ToolbarContentBuilder
     private var rootToolbar: some ToolbarContent {
+        @Bindable var importer = model.importer
         ToolbarItemGroup {
-            TextField("DOI", text: $model.doiInput)
+            TextField("DOI", text: $importer.doiInput)
                 .frame(width: 260)
-            Button(model.isResolvingDOI ? "Resolving..." : "Add DOI", systemImage: "plus.circle") {
-                model.addByDOI()
+            Button(model.importer.isResolvingDOI ? "Resolving..." : "Add DOI", systemImage: "plus.circle") {
+                model.importer.addByDOI()
             }
-            .disabled(model.isResolvingDOI)
+            .disabled(model.importer.isResolvingDOI)
 
             Button("New Item", systemImage: "doc.badge.plus") {
                 model.addEmptyItem()
@@ -196,7 +197,7 @@ struct RootView: View {
     private func handleImportedAttachments(_ result: Result<[URL], any Error>) {
         switch result {
         case let .success(urls):
-            model.importAttachments(urls: urls)
+            model.importer.importAttachments(urls: urls)
         case let .failure(error):
             model.statusMessage = "Import failed: \(error.localizedDescription)"
         }
@@ -245,9 +246,9 @@ struct RootView: View {
         }
     }
 
-    private func dispatchDropImport(urls: [URL], mode: AppModel.AttachmentImportMode) {
+    private func dispatchDropImport(urls: [URL], mode: AttachmentImportMode) {
         DispatchQueue.main.async {
-            model.importAttachments(urls: urls, mode: mode)
+            model.importer.importAttachments(urls: urls, mode: mode)
         }
     }
 

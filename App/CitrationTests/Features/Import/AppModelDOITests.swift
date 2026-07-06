@@ -37,16 +37,16 @@ struct AppModelDOITests {
         let model = makeAppModel(providers: [provider])
         await model.refreshItems()
 
-        model.doiInput = doi
-        model.addByDOI()
+        model.importer.doiInput = doi
+        model.importer.addByDOI()
 
-        #expect(model.isResolvingDOI)
+        #expect(model.importer.isResolvingDOI)
         #expect(model.statusMessage == "Resolving DOI \(doi)...")
 
-        try await waitUntil { !model.isResolvingDOI }
+        try await waitUntil { !model.importer.isResolvingDOI }
 
         #expect(model.statusMessage == "Added: A Great Paper")
-        #expect(model.doiInput.isEmpty)
+        #expect(model.importer.doiInput.isEmpty)
         #expect(model.items.count == 1)
         #expect(model.items.first?.doi == doi)
         #expect(model.selectedItemID != nil)
@@ -60,26 +60,26 @@ struct AppModelDOITests {
         let model = makeAppModel(providers: [provider])
         await model.refreshItems()
 
-        model.doiInput = doi
-        model.addByDOI()
+        model.importer.doiInput = doi
+        model.importer.addByDOI()
 
-        #expect(model.isResolvingDOI)
+        #expect(model.importer.isResolvingDOI)
         #expect(model.statusMessage == "Resolving DOI \(doi)...")
 
-        try await waitUntil { !model.isResolvingDOI }
+        try await waitUntil { !model.importer.isResolvingDOI }
 
         #expect(model.statusMessage == "No metadata found for \(doi)")
         #expect(model.items.isEmpty)
-        #expect(model.doiInput == doi)
+        #expect(model.importer.doiInput == doi)
     }
 
     @Test("addByDOI rejects empty input immediately")
     func addByDOIRejectsEmptyInputImmediately() {
         let model = makeAppModel(providers: [NoopMetadataProvider()])
-        model.doiInput = "   "
-        model.addByDOI()
+        model.importer.doiInput = "   "
+        model.importer.addByDOI()
 
-        #expect(!model.isResolvingDOI)
+        #expect(!model.importer.isResolvingDOI)
         #expect(model.statusMessage == "Enter a DOI first")
     }
 
@@ -102,9 +102,9 @@ struct AppModelDOITests {
         let model = makeAppModel(providers: [provider])
         await model.refreshItems()
 
-        model.doiInput = "  DOI: 10.1038/NATURE12373  "
-        model.addByDOI()
-        try await waitUntil { !model.isResolvingDOI }
+        model.importer.doiInput = "  DOI: 10.1038/NATURE12373  "
+        model.importer.addByDOI()
+        try await waitUntil { !model.importer.isResolvingDOI }
 
         #expect(model.items.count == 1)
         #expect(model.items.first?.doi == "10.1038/nature12373")

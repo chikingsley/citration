@@ -40,7 +40,7 @@ struct AppModelImportTests {
         )
         await model.refreshItems()
 
-        model.importAttachments(urls: [sourceFile], mode: .createNewItemPerFile)
+        model.importer.importAttachments(urls: [sourceFile], mode: .createNewItemPerFile)
         try await waitUntil(timeout: 3.0) { model.items.count == 1 && model.items.first?.doi == doi }
 
         let imported = try #require(model.items.first)
@@ -79,7 +79,7 @@ struct AppModelImportTests {
         )
         await model.refreshItems()
 
-        model.importAttachments(urls: [sourceFile], mode: .createNewItemPerFile)
+        model.importer.importAttachments(urls: [sourceFile], mode: .createNewItemPerFile)
         try await waitUntil(timeout: 3.0) { model.items.first?.title == "Resolved From DOI" }
 
         let requests = await recorder.requests()
@@ -103,8 +103,8 @@ struct AppModelImportTests {
         )
         await model.refreshItems()
 
-        model.importAttachments(urls: [missingFile], mode: .createNewItemPerFile)
-        try await waitUntil(timeout: 3.0) { !model.isImportingAttachments }
+        model.importer.importAttachments(urls: [missingFile], mode: .createNewItemPerFile)
+        try await waitUntil(timeout: 3.0) { !model.importer.isImporting }
 
         #expect(model.items.isEmpty)
         #expect(model.statusMessage == "Import failed")
@@ -126,11 +126,11 @@ struct AppModelImportTests {
         )
         await model.refreshItems()
 
-        model.importAttachments(urls: [sourceFile], mode: .createNewItemPerFile)
+        model.importer.importAttachments(urls: [sourceFile], mode: .createNewItemPerFile)
 
         try await waitUntil(timeout: 0.8) { model.items.count == 1 }
         #expect(model.items.first?.title == "slow")
 
-        try await waitUntil(timeout: 4.0) { !model.isImportingAttachments }
+        try await waitUntil(timeout: 4.0) { !model.importer.isImporting }
     }
 }
