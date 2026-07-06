@@ -3,6 +3,9 @@ node_modules
 build/
 .signatures.json
 tmp
+.env
+.env.*
+!.env.example
 .swiftlint_cache
 **/.build/
 **/.swiftpm/
