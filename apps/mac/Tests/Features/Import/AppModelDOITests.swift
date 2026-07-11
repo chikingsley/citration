@@ -51,7 +51,12 @@ struct AppModelDOITests {
         #expect(model.items.count == 1)
         #expect(model.items.first?.doi == doi)
         #expect(model.selectedItemID != nil)
-        #expect(model.citation.preview.contains("[apa]"))
+        try await waitUntil(timeout: 5) {
+            model.citation.preview.contains("A Great Paper")
+        }
+        #expect(model.citation.preview.contains("Lovelace"))
+        #expect(model.citation.preview.contains("1843"))
+        #expect(model.citation.preview.contains("A Great Paper"))
     }
 
     @Test("DOI identifier with no match sets failure status and stops resolving")

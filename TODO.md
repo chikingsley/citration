@@ -71,7 +71,7 @@ Done when the real running Mac app uses the agreed Library/document-tab structur
 - [x] Render the 61 existing ink annotations and create compatible ink objects from a real input path before the later iPad client.
 - [x] Complete EPUB navigation, durable progress, selection, annotation, typography, and search with proven portable locations.
 - [x] Preserve and expose collections, tags, trash, attachment state, full-text state, settings, and unsupported raw objects without silent loss.
-- [ ] Keep OCR, metadata repair/conflict diagnostics, CSL citation rendering, OpenAlex discovery, and local relationship suggestions operating through the final synchronized objects.
+- [x] Keep OCR, metadata repair/conflict diagnostics, CSL citation rendering, OpenAlex discovery, and local relationship suggestions operating through the final synchronized objects.
 
 Done when all 414 baseline objects are represented or visibly preserved as unsupported, all 80 annotations round-trip, required attachments open offline, and no compatibility data is silently dropped.
 

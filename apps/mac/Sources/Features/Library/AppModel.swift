@@ -170,7 +170,9 @@ final class AppModel {
         if !hasValidSelection {
             selectedItemIdentity = items.first?.identity
         }
-        await citation.renderPreviewForSelection()
+        Task {
+            await citation.renderPreviewForSelection()
+        }
         await importer.refreshSelectedItemAttachments()
         await notes.refreshForSelection()
         relationships.refreshForSelection()

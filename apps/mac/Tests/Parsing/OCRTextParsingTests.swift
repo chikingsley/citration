@@ -86,8 +86,8 @@ struct OCRResultCacheTests {
 @Suite("OCR import flow")
 @MainActor
 struct OCRImportFlowTests {
-    @Test("scanned book gains its OCR title on import")
-    func scannedImportAppliesOCRTitle() async throws {
+    @Test("captured OCR result enriches a real scanned book through the production service")
+    func capturedOCRResultEnrichesRealScannedBook() async throws {
         let tempDirectory = makeTempDirectory()
         defer { cleanupDirectory(tempDirectory) }
         let attachmentStore = try LocalAttachmentStore(
@@ -102,11 +102,18 @@ struct OCRImportFlowTests {
             contentsOf: scannedPDF.deletingPathExtension().appendingPathExtension("ocr.md"),
             encoding: .utf8
         )
+        let pdfData = try Data(contentsOf: scannedPDF)
+        let cache = OCRResultCache(directory: tempDirectory.appendingPathComponent("ocr-cache", isDirectory: true))
+        cache.store(markdown, contentHash: OCRResultCache.contentHash(of: pdfData))
+        let service = MistralOCRService(
+            keyStore: InMemoryAPIKeyStore(apiKey: "cached-result"),
+            cache: cache
+        )
 
         let model = makeAppModel(
             pdfDOIExtractor: PDFKitDOIExtractor(),
             attachmentStore: attachmentStore,
-            ocrService: StubOCRService(markdown: markdown)
+            ocrService: service
         )
         await model.refreshItems()
 

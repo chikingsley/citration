@@ -5,6 +5,8 @@ import Testing
 
 // MARK: - Factories
 
+private let appModelTestCitationFormatter: CSLCitationFormatter = .init()
+
 @MainActor
 func makeAppModel(
     initialItems: [BCItem] = [],
@@ -12,7 +14,9 @@ func makeAppModel(
     pdfDOIExtractor: any PDFDOIExtracting = NullPDFDOIExtractor(),
     attachmentStore: LocalAttachmentStore? = nil,
     readerProgressStore: LocalReaderProgressStore? = nil,
-    ocrService: any OCRServicing = NullOCRService()
+    ocrService: any OCRServicing = NullOCRService(),
+    citationFormatter: any CitationFormattingEngine = appModelTestCitationFormatter,
+    relatedWorkDiscoveryProvider: any RelatedWorkDiscoveryProvider = NoopRelatedWorkDiscoveryProvider()
 ) -> AppModel {
     let database = makeDatabase()
     let persistence: CitrationLibraryStore
@@ -35,7 +39,7 @@ func makeAppModel(
         ),
         store: persistence,
         metadataRegistry: MetadataProviderRegistry(providers: providers),
-        citationFormatter: StubCitationFormatter(),
+        citationFormatter: citationFormatter,
         storageConnectors: [],
         attachmentStore: attachmentStore ?? persistence,
         annotationStore: persistence,
@@ -44,6 +48,7 @@ func makeAppModel(
         relationshipStore: persistence,
         readerProgressStore: readerProgressStore ?? persistence,
         pdfDOIExtractor: pdfDOIExtractor,
+        relatedWorkDiscoveryProvider: relatedWorkDiscoveryProvider,
         ocrService: ocrService,
         openAlexAPIKeyStore: FileAPIKeyStore(
             fileURL: makeTempDirectory().appending(path: "openalex-api-key")
@@ -77,23 +82,6 @@ struct NullOCRService: OCRServicing {
     func recognizeText(from documentURL: URL) throws -> String {
         _ = documentURL
         throw OCRServiceError.notConfigured
-    }
-}
-
-// MARK: - StubOCRService
-
-/// Returns fixed markdown, recording nothing; lets tests exercise the
-/// OCR enrichment path without the network.
-struct StubOCRService: OCRServicing {
-    let markdown: String
-
-    func isConfigured() -> Bool {
-        true
-    }
-
-    func recognizeText(from documentURL: URL) -> String {
-        _ = documentURL
-        return markdown
     }
 }
 

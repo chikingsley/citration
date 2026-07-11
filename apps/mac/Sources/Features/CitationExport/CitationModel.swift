@@ -30,6 +30,7 @@ final class CitationModel {
             preview = "Select an item to preview citation output"
             return
         }
+        let selectedItemID = selectedItem.id
 
         do {
             let style = CitationStyle(id: "apa", title: "APA")
@@ -41,8 +42,14 @@ final class CitationModel {
             guard let entry = bibliography.entries.first else {
                 throw CitationEngineError.invalidInput("no bibliography entry")
             }
+            guard context?.selectedItem?.id == selectedItemID else {
+                return
+            }
             preview = entry
         } catch {
+            guard context?.selectedItem?.id == selectedItemID else {
+                return
+            }
             preview = "Citation preview failed: \(error.localizedDescription)"
         }
     }
