@@ -67,6 +67,9 @@ struct CitrationCLI {
         case "capture-zotero-fixtures":
             try await captureZoteroFixtures(arguments: Array(arguments.dropFirst()))
 
+        case "sync-zotero-read-only":
+            try await syncZoteroReadOnly(arguments: Array(arguments.dropFirst()))
+
         default:
             throw NSError(
                 domain: "CitrationCLI",
@@ -146,6 +149,7 @@ struct CitrationCLI {
           cd tools/citration-cli && swift run citration openalex-key clear
           cd tools/citration-cli && swift run citration openalex-smoke <doi>
           cd tools/citration-cli && swift run citration capture-zotero-fixtures [--server <url>] [--user-id <id>]
+          SELFHOST_API_KEY=<private environment> swift run citration sync-zotero-read-only --server <url> --database <path>
         """)
     }
 

@@ -9,7 +9,9 @@ The baseline was collected through authenticated read-only API requests on 2026-
 | Object | Count |
 | --- | ---: |
 | All item objects | 414 |
-| Top-level bibliographic items | 149 |
+| Top-level items | 149 |
+| Top-level bibliographic items | 128 |
+| Top-level attachments | 21 |
 | Child objects | 265 |
 | Attachments | 174 |
 | Annotations | 80 |
@@ -21,9 +23,9 @@ The baseline was collected through authenticated read-only API requests on 2026-
 | Groups | 0 |
 | Deleted item keys | 21 |
 
-The top-level item types are 62 books, 33 preprints, 27 journal articles, and 6 conference papers.
+The 128 top-level bibliographic items are 62 books, 33 preprints, 27 journal articles, and 6 conference papers. The `/items/top` total is 149 because Zotero also classifies 21 imported attachments without parents as top-level items.
 
-The attachment set contains 130 PDFs, 20 EPUBs, 23 HTML snapshots, and 1 plain-text file. Link modes are 126 imported files and 48 imported URLs.
+The attachment set contains 130 PDFs, 20 EPUBs, 23 HTML snapshots, and 1 plain-text file. Of those 174 attachments, 21 are top-level and 153 are children. Link modes are 126 imported files and 48 imported URLs.
 
 The annotation set contains 61 ink annotations, 8 highlights, 8 underlines, and 3 note annotations. Ink is the dominant live annotation type and is a baseline requirement.
 
@@ -49,9 +51,9 @@ After a refresh, inspect `manifest.json`, run the CitrationCore tests, and revie
 
 ## Test Evidence Audit
 
-The existing suite contains several useful controlled doubles, but they are not product proof. `InMemoryItemStore` tests characterize ordering and update semantics only. App-model tests use that store plus stub metadata, OCR, PDF-extraction, citation, and HTTP collaborators to test orchestration deterministically. The authentication tests’ in-memory key/session stores test protocol behavior without exercising secure persistence. Those tests may remain while their behavior is still relevant, but they cannot establish database durability, migration safety, Zotero compatibility, attachment transfer, or live synchronization.
+The existing suite contains several useful controlled doubles, but they are not product proof. `InMemoryItemStore` tests characterize ordering and update semantics only. App-model tests now use real temporary GRDB databases and files by default, while still using controlled metadata, OCR, PDF-extraction, citation, and HTTP collaborators to test orchestration deterministically. The authentication tests’ in-memory key/session stores test protocol behavior without exercising secure persistence. Those tests may remain while their behavior is still relevant, but they cannot establish secure credential storage or live synchronization.
 
-The legacy SwiftData tests use a real temporary on-disk store, and the JSON-backed note, collection, relationship, attachment, annotation, and reader-progress tests use real temporary files. They characterize data that step 3 must migrate, not the final architecture. Step 2 replaces persistence claims with captured Zotero fixtures in real temporary GRDB databases. Step 4 adds production transport plus read-only and disposable-write live gates. Step 6 uses real document files and the live annotation/attachment corpus. A test double remains acceptable for a small pure unit boundary, but its result will continue to be labeled unit evidence only.
+The legacy SwiftData tests use a real temporary on-disk store, and the JSON-backed note, collection, relationship, attachment, annotation, and reader-progress tests use real temporary files. They characterize data that the completed one-time migration must continue to recognize, not the production architecture. Final persistence is covered by populated migration fixtures and `CitrationLibraryStore` tests using real SQLite databases and files. On 2026-07-10 the production transport also completed a read-only live pull into a fresh database at version 1291: 414 items, 10 collections, 48 settings, 164 full-text records, 21 deletion keys, and zero groups or saved searches; an immediate incremental pull returned zero changes. Disposable-write acceptance remains open. A test double remains acceptable for a small pure unit boundary, but its result will continue to be labeled unit evidence only.
 
 ## Legacy Migration Inventory
 

@@ -25,6 +25,9 @@ All notable completed changes to Citration are tracked here. Entries are newest 
 - Added one GRDB-backed library store shared by the Mac app and future Apple clients for items, collections, notes, attachments, annotations, relationships, and reader progress.
 - Cut production startup over to the verified backup/migration path and the final GRDB store; SwiftData and JSON readers now exist only for legacy migration and focused compatibility tests.
 - Verified the actual local profile starts through GRDB with an integrity-clean database, a completed migration record, and a recoverable legacy backup.
+- Added the production Zotero API v3 transport and read-only full-library sync engine with capability verification, paginated version discovery, bounded object/full-text downloads, retry/backoff handling, incremental pulls, settings, searches, groups, and deletion processing.
+- Added a credential-safe read-only sync CLI and verified the live self-hosted library into a fresh integrity-clean database at version 1291; a second incremental pull returned no changes.
+- Corrected the acceptance inventory to distinguish 128 bibliographic top-level items from 21 top-level attachments, matching the authoritative `/items/top` total of 149.
 
 ### Changed
 

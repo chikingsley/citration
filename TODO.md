@@ -39,11 +39,11 @@ Done when the existing local library opens from the final database, the verified
 
 - [ ] Remove custom account, Sign in with Apple, workspace, RevenueCat, and custom Citration API assumptions from the core/app boundary.
 - [ ] Add a compatible server connection profile using a server URL and scoped API/device key, while preserving local-only operation.
-- [ ] Implement API key capability checks, pagination, retry/backoff, library/object versions, incremental `since` pulls, batch downloads, settings, full text, groups, and `/deleted` processing.
+- [x] Implement API key capability checks, pagination, retry/backoff, library/object versions, incremental `since` pulls, batch downloads, settings, full text, groups, and `/deleted` processing.
 - [ ] Implement local dirty tracking, version-zero creates, safe writes with version preconditions, deletion logs, pristine-base merges, explicit same-field conflicts, and failed-object retry queues.
 - [ ] Implement attachment metadata sync, lazy verified downloads, uploads, multipart uploads, registration, resumability, cache state, and cleanup.
 - [ ] Use streaming notifications only to trigger authoritative incremental pulls.
-- [ ] Run a read-only live sync into a fresh database and reproduce the acceptance baseline without exposing private content in logs.
+- [x] Run a read-only live sync into a fresh database and reproduce the acceptance baseline without exposing private content in logs.
 - [ ] Run disposable bidirectional writes, verify them in Zotero Desktop, verify Desktop changes return to CitrationCore, and clean up every test object.
 
 Done when the final database and sync engine converge with Zotero Self-Host and Zotero Desktop through real read/write acceptance, including interruption, conflict, attachment, and cleanup evidence.
