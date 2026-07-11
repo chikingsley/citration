@@ -30,6 +30,9 @@ struct ItemNotesInspectorSection: View {
                             Text(note.updatedAt, style: .date)
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
+                            Text("v\(note.version) · \(note.identity.objectKey)")
+                                .font(.caption.monospaced())
+                                .foregroundStyle(.tertiary)
                             Spacer()
                             Button {
                                 notes.remove(note)
@@ -40,8 +43,13 @@ struct ItemNotesInspectorSection: View {
                             .help("Remove note")
                         }
 
-                        Text(note.text)
-                            .textSelection(.enabled)
+                        NoteHTMLView(html: note.html)
+                            .frame(minHeight: 80, idealHeight: 140, maxHeight: 220)
+                        if !note.tags.isEmpty {
+                            Text(note.tags.map(\.value).joined(separator: ", "))
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
                     }
                     .padding(.vertical, 4)
                 }

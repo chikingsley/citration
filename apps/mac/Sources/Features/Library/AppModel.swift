@@ -19,7 +19,7 @@ final class AppModel {
         attachmentStore: any LibraryAttachmentStoring,
         annotationStore: any LibraryAnnotationStoring,
         collectionStore: any LibraryCollectionStoring,
-        noteStore: any LibraryNoteStoring,
+        noteStore: any SynchronizedLibraryNoteStoring,
         relationshipStore: any LibraryRelationshipStoring,
         readerProgressStore: any LibraryReaderProgressStoring,
         pdfDOIExtractor: any PDFDOIExtracting = NullPDFDOIExtractor(),

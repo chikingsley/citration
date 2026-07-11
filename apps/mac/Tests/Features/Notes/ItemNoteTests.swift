@@ -2,12 +2,25 @@
 import CitrationCore
 import Foundation
 import Testing
+import WebKit
 
 // MARK: - ItemNoteTests
 
 @Suite("Item Notes")
 @MainActor
 struct ItemNoteTests {
+    @Test("note HTML rendering disables active content and remote resources")
+    func noteHTMLRenderingIsIsolated() {
+        let noteHTML = "<p>Preserve <strong>formatting</strong><script>alert('no')</script></p>"
+        let configuration = NoteHTMLView.makeConfiguration()
+        let document = NoteHTMLView.document(containing: noteHTML)
+
+        #expect(!configuration.defaultWebpagePreferences.allowsContentJavaScript)
+        #expect(!configuration.websiteDataStore.isPersistent)
+        #expect(document.contains("default-src 'none'"))
+        #expect(document.contains(noteHTML))
+    }
+
     @Test("addNoteToSelectedItem persists trimmed note")
     func addNoteToSelectedItemPersistsTrimmedNote() async throws {
         let item = BCItem(title: "Paper")
@@ -15,12 +28,16 @@ struct ItemNoteTests {
         await model.refreshItems()
         model.selectItem(id: item.id)
 
-        model.notes.draft = "  Check related work  "
+        model.notes.draft = "  Check <related> & linked work  "
         model.notes.addToSelectedItem()
         try await waitUntil { model.notes.selectedItemNotes.count == 1 }
 
         #expect(model.notes.draft.isEmpty)
-        #expect(model.notes.selectedItemNotes.first?.text == "Check related work")
+        let note = try #require(model.notes.selectedItemNotes.first)
+        #expect(note.html == "<p>Check &lt;related&gt; &amp; linked work</p>")
+        #expect(!note.identity.objectKey.isEmpty)
+        #expect(note.parentIdentity.appUUID == item.id)
+        #expect(note.version == 0)
         #expect(model.statusMessage == "Added note")
     }
 

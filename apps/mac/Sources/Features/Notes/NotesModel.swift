@@ -7,16 +7,16 @@ import Observation
 final class NotesModel {
     // MARK: Lifecycle
 
-    init(store: any LibraryNoteStoring) {
+    init(store: any SynchronizedLibraryNoteStoring) {
         self.store = store
     }
 
     // MARK: Internal
 
     var draft: String = ""
-    var selectedItemNotes: [LibraryNote] = []
+    var selectedItemNotes: [SynchronizedLibraryNote] = []
 
-    let store: any LibraryNoteStoring
+    let store: any SynchronizedLibraryNoteStoring
 
     func bind(context: any LibraryContext) {
         self.context = context
@@ -41,7 +41,7 @@ final class NotesModel {
         }
 
         do {
-            selectedItemNotes = try await store.listNotes(itemID: selectedItemID)
+            selectedItemNotes = try await store.listSynchronizedNotes(itemID: selectedItemID)
         } catch {
             selectedItemNotes = []
             context?.statusMessage = "Failed to load notes"
@@ -63,7 +63,7 @@ final class NotesModel {
         Task {
             do {
                 _ = try await store.upsert(
-                    LibraryNote(itemID: selectedItemID, text: text)
+                    LibraryNote(itemID: selectedItemID, text: Self.noteHTML(for: text))
                 )
                 draft = ""
                 await refreshForSelection()
@@ -74,10 +74,10 @@ final class NotesModel {
         }
     }
 
-    func remove(_ note: LibraryNote) {
+    func remove(_ note: SynchronizedLibraryNote) {
         Task {
             do {
-                try await store.remove(id: note.id)
+                try await store.remove(id: note.identity.appUUID)
                 await refreshForSelection()
                 context?.statusMessage = "Removed note"
             } catch {
@@ -94,4 +94,15 @@ final class NotesModel {
     // MARK: Private
 
     @ObservationIgnored private weak var context: (any LibraryContext)?
+
+    private static func noteHTML(for text: String) -> String {
+        let escaped = text
+            .replacingOccurrences(of: "&", with: "&amp;")
+            .replacingOccurrences(of: "<", with: "&lt;")
+            .replacingOccurrences(of: ">", with: "&gt;")
+            .replacingOccurrences(of: "\"", with: "&quot;")
+            .replacingOccurrences(of: "'", with: "&#39;")
+            .replacingOccurrences(of: "\n", with: "<br>")
+        return "<p>\(escaped)</p>"
+    }
 }

@@ -9,7 +9,7 @@ public actor CitrationLibraryStore:
     LibraryAnnotationStoring,
     LibraryAttachmentStoring,
     LibraryCollectionStoring,
-    LibraryNoteStoring,
+    SynchronizedLibraryNoteStoring,
     LibraryReaderProgressStoring,
     LibraryRelationshipStoring
 {
