@@ -62,7 +62,7 @@ struct ItemRelatedInspectorSection: View {
             Text("OpenAlex")
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(.secondary)
-            if !model.settings.hasKey {
+            if !model.openAlexSettings.hasKey {
                 Text("OpenAlex key not configured.")
                     .foregroundStyle(.secondary)
             } else if model.insights.isLoading {

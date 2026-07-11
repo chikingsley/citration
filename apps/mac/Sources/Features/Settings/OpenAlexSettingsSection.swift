@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct OpenAlexSettingsInspectorSection: View {
+struct OpenAlexSettingsSection: View {
     @Bindable var settings: OpenAlexSettingsModel
 
     var body: some View {

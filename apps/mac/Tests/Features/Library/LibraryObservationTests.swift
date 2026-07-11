@@ -54,7 +54,7 @@ struct LibraryObservationTests {
                     isDeleted: true
                 ),
             ],
-            libraryID: store.libraryID
+            libraryID: store.initialLibraryID
         )
 
         try await waitUntil {

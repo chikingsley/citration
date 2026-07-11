@@ -54,6 +54,10 @@ struct CitrationApp: App {
             }
         }
         .windowToolbarStyle(.unified)
+
+        Settings {
+            ApplicationSettingsView(model: model)
+        }
     }
 
     // MARK: Private

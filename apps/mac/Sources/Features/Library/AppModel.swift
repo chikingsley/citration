@@ -2,6 +2,8 @@ import CitrationCore
 import Foundation
 import Observation
 
+// MARK: - AppModel
+
 @MainActor
 @Observable
 final class AppModel {
@@ -28,9 +30,11 @@ final class AppModel {
         self.database = database
         self.connectionManager = connectionManager
         self.store = store
+        observedLibraryID = (store as? CitrationLibraryStore)?.initialLibraryID
         self.annotationStore = annotationStore
         self.readerProgressStore = readerProgressStore
         citation = CitationModel(formatter: citationFormatter)
+        zoteroSettings = ZoteroSettingsModel(connectionManager: connectionManager)
         self.storageConnectors = storageConnectors
         collections = CollectionsModel(store: collectionStore)
         notes = NotesModel(store: noteStore)
@@ -47,7 +51,7 @@ final class AppModel {
             annotationStore: annotationStore
         )
         insights = InsightsModel(discoveryProvider: relatedWorkDiscoveryProvider)
-        settings = OpenAlexSettingsModel(keyStore: openAlexAPIKeyStore)
+        openAlexSettings = OpenAlexSettingsModel(keyStore: openAlexAPIKeyStore)
         collections.bind(context: self)
         notes.bind(context: self)
         tags.bind(context: self)
@@ -55,14 +59,16 @@ final class AppModel {
         reader.bind(context: self)
         citation.bind(context: self)
         insights.bind(context: self, relationships: relationships)
-        settings.bind(context: self, insights: insights)
+        zoteroSettings.bind(context: self)
+        openAlexSettings.bind(context: self, insights: insights)
         importer.bind(context: self, collections: collections, reader: reader)
 
         startLibraryObservation()
         startNavigationObservation()
 
         Task {
-            await settings.refreshKeyStatus()
+            await zoteroSettings.refresh()
+            await openAlexSettings.refreshKeyStatus()
             await collections.refresh()
             if libraryObservation == nil {
                 await refreshItems()
@@ -81,10 +87,10 @@ final class AppModel {
     var storageConnectors: [StorageConnector]
     var selectedWorkspaceTab: WorkspaceTab = .library
     private(set) var openDocuments: [LocalAttachment] = []
-    private(set) var libraryObservationRevision = 0
-    private(set) var navigationObservationRevision = 0
-    private(set) var savedSearches: [ZoteroSavedSearchSummary] = []
-    private(set) var deletedItemCount = 0
+    var libraryObservationRevision = 0
+    var navigationObservationRevision = 0
+    var savedSearches: [ZoteroSavedSearchSummary] = []
+    var deletedItemCount = 0
 
     let collections: CollectionsModel
     let notes: NotesModel
@@ -94,12 +100,19 @@ final class AppModel {
     let importer: ImportModel
     let citation: CitationModel
     let insights: InsightsModel
-    let settings: OpenAlexSettingsModel
+    let zoteroSettings: ZoteroSettingsModel
+    let openAlexSettings: OpenAlexSettingsModel
     let database: CitrationDatabase
     let connectionManager: ZoteroConnectionManager
     let store: any BCItemStore
     let annotationStore: any LibraryAnnotationStoring
     let readerProgressStore: any LibraryReaderProgressStoring
+
+    // MARK: Observation
+
+    @ObservationIgnored var libraryObservation: CitrationDatabaseObservation?
+    @ObservationIgnored var navigationObservation: CitrationDatabaseObservation?
+    @ObservationIgnored var observedLibraryID: Int64?
 
     var selectedItem: BCItem? {
         guard let selectedItemID else {
@@ -254,58 +267,5 @@ final class AppModel {
         let model = ReaderModel(progressStore: readerProgressStore, annotationStore: annotationStore)
         model.bind(context: self)
         return model
-    }
-
-    // MARK: Private
-
-    @ObservationIgnored private var libraryObservation: CitrationDatabaseObservation?
-    @ObservationIgnored private var navigationObservation: CitrationDatabaseObservation?
-
-    private func startLibraryObservation() {
-        guard let store = store as? CitrationLibraryStore else {
-            return
-        }
-        libraryObservation = database.observeLibraryItems(
-            libraryID: store.libraryID,
-            onError: { [weak self] _ in
-                Task { @MainActor [weak self] in
-                    self?.statusMessage = "Failed to observe library changes"
-                }
-            },
-            onChange: { [weak self] _ in
-                Task { @MainActor [weak self] in
-                    guard let self else {
-                        return
-                    }
-                    libraryObservationRevision += 1
-                    await collections.refresh()
-                    await refreshItems()
-                }
-            }
-        )
-    }
-
-    private func startNavigationObservation() {
-        guard let store = store as? CitrationLibraryStore else {
-            return
-        }
-        navigationObservation = database.observeLibraryNavigation(
-            libraryID: store.libraryID,
-            onError: { [weak self] _ in
-                Task { @MainActor [weak self] in
-                    self?.statusMessage = "Failed to observe library navigation"
-                }
-            },
-            onChange: { [weak self] snapshot in
-                Task { @MainActor [weak self] in
-                    guard let self else {
-                        return
-                    }
-                    savedSearches = snapshot.savedSearches
-                    deletedItemCount = snapshot.deletedItemCount
-                    navigationObservationRevision += 1
-                }
-            }
-        )
     }
 }

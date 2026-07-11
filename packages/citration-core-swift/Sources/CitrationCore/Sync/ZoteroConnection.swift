@@ -93,3 +93,34 @@ public enum ZoteroTransportError: Error, Equatable, Sendable {
     case preconditionFailed(remoteVersion: Int64?)
     case tooManyWriteObjects(Int)
 }
+
+// MARK: LocalizedError
+
+extension ZoteroTransportError: LocalizedError {
+    public var errorDescription: String? {
+        switch self {
+        case .invalidServerURL:
+            "Enter a valid HTTPS server URL. Plain HTTP is allowed only for localhost."
+        case .missingAPIKey:
+            "Enter a scoped Zotero API or device key."
+        case .invalidResponse:
+            "The server returned a response Citration could not understand."
+        case let .httpStatus(status):
+            "The server returned HTTP \(status). Check the URL, key, and server status."
+        case let .missingHeader(name):
+            "The server response is missing the required \(name) header."
+        case let .invalidHeader(name, value):
+            "The server returned an invalid \(name) header: \(value)."
+        case .keyCannotReadLibrary:
+            "This key cannot read the personal library. Create a key with library read access."
+        case .keyCannotWriteLibrary:
+            "This key cannot write the personal library. Create a key with library write access."
+        case .keyCannotAccessFiles:
+            "This key cannot access attachment files. Create a key with file access."
+        case .preconditionFailed:
+            "The remote library changed during synchronization. Sync again to merge the latest version."
+        case let .tooManyWriteObjects(count):
+            "A write contained \(count) objects; Zotero accepts at most 50 at once."
+        }
+    }
+}

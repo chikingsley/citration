@@ -65,7 +65,6 @@ struct RootInspectorView: View {
                         readerNotesSection
                     }
                     ItemRelatedInspectorSection(relationships: model.relationships, model: model)
-                    OpenAlexSettingsInspectorSection(settings: model.settings)
                 }
                 .formStyle(.grouped)
             }
@@ -79,7 +78,6 @@ struct RootInspectorView: View {
                             description: Text("Select an item to view its details.")
                         )
                     }
-                    OpenAlexSettingsInspectorSection(settings: model.settings)
                 }
                 .formStyle(.grouped)
             }

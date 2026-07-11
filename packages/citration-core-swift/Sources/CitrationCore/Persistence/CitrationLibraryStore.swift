@@ -25,10 +25,12 @@ public actor CitrationLibraryStore:
         self.database = database
         self.attachmentsDirectory = attachmentsDirectory
         self.fileManager = fileManager
-        libraryID = try database.upsertLibrary(
+        let libraryID = try database.upsertLibrary(
             identity: libraryIdentity,
             name: libraryName
         )
+        initialLibraryID = libraryID
+        self.libraryID = libraryID
         try fileManager.createDirectory(at: attachmentsDirectory, withIntermediateDirectories: true)
         for item in initialItems {
             let key = LegacyZoteroObjectFactory.itemKey(for: item.id)
@@ -55,11 +57,25 @@ public actor CitrationLibraryStore:
 
     // MARK: Public
 
-    public nonisolated let libraryID: Int64
+    /// The library selected when this store was created. Production clients can
+    /// switch the same store after a connection is established without
+    /// rebuilding every feature model around a second persistence path.
+    public nonisolated let initialLibraryID: Int64
+
+    public func selectLibrary(identity: ZoteroLibraryIdentity, name: String? = nil) throws -> Int64 {
+        let selectedID = try database.upsertLibrary(identity: identity, name: name)
+        libraryID = selectedID
+        return selectedID
+    }
+
+    public func selectedLibraryID() -> Int64 {
+        libraryID
+    }
 
     // MARK: Internal
 
     let database: CitrationDatabase
     let attachmentsDirectory: URL
     let fileManager: FileManager
+    var libraryID: Int64
 }
