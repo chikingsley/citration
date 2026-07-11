@@ -7,7 +7,7 @@ import Observation
 final class RelationshipsModel {
     // MARK: Lifecycle
 
-    init(store: LocalRelationshipStore) {
+    init(store: any LibraryRelationshipStoring) {
         self.store = store
     }
 
@@ -19,7 +19,7 @@ final class RelationshipsModel {
     var kind: LibraryRelationshipKind = .userLinked
     var noteDraft: String = ""
 
-    let store: LocalRelationshipStore
+    let store: any LibraryRelationshipStoring
 
     /// Items the selected item could be linked to (everything but itself).
     var candidates: [BCItem] {

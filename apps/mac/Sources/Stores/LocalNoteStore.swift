@@ -23,7 +23,7 @@ enum LocalNoteStorePaths {
 
 // MARK: - LocalNoteStore
 
-actor LocalNoteStore {
+actor LocalNoteStore: LibraryNoteStoring {
     // MARK: Lifecycle
 
     init(storeURL: URL, fileManager: FileManager = .default) throws {

@@ -13,14 +13,14 @@ final class AppModel {
         metadataRegistry: MetadataProviderRegistry,
         citationFormatter: any CitationFormattingEngine,
         storageConnectors: [StorageConnector],
+        attachmentStore: any LibraryAttachmentStoring,
+        annotationStore: any LibraryAnnotationStoring,
+        collectionStore: any LibraryCollectionStoring,
+        noteStore: any LibraryNoteStoring,
+        relationshipStore: any LibraryRelationshipStoring,
+        readerProgressStore: any LibraryReaderProgressStoring,
         sessionStore: AuthSessionStore = InMemoryAuthSessionStore(),
         pdfDOIExtractor: any PDFDOIExtracting = NullPDFDOIExtractor(),
-        attachmentStore: LocalAttachmentStore? = nil,
-        annotationStore: LocalAnnotationStore? = nil,
-        collectionStore: LocalCollectionStore? = nil,
-        noteStore: LocalNoteStore? = nil,
-        relationshipStore: LocalRelationshipStore? = nil,
-        readerProgressStore: LocalReaderProgressStore? = nil,
         relatedWorkDiscoveryProvider: any RelatedWorkDiscoveryProvider = NoopRelatedWorkDiscoveryProvider(),
         ocrService: any OCRServicing = MistralOCRService(),
         openAlexAPIKeyStore: any APIKeyStore = InMemoryAPIKeyStore()
@@ -30,19 +30,19 @@ final class AppModel {
         citation = CitationModel(formatter: citationFormatter)
         self.storageConnectors = storageConnectors
         self.sessionStore = sessionStore
-        collections = CollectionsModel(store: collectionStore ?? AppModel.makeCollectionStore())
-        notes = NotesModel(store: noteStore ?? AppModel.makeNoteStore())
-        relationships = RelationshipsModel(store: relationshipStore ?? AppModel.makeRelationshipStore())
+        collections = CollectionsModel(store: collectionStore)
+        notes = NotesModel(store: noteStore)
+        relationships = RelationshipsModel(store: relationshipStore)
         importer = ImportModel(
             store: store,
-            attachmentStore: attachmentStore ?? AppModel.makeAttachmentStore(),
+            attachmentStore: attachmentStore,
             metadataRegistry: metadataRegistry,
             pdfDOIExtractor: pdfDOIExtractor,
             ocrService: ocrService
         )
         reader = ReaderModel(
-            progressStore: readerProgressStore ?? AppModel.makeReaderProgressStore(),
-            annotationStore: annotationStore ?? AppModel.makeAnnotationStore()
+            progressStore: readerProgressStore,
+            annotationStore: annotationStore
         )
         insights = InsightsModel(discoveryProvider: relatedWorkDiscoveryProvider)
         settings = OpenAlexSettingsModel(keyStore: openAlexAPIKeyStore)

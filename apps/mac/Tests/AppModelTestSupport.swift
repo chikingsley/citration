@@ -11,23 +11,34 @@ func makeAppModel(
     providers: [any MetadataProvider] = [NoopMetadataProvider()],
     pdfDOIExtractor: any PDFDOIExtracting = NullPDFDOIExtractor(),
     attachmentStore: LocalAttachmentStore? = nil,
-    annotationStore: LocalAnnotationStore? = makeAnnotationStore(),
-    readerProgressStore: LocalReaderProgressStore? = makeReaderProgressStore(),
+    annotationStore: LocalAnnotationStore? = nil,
+    readerProgressStore: LocalReaderProgressStore? = nil,
     ocrService: any OCRServicing = NullOCRService()
 ) -> AppModel {
-    AppModel(
-        database: makeDatabase(),
-        store: InMemoryItemStore(initialItems: initialItems),
+    let database = makeDatabase()
+    let persistence: CitrationLibraryStore
+    do {
+        persistence = try CitrationLibraryStore(
+            database: database,
+            attachmentsDirectory: makeTempDirectory().appending(path: "attachments", directoryHint: .isDirectory),
+            initialItems: initialItems
+        )
+    } catch {
+        fatalError("Unable to initialize the real GRDB AppModel test store: \(error)")
+    }
+    return AppModel(
+        database: database,
+        store: persistence,
         metadataRegistry: MetadataProviderRegistry(providers: providers),
         citationFormatter: StubCitationFormatter(),
         storageConnectors: [],
+        attachmentStore: attachmentStore ?? persistence,
+        annotationStore: annotationStore ?? persistence,
+        collectionStore: persistence,
+        noteStore: persistence,
+        relationshipStore: persistence,
+        readerProgressStore: readerProgressStore ?? persistence,
         pdfDOIExtractor: pdfDOIExtractor,
-        attachmentStore: attachmentStore,
-        annotationStore: annotationStore,
-        collectionStore: makeCollectionStore(),
-        noteStore: makeNoteStore(),
-        relationshipStore: makeRelationshipStore(),
-        readerProgressStore: readerProgressStore,
         ocrService: ocrService
     )
 }
@@ -79,33 +90,6 @@ func makeAnnotationStore() -> LocalAnnotationStore? {
     try? LocalAnnotationStore(
         storeURL: FileManager.default.temporaryDirectory
             .appendingPathComponent("citration-appmodel-annotations")
-            .appendingPathComponent(UUID().uuidString)
-            .appendingPathExtension("json")
-    )
-}
-
-func makeCollectionStore() -> LocalCollectionStore? {
-    try? LocalCollectionStore(
-        storeURL: FileManager.default.temporaryDirectory
-            .appendingPathComponent("citration-appmodel-collections")
-            .appendingPathComponent(UUID().uuidString)
-            .appendingPathExtension("json")
-    )
-}
-
-func makeNoteStore() -> LocalNoteStore? {
-    try? LocalNoteStore(
-        storeURL: FileManager.default.temporaryDirectory
-            .appendingPathComponent("citration-appmodel-notes")
-            .appendingPathComponent(UUID().uuidString)
-            .appendingPathExtension("json")
-    )
-}
-
-func makeRelationshipStore() -> LocalRelationshipStore? {
-    try? LocalRelationshipStore(
-        storeURL: FileManager.default.temporaryDirectory
-            .appendingPathComponent("citration-appmodel-relationships")
             .appendingPathComponent(UUID().uuidString)
             .appendingPathExtension("json")
     )

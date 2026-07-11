@@ -22,6 +22,9 @@ All notable completed changes to Citration are tracked here. Entries are newest 
 - Removed the production in-memory fallback for persistence initialization so startup cannot silently present an empty library after a storage failure.
 - Added a one-time legacy-library migrator that creates an atomic recoverable backup, reads the real SwiftData and JSON stores, preserves original records, and projects version-zero dirty objects into the final GRDB schema.
 - Added populated on-disk migration evidence for items, collections, membership, notes, attachments, annotations, relationships, and reader progress, including idempotent reruns and recovery after invalid source data.
+- Added one GRDB-backed library store shared by the Mac app and future Apple clients for items, collections, notes, attachments, annotations, relationships, and reader progress.
+- Cut production startup over to the verified backup/migration path and the final GRDB store; SwiftData and JSON readers now exist only for legacy migration and focused compatibility tests.
+- Verified the actual local profile starts through GRDB with an integrity-clean database, a completed migration record, and a recoverable legacy backup.
 
 ### Changed
 

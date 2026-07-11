@@ -23,7 +23,7 @@ enum LocalRelationshipStorePaths {
 
 // MARK: - LocalRelationshipStore
 
-actor LocalRelationshipStore {
+actor LocalRelationshipStore: LibraryRelationshipStoring {
     // MARK: Lifecycle
 
     init(storeURL: URL, fileManager: FileManager = .default) throws {

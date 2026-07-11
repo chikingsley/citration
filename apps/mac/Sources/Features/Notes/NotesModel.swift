@@ -7,7 +7,7 @@ import Observation
 final class NotesModel {
     // MARK: Lifecycle
 
-    init(store: LocalNoteStore) {
+    init(store: any LibraryNoteStoring) {
         self.store = store
     }
 
@@ -16,7 +16,7 @@ final class NotesModel {
     var draft: String = ""
     var selectedItemNotes: [LibraryNote] = []
 
-    let store: LocalNoteStore
+    let store: any LibraryNoteStoring
 
     func bind(context: any LibraryContext) {
         self.context = context

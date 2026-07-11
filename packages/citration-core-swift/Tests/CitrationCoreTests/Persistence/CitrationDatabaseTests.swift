@@ -260,6 +260,8 @@ struct CitrationDatabaseTests {
     private static let requiredSchemaObjects: Set<String> = [
         "annotation_projections",
         "app_relationships",
+        "app_object_identity",
+        "app_collection_memberships",
         "attachment_projections",
         "collection_items",
         "collection_projections",

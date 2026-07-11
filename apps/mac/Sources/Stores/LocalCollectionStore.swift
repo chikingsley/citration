@@ -23,7 +23,7 @@ enum LocalCollectionStorePaths {
 
 // MARK: - LocalCollectionStore
 
-actor LocalCollectionStore {
+actor LocalCollectionStore: LibraryCollectionStoring {
     // MARK: Lifecycle
 
     init(storeURL: URL, fileManager: FileManager = .default) throws {

@@ -19,7 +19,7 @@ final class ImportModel {
 
     init(
         store: any BCItemStore,
-        attachmentStore: LocalAttachmentStore,
+        attachmentStore: any LibraryAttachmentStoring,
         metadataRegistry: MetadataProviderRegistry,
         pdfDOIExtractor: any PDFDOIExtracting,
         ocrService: any OCRServicing = MistralOCRService()
@@ -41,7 +41,7 @@ final class ImportModel {
     var metadataConflicts: [MetadataResolutionConflict] = []
     var selectedItemAttachments: [LocalAttachment] = []
 
-    let attachmentStore: LocalAttachmentStore
+    let attachmentStore: any LibraryAttachmentStoring
 
     var isReprocessing: Bool {
         reprocessingItemID != nil

@@ -106,9 +106,15 @@ extension CitrationDatabase {
                     SELECT migrated_object_key FROM legacy_records
                     WHERE library_id = ? AND migrated_object_key IS NOT NULL
                 );
+                DELETE FROM app_object_identity
+                WHERE library_id = ? AND object_key IN (
+                    SELECT migrated_object_key FROM legacy_records
+                    WHERE library_id = ? AND migrated_object_key IS NOT NULL
+                );
                 DELETE FROM legacy_records WHERE library_id = ?;
                 """,
                 arguments: [
+                    libraryID, libraryID,
                     libraryID, libraryID,
                     libraryID, libraryID,
                     libraryID, libraryID,
@@ -150,8 +156,24 @@ extension CitrationDatabase {
                         record.objectKey,
                     ]
                 )
+                if
+                    let objectKind = record.objectKind,
+                    let objectKey = record.objectKey,
+                    let appUUID = UUID(uuidString: record.legacyID)
+                {
+                    let dates = Self.legacyIdentityDates(for: record)
+                    try Self.upsertAppIdentity(
+                        uuid: appUUID,
+                        kind: objectKind,
+                        key: objectKey,
+                        dates: dates,
+                        libraryID: libraryID,
+                        database: database
+                    )
+                }
             }
 
+            try Self.storeLegacyMemberships(records, libraryID: libraryID, database: database)
             try Self.storeLegacyRelationships(relationships, libraryID: libraryID, database: database)
             try Self.storeLegacyReaderProgress(readerProgress, libraryID: libraryID, database: database)
             try Self.storeLegacyAttachmentPaths(attachmentPaths, libraryID: libraryID, database: database)
@@ -242,6 +264,99 @@ extension CitrationDatabase {
             sql: "SELECT COUNT(*) FROM \(table) WHERE library_id = ?",
             arguments: [libraryID]
         ) ?? 0
+    }
+
+    private static func upsertAppIdentity(
+        uuid: UUID,
+        kind: ZoteroObjectKind,
+        key: String,
+        dates: (createdAt: Date, updatedAt: Date),
+        libraryID: Int64,
+        database: Database
+    ) throws {
+        try database.execute(
+            sql: """
+            INSERT INTO app_object_identity (
+                library_id, object_kind, object_key, app_uuid, created_at, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?)
+            ON CONFLICT (library_id, object_kind, object_key) DO UPDATE SET
+                app_uuid = excluded.app_uuid,
+                updated_at = excluded.updated_at
+            """,
+            arguments: [
+                libraryID,
+                kind.rawValue,
+                key,
+                uuid.uuidString,
+                dates.createdAt.timeIntervalSince1970,
+                dates.updatedAt.timeIntervalSince1970,
+            ]
+        )
+    }
+
+    private static func legacyIdentityDates(
+        for record: LegacyMigrationObject
+    ) -> (createdAt: Date, updatedAt: Date) {
+        let decoder = JSONDecoder()
+        if let item = try? decoder.decode(BCItem.self, from: record.rawPayload) {
+            return (item.createdAt, item.updatedAt)
+        }
+        if let collection = try? decoder.decode(LibraryCollection.self, from: record.rawPayload) {
+            return (collection.createdAt, collection.updatedAt)
+        }
+        if let note = try? decoder.decode(LibraryNote.self, from: record.rawPayload) {
+            return (note.createdAt, note.updatedAt)
+        }
+        if let annotation = try? decoder.decode(LibraryAnnotation.self, from: record.rawPayload) {
+            return (annotation.createdAt, annotation.updatedAt)
+        }
+        return (.distantPast, .distantPast)
+    }
+
+    private static func storeLegacyMemberships(
+        _ records: [LegacyMigrationObject],
+        libraryID: Int64,
+        database: Database
+    ) throws {
+        let decoder = JSONDecoder()
+        for record in records where record.entityKind == "membership" {
+            let membership = try decoder.decode(LibraryCollectionMembership.self, from: record.rawPayload)
+            guard
+                let collectionKey = try objectKey(for: membership.collectionID, libraryID: libraryID, database: database),
+                let itemKey = try objectKey(for: membership.itemID, libraryID: libraryID, database: database)
+            else {
+                continue
+            }
+            try database.execute(
+                sql: """
+                INSERT INTO app_collection_memberships (
+                    library_id, collection_key, item_key, membership_uuid, created_at
+                ) VALUES (?, ?, ?, ?, ?)
+                ON CONFLICT (library_id, collection_key, item_key) DO UPDATE SET
+                    membership_uuid = excluded.membership_uuid,
+                    created_at = excluded.created_at
+                """,
+                arguments: [
+                    libraryID,
+                    collectionKey,
+                    itemKey,
+                    membership.id.uuidString,
+                    membership.createdAt.timeIntervalSince1970,
+                ]
+            )
+        }
+    }
+
+    private static func objectKey(
+        for uuid: UUID,
+        libraryID: Int64,
+        database: Database
+    ) throws -> String? {
+        try String.fetchOne(
+            database,
+            sql: "SELECT object_key FROM app_object_identity WHERE library_id = ? AND app_uuid = ?",
+            arguments: [libraryID, uuid.uuidString]
+        )
     }
 
     private static func storeLegacyRelationships(

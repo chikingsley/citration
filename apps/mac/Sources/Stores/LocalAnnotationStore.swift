@@ -23,7 +23,7 @@ enum LocalAnnotationStorePaths {
 
 // MARK: - LocalAnnotationStore
 
-actor LocalAnnotationStore {
+actor LocalAnnotationStore: LibraryAnnotationStoring {
     // MARK: Lifecycle
 
     init(storeURL: URL, fileManager: FileManager = .default) throws {

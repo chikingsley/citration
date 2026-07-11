@@ -23,7 +23,7 @@ enum LocalReaderProgressStorePaths {
 
 // MARK: - LocalReaderProgressStore
 
-actor LocalReaderProgressStore {
+actor LocalReaderProgressStore: LibraryReaderProgressStoring {
     // MARK: Lifecycle
 
     init(storeURL: URL, fileManager: FileManager = .default) throws {

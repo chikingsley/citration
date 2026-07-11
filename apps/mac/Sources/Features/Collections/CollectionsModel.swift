@@ -7,7 +7,7 @@ import Observation
 final class CollectionsModel {
     // MARK: Lifecycle
 
-    init(store: LocalCollectionStore) {
+    init(store: any LibraryCollectionStoring) {
         self.store = store
     }
 
@@ -18,7 +18,7 @@ final class CollectionsModel {
     var selectedID: UUID?
     var selectedItemCollectionIDs: Set<UUID> = []
 
-    let store: LocalCollectionStore
+    let store: any LibraryCollectionStoring
 
     /// Items in the selected collection; the whole library when none is selected.
     var selectedCollectionItems: [BCItem] {

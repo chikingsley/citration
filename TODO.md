@@ -31,7 +31,7 @@ Done when all captured fixtures persist in one real temporary SQLite database, q
 - [x] Import legacy records into the final SQLite schema without creating a permanent parallel model.
 - [x] Verify counts, IDs, timestamps, relationships, attachment paths, annotation locations, and reader progress against migration fixtures.
 - [x] Make migration resumable or safely restartable after interruption.
-- [ ] Remove the SwiftData/JSON production paths and in-memory fallbacks only after migration evidence is green.
+- [x] Remove the SwiftData/JSON production paths and in-memory fallbacks only after migration evidence is green.
 
 Done when the existing local library opens from the final database, the verified backup remains recoverable, and there is one production persistence implementation.
 

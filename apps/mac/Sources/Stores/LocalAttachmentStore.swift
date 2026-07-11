@@ -2,25 +2,7 @@ import CitrationCore
 import Foundation
 import UniformTypeIdentifiers
 
-// MARK: - LocalAttachment
-
-struct LocalAttachment: Identifiable, Hashable {
-    let itemID: UUID
-    let fileName: String
-    let objectKey: String
-    let localURL: URL
-    let contentType: String
-    let size: Int64
-    let createdAt: Date
-
-    var id: String {
-        objectKey
-    }
-
-    var documentFormat: DocumentFormat {
-        DocumentFormat.infer(fileName: fileName, contentType: contentType)
-    }
-}
+typealias LocalAttachment = LibraryAttachment
 
 // MARK: - LocalAttachmentStorePaths
 
@@ -45,7 +27,7 @@ enum LocalAttachmentStorePaths {
 
 // MARK: - LocalAttachmentStore
 
-actor LocalAttachmentStore {
+actor LocalAttachmentStore: LibraryAttachmentStoring {
     // MARK: Lifecycle
 
     init(baseDirectory: URL, fileManager: FileManager = .default) throws {

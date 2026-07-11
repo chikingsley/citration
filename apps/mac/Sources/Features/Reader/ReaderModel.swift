@@ -7,7 +7,7 @@ import Observation
 final class ReaderModel {
     // MARK: Lifecycle
 
-    init(progressStore: LocalReaderProgressStore, annotationStore: LocalAnnotationStore) {
+    init(progressStore: any LibraryReaderProgressStoring, annotationStore: any LibraryAnnotationStoring) {
         self.progressStore = progressStore
         self.annotationStore = annotationStore
     }
@@ -19,8 +19,8 @@ final class ReaderModel {
     var annotations: [LibraryAnnotation] = []
     var noteDraft: String = ""
 
-    let progressStore: LocalReaderProgressStore
-    let annotationStore: LocalAnnotationStore
+    let progressStore: any LibraryReaderProgressStoring
+    let annotationStore: any LibraryAnnotationStoring
 
     func bind(context: any LibraryContext) {
         self.context = context

@@ -298,6 +298,37 @@ extension CitrationDatabase {
                 ON app_relationships(library_id, target_item_key, relationship_kind);
             """)
         }
+        migrator.registerMigration("v5_create_app_object_identity") { database in
+            try database.execute(sql: """
+            CREATE TABLE app_object_identity (
+                library_id INTEGER NOT NULL REFERENCES libraries(id) ON DELETE CASCADE,
+                object_kind TEXT NOT NULL,
+                object_key TEXT NOT NULL,
+                app_uuid TEXT NOT NULL,
+                created_at REAL NOT NULL,
+                updated_at REAL NOT NULL,
+                PRIMARY KEY (library_id, object_kind, object_key),
+                UNIQUE (library_id, app_uuid)
+            ) WITHOUT ROWID;
+
+            CREATE INDEX app_object_identity_by_uuid
+                ON app_object_identity(library_id, app_uuid);
+
+            CREATE TABLE app_collection_memberships (
+                library_id INTEGER NOT NULL REFERENCES libraries(id) ON DELETE CASCADE,
+                collection_key TEXT NOT NULL,
+                item_key TEXT NOT NULL,
+                membership_uuid TEXT NOT NULL,
+                created_at REAL NOT NULL,
+                PRIMARY KEY (library_id, collection_key, item_key),
+                UNIQUE (library_id, membership_uuid),
+                FOREIGN KEY (library_id, collection_key)
+                    REFERENCES collection_projections(library_id, collection_key) ON DELETE CASCADE,
+                FOREIGN KEY (library_id, item_key)
+                    REFERENCES item_projections(library_id, item_key) ON DELETE CASCADE
+            ) WITHOUT ROWID;
+            """)
+        }
         return migrator
     }
 }

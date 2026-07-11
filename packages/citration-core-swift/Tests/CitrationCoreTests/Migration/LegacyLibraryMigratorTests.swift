@@ -19,7 +19,7 @@ struct LegacyLibraryMigratorTests {
             backupDirectory: fixture.backupDirectory
         )
 
-        let report = try await migrator.migrate()
+        let report = try migrator.migrateSynchronously()
         let libraryID = try database.upsertLibrary(
             identity: ZoteroLibraryIdentity(type: "local", remoteID: 0)
         )
@@ -27,6 +27,7 @@ struct LegacyLibraryMigratorTests {
         let inspection = try verifyCounts(database, libraryID: libraryID)
         try verifyPrimaryItem(database, libraryID: libraryID, fixture: fixture)
         try verifyRelatedRecords(database, libraryID: libraryID, fixture: fixture)
+        try await verifyFinalStore(database, fixture: fixture)
         try await verifyIdempotence(
             migrator,
             database: database,
@@ -202,6 +203,33 @@ struct LegacyLibraryMigratorTests {
             try database.inspectLegacyMigration(name: LegacyLibraryMigrator.migrationName, libraryID: libraryID)
                 == inspection
         )
+    }
+
+    private func verifyFinalStore(
+        _ database: CitrationDatabase,
+        fixture: LegacyFixture
+    ) async throws {
+        let store = try CitrationLibraryStore(
+            database: database,
+            attachmentsDirectory: fixture.legacyDirectory.appending(path: "attachments", directoryHint: .isDirectory)
+        )
+        let item = try #require(fixture.items.first { $0.title == "A Real Legacy Article" })
+        #expect(await Set(store.listItems().map(\.id)) == Set(fixture.items.map(\.id)))
+        #expect(try await store.snapshot().collections.count == 1)
+        #expect(try await store.snapshot().memberships.count == 1)
+        #expect(try await store.listNotes(itemID: item.id) == [fixture.note])
+        let attachment = try #require(try await store.listAttachments(for: item.id).first)
+        #expect(attachment.localURL.resolvingSymlinksInPath() == fixture.attachmentURL.resolvingSymlinksInPath())
+        let annotation = try #require(
+            try await store.listAnnotations(itemID: item.id, attachmentKey: attachment.objectKey).first
+        )
+        #expect(annotation.id == fixture.annotation.id)
+        #expect(annotation.location == fixture.annotation.location)
+        #expect(annotation.attachmentKey == attachment.objectKey)
+        let progress = try #require(try await store.progress(for: attachment.objectKey))
+        #expect(progress.itemID == fixture.readerProgress.itemID)
+        #expect(progress.location == fixture.readerProgress.location)
+        #expect(progress.attachmentKey == attachment.objectKey)
     }
 }
 
