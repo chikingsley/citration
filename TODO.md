@@ -50,10 +50,10 @@ Done when the final database and sync engine converge with Zotero Self-Host and 
 
 ## 5. Install The Permanent Native Mac Shell
 
-- [ ] Create a non-closable Library tab plus document tabs that can detach into native windows.
-- [ ] Build the source sidebar for library views, nested collections, tags, saved searches, trash, and later shared libraries.
-- [ ] Build the library table from database observations with sorting, filtering, multiple selection, and configurable useful columns.
-- [ ] Replace the long inspector form with contextual Info, Attachments, Notes, Annotations, Cite, and Related surfaces.
+- [x] Create a non-closable Library tab plus document tabs that can detach into native windows.
+- [x] Build the source sidebar for library views, nested collections, tags, saved searches, trash, and later shared libraries.
+- [x] Build the library table from database observations with sorting, filtering, multiple selection, and configurable useful columns.
+- [x] Replace the long inspector form with contextual Info, Attachments, Notes, Annotations, Cite, and Related surfaces.
 - [ ] Move identifier entry into one Add flow and move OpenAlex, OCR, connection, and application configuration into Settings.
 - [ ] Expose quiet synchronization/download state and actionable failures without turning the app into a dashboard.
 - [ ] Preserve native SwiftUI/AppKit behavior, keyboard commands, accessibility, drag/drop, and separate-window semantics.

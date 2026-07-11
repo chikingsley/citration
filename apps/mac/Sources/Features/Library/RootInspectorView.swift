@@ -1,7 +1,8 @@
 import CitrationCore
-import Foundation
 import SwiftUI
 import UniformTypeIdentifiers
+
+// MARK: - RootInspectorView
 
 struct RootInspectorView: View {
     // MARK: Internal
@@ -47,217 +48,108 @@ struct RootInspectorView: View {
 
     // MARK: Private
 
+    @SceneStorage("Citration.ItemInspectorSection") private var selectedSectionRawValue =
+        ItemInspectorSection.info.rawValue
+
     @ViewBuilder
     private var inspectorContent: some View {
         if let item = model.selectedItem {
-            ScrollView {
-                Form {
-                    itemInfoSection(item)
-                    if model.importer.hasMetadataDiagnostics {
-                        MetadataDiagnosticsInspectorSection(importer: model.importer)
+            VStack(spacing: 0) {
+                sectionPicker
+                Divider()
+                ScrollView {
+                    Form {
+                        selectedContent(item)
                     }
-                    ItemTagsInspectorSection(tags: model.tags, item: item)
-                    ItemCollectionsInspectorSection(model: model, item: item)
-                    ItemNotesInspectorSection(notes: model.notes)
-                    CitationExportInspectorSection(citation: model.citation)
-                    attachmentsSection
-                    if model.reader.activeAttachment?.itemID == item.id {
-                        readerNotesSection
-                    }
-                    ItemRelatedInspectorSection(relationships: model.relationships, model: model)
+                    .formStyle(.grouped)
                 }
-                .formStyle(.grouped)
             }
         } else {
-            ScrollView {
-                Form {
-                    Section {
-                        ContentUnavailableView(
-                            "No Selection",
-                            systemImage: "doc.text",
-                            description: Text("Select an item to view its details.")
-                        )
-                    }
-                }
-                .formStyle(.grouped)
-            }
+            ContentUnavailableView(
+                "No Selection",
+                systemImage: "doc.text",
+                description: Text("Select an item to view its details.")
+            )
         }
     }
 
-    private var attachmentsSection: some View {
-        Section("Attachments") {
-            let isProcessingThisItem = model.importer.reprocessingItemID == model.selectedItemID
-            let isProcessingOtherItem = model.importer.reprocessingItemID != nil && !isProcessingThisItem
-
-            HStack {
-                Button(isProcessingThisItem ? "Processing..." : "Process Metadata") {
-                    model.importer.reprocessSelectedItemAttachments()
-                }
-                .disabled(
-                    isProcessingThisItem
-                        || isProcessingOtherItem
-                        || model.importer.isImporting
-                        || model.importer.selectedItemAttachments.isEmpty
-                )
-                Spacer()
+    private var sectionPicker: some View {
+        Picker("Inspector", selection: $selectedSectionRawValue) {
+            ForEach(ItemInspectorSection.allCases) { section in
+                Label(section.title, systemImage: section.systemImage)
+                    .labelStyle(.iconOnly)
+                    .tag(section.rawValue)
+                    .help(section.title)
             }
+        }
+        .pickerStyle(.segmented)
+        .padding(10)
+    }
 
-            if model.importer.selectedItemAttachments.isEmpty {
-                Text("No attachments yet. Use Attach or drag a PDF into this sidebar.")
-                    .foregroundStyle(.secondary)
-            } else {
-                ForEach(model.importer.selectedItemAttachments) { attachment in
-                    attachmentRow(attachment)
-                }
+    @ViewBuilder
+    private func selectedContent(_ item: BCItem) -> some View {
+        switch ItemInspectorSection(rawValue: selectedSectionRawValue) ?? .info {
+        case .info:
+            ItemInfoInspectorSection(item: item)
+            if model.importer.hasMetadataDiagnostics {
+                MetadataDiagnosticsInspectorSection(importer: model.importer)
             }
+            ItemTagsInspectorSection(tags: model.tags, item: item)
+            ItemCollectionsInspectorSection(model: model, item: item)
+
+        case .attachments:
+            ItemAttachmentsInspectorSection(model: model)
+
+        case .notes:
+            ItemNotesInspectorSection(notes: model.notes)
+
+        case .annotations:
+            ItemAnnotationsInspectorSection(model: model)
+
+        case .cite:
+            CitationExportInspectorSection(citation: model.citation)
+
+        case .related:
+            ItemRelatedInspectorSection(relationships: model.relationships, model: model)
+        }
+    }
+}
+
+// MARK: - ItemInspectorSection
+
+private enum ItemInspectorSection: String, CaseIterable, Identifiable {
+    case info
+    case attachments
+    case notes
+    case annotations
+    case cite
+    case related
+
+    // MARK: Internal
+
+    var id: String {
+        rawValue
+    }
+
+    var title: String {
+        switch self {
+        case .info: "Info"
+        case .attachments: "Attachments"
+        case .notes: "Notes"
+        case .annotations: "Annotations"
+        case .cite: "Cite"
+        case .related: "Related"
         }
     }
 
-    private var readerNotesSection: some View {
-        @Bindable var reader = model.reader
-        return Section("Reader Notes") {
-            TextField("Add a note", text: $reader.noteDraft, axis: .vertical)
-                .lineLimit(2 ... 5)
-            HStack {
-                Button("Add Note", systemImage: "note.text.badge.plus") {
-                    model.reader.addNote()
-                }
-                .disabled(model.reader.noteDraft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                Spacer()
-            }
-
-            if model.reader.annotations.isEmpty {
-                Text("No notes for this attachment yet.")
-                    .foregroundStyle(.secondary)
-            } else {
-                ForEach(model.reader.annotations) { annotation in
-                    readerAnnotationRow(annotation)
-                }
-            }
-        }
-    }
-
-    private func itemInfoSection(_ item: BCItem) -> some View {
-        Section("Info") {
-            LabeledContent("Title") {
-                Text(item.title.bcCollapsedWhitespace()).textSelection(.enabled)
-            }
-            if let doi = item.doi {
-                LabeledContent("DOI") {
-                    Text(doi).textSelection(.enabled)
-                }
-            }
-            LabeledContent("Year", value: item.publicationYear.map(String.init) ?? "n.d.")
-            LabeledContent("Creator", value: item.creators.first?.displayName ?? "Unknown")
-            if item.creators.count > 1 {
-                LabeledContent("Authors", value: item.creators.map(\.displayName).joined(separator: ", "))
-            }
-        }
-    }
-
-    private func attachmentRow(_ attachment: LocalAttachment) -> some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 2) {
-                Label(attachment.fileName, systemImage: iconName(for: attachment.documentFormat))
-                Text(attachmentDetail(for: attachment))
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-            Spacer()
-            Button {
-                model.openDocument(attachment)
-            } label: {
-                Image(systemName: "book.pages")
-            }
-            .buttonStyle(.borderless)
-            .disabled(!attachment.documentFormat.isReadableDocument)
-            .help("Read in Citration")
-            Link("Open", destination: attachment.localURL)
-            Button {
-                model.importer.removeAttachment(attachment)
-            } label: {
-                Image(systemName: "trash")
-            }
-            .buttonStyle(.borderless)
-            .help("Remove attachment")
-        }
-    }
-
-    private func readerAnnotationRow(_ annotation: LibraryAnnotation) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack {
-                if annotation.kind != .note {
-                    Circle()
-                        .fill(Color(nsColor: annotation.color.nsColor))
-                        .frame(width: 8, height: 8)
-                }
-                Text(annotationDetail(for: annotation))
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                Spacer()
-                Button {
-                    model.reader.removeAnnotation(annotation)
-                } label: {
-                    Image(systemName: "trash")
-                }
-                .buttonStyle(.borderless)
-                .help("Remove annotation")
-            }
-            Text(annotationBody(for: annotation))
-                .textSelection(.enabled)
-                .italic(annotation.kind != .note)
-        }
-        .padding(.vertical, 4)
-    }
-
-    private func annotationDetail(for annotation: LibraryAnnotation) -> String {
-        let date = annotation.updatedAt.formatted(date: .abbreviated, time: .omitted)
-        if let location = annotation.location, annotation.kind != .note {
-            return "\(location.displayLabel) · \(date)"
-        }
-        return date
-    }
-
-    private func annotationBody(for annotation: LibraryAnnotation) -> String {
-        if annotation.kind == .note {
-            return annotation.note
-        }
-        return annotation.selectedText ?? annotation.note
-    }
-
-    private func attachmentDetail(for attachment: LocalAttachment) -> String {
-        let size = ByteCountFormatter.string(fromByteCount: attachment.size, countStyle: .file)
-        let format = attachment.documentFormat.displayName
-        switch attachment.documentFormat {
-        case .pdf:
-            return "\(format) · In-app reader · \(size)"
-        case .epub,
-             .html,
-             .plainText:
-            return "\(format) · Reader pending · \(size)"
-        case .image,
-             .audio,
-             .unknown:
-            return "\(format) · \(size)"
-        }
-    }
-
-    private func iconName(for format: DocumentFormat) -> String {
-        switch format {
-        case .pdf:
-            "doc.richtext"
-        case .epub:
-            "book"
-        case .html:
-            "safari"
-        case .plainText:
-            "doc.plaintext"
-        case .image:
-            "photo"
-        case .audio:
-            "waveform"
-        case .unknown:
-            "doc"
+    var systemImage: String {
+        switch self {
+        case .info: "info.circle"
+        case .attachments: "paperclip"
+        case .notes: "note.text"
+        case .annotations: "highlighter"
+        case .cite: "quote.opening"
+        case .related: "point.3.connected.trianglepath.dotted"
         }
     }
 }
