@@ -14,8 +14,8 @@ struct WorkspaceTabBar: View {
         ScrollView(.horizontal) {
             HStack(spacing: 0) {
                 libraryTab
-                ForEach(model.openDocuments) { attachment in
-                    documentTab(attachment)
+                ForEach(model.documentSessions) { session in
+                    documentTab(session.attachment)
                 }
             }
         }

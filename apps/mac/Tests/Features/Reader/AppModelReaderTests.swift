@@ -7,19 +7,20 @@ import Testing
 @MainActor
 struct AppModelReaderTests {
     @Test("opening PDF reader tracks attachment and selected item")
-    func openingPDFReaderTracksAttachmentAndSelectedItem() {
-        let itemID = UUID()
+    func openingPDFReaderTracksAttachmentAndSelectedItem() async {
+        let item = BCItem(title: "Reader Item")
         let attachment = makeAttachment(
-            itemID: itemID,
+            itemID: item.id,
             fileName: "reader.pdf",
             contentType: "application/pdf"
         )
-        let model = makeAppModel(providers: [NoopMetadataProvider()])
+        let model = makeAppModel(initialItems: [item], providers: [NoopMetadataProvider()])
+        await model.refreshItems()
 
         model.reader.open(attachment)
 
         #expect(model.reader.activeAttachment == attachment)
-        #expect(model.selectedItemID == itemID)
+        #expect(model.selectedItemID == item.id)
         #expect(model.statusMessage == "Reading reader.pdf")
     }
 

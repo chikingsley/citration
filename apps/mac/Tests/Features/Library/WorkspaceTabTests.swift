@@ -65,6 +65,33 @@ struct WorkspaceTabTests {
         #expect(FileManager.default.fileExists(atPath: decoded.localURL.path))
     }
 
+    @Test("Each document tab retains an independent reader session")
+    func documentTabsRetainIndependentReaderSessions() throws {
+        let directory = makeTempDirectory()
+        defer { cleanupDirectory(directory) }
+        let firstURL = try makeFile(named: "first.pdf", contents: Data("first".utf8), in: directory)
+        let secondURL = try makeFile(named: "second.pdf", contents: Data("second".utf8), in: directory)
+        let item = BCItem(title: "Workspace Item")
+        let model = makeAppModel(initialItems: [item])
+        let first = attachment(itemID: item.id, key: "FIRST001", url: firstURL, contentType: "application/pdf")
+        let second = attachment(itemID: item.id, key: "SECOND01", url: secondURL, contentType: "application/pdf")
+
+        model.openDocument(first)
+        let firstReader = model.reader
+        firstReader.noteDraft = "First tab draft"
+        model.openDocument(second)
+        let secondReader = model.reader
+        secondReader.noteDraft = "Second tab draft"
+
+        #expect(firstReader !== secondReader)
+        model.selectWorkspaceTab(.document(first.objectKey))
+        #expect(model.reader === firstReader)
+        #expect(model.reader.noteDraft == "First tab draft")
+        model.selectWorkspaceTab(.document(second.objectKey))
+        #expect(model.reader === secondReader)
+        #expect(model.reader.noteDraft == "Second tab draft")
+    }
+
     // MARK: Private
 
     private func attachment(

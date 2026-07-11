@@ -21,7 +21,7 @@ final class CollectionsModel {
     let store: any LibraryCollectionStoring
 
     /// Items in the selected collection; the whole library when none is selected.
-    var selectedCollectionItems: [BCItem] {
+    var selectedCollectionItems: [SynchronizedLibraryItem] {
         guard let context else {
             return []
         }
@@ -34,10 +34,10 @@ final class CollectionsModel {
                 .filter { $0.collectionID == selectedID }
                 .map(\.itemID)
         )
-        return context.items.filter { itemIDs.contains($0.id) }
+        return context.items.filter { itemIDs.contains($0.identity.appUUID) }
     }
 
-    func items(in collectionID: UUID) -> [BCItem] {
+    func items(in collectionID: UUID) -> [SynchronizedLibraryItem] {
         guard let context else {
             return []
         }
@@ -46,7 +46,7 @@ final class CollectionsModel {
                 .filter { $0.collectionID == collectionID }
                 .map(\.itemID)
         )
-        return context.items.filter { itemIDs.contains($0.id) }
+        return context.items.filter { itemIDs.contains($0.identity.appUUID) }
     }
 
     func bind(context: any LibraryContext) {

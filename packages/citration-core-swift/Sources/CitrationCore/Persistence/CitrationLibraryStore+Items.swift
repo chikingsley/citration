@@ -3,8 +3,12 @@ import GRDB
 
 extension CitrationLibraryStore {
     public func listItems() -> [BCItem] {
+        listLibraryItems().map(\.bibliographic)
+    }
+
+    public func listLibraryItems() -> [SynchronizedLibraryItem] {
         do {
-            return try fetchItems()
+            return try fetchLibraryItems()
         } catch {
             fatalError("Failed to read the GRDB library: \(error)")
         }
@@ -29,7 +33,7 @@ extension CitrationLibraryStore {
         }
     }
 
-    private func fetchItems() throws -> [BCItem] {
+    private func fetchLibraryItems() throws -> [SynchronizedLibraryItem] {
         try database.databaseQueue.read { database in
             let rows = try Row.fetchAll(
                 database,
@@ -57,14 +61,14 @@ extension CitrationLibraryStore {
                 """,
                 arguments: [libraryID]
             )
-            return try rows.map { try Self.decodeItem(row: $0, database: database) }
+            return try rows.map { try Self.decodeLibraryItem(row: $0, database: database) }
         }
     }
 
     private func upsertItem(_ input: BCItem) throws {
-        let existing = try fetchItems().first { $0.id == input.id }
+        let existing = try fetchLibraryItems().first { $0.identity.appUUID == input.id }
         var item = input
-        item.createdAt = existing?.createdAt ?? input.createdAt
+        item.createdAt = existing?.bibliographic.createdAt ?? input.createdAt
         item.updatedAt = .now
         let key = try objectKey(for: item.id, kind: .item)
             ?? LegacyZoteroObjectFactory.itemKey(for: item.id)
@@ -78,10 +82,27 @@ extension CitrationLibraryStore {
                 arguments: [libraryID, key]
             )
         }
-        let object = try LegacyZoteroObjectFactory.itemObject(
+        let existingObject = try database.databaseQueue.read { database -> JSONValue? in
+            guard
+                let data = try Data.fetchOne(
+                    database,
+                    sql: """
+                    SELECT current_json FROM zotero_objects
+                    WHERE library_id = ? AND object_kind = 'item' AND object_key = ?
+                    """,
+                    arguments: [libraryID, key]
+                )
+            else {
+                return nil
+            }
+            return try ZoteroJSON.decode(data)
+        }
+        let object = try LegacyZoteroObjectFactory.mergingItemObject(
             item,
+            previous: existing?.bibliographic,
             key: key,
-            collectionKeys: collectionKeys
+            collectionKeys: collectionKeys,
+            existingObject: existingObject
         )
         try database.storeLocalItems([object], libraryID: libraryID)
         try upsertIdentity(
@@ -93,14 +114,14 @@ extension CitrationLibraryStore {
         )
     }
 
-    private static func decodeItem(row: Row, database: Database) throws -> BCItem {
+    private static func decodeLibraryItem(row: Row, database: Database) throws -> SynchronizedLibraryItem {
         let libraryID: Int64 = row["library_id"]
         let key: String = row["item_key"]
         let uuidText: String = row["app_uuid"]
         guard let id = UUID(uuidString: uuidText) else {
             throw CitrationDatabaseError.invalidObjectKey
         }
-        return try BCItem(
+        let bibliographic = try BCItem(
             id: id,
             title: row["title"],
             identifiers: fetchIdentifiers(libraryID: libraryID, key: key, database: database),
@@ -110,6 +131,18 @@ extension CitrationLibraryStore {
             tags: fetchBCItemTags(libraryID: libraryID, key: key, database: database),
             createdAt: parseDate(row["date_added"]) ?? .distantPast,
             updatedAt: parseDate(row["date_modified"]) ?? .distantPast
+        )
+        return SynchronizedLibraryItem(
+            identity: SynchronizedLibraryItemIdentity(
+                libraryID: libraryID,
+                objectKey: key,
+                appUUID: id
+            ),
+            bibliographic: bibliographic,
+            zoteroItemType: row["item_type"],
+            zoteroDate: row["date_text"],
+            publicationTitle: row["publication_title"],
+            parentItemKey: row["parent_item_key"]
         )
     }
 

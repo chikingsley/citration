@@ -24,7 +24,7 @@ final class InsightsModel {
         }
         return LibraryInsightEngine().recommendations(
             for: selectedItem,
-            in: context.items,
+            in: context.bibliographicItems,
             relationships: relationships.all
         )
     }
@@ -102,7 +102,7 @@ final class InsightsModel {
             return nil
         }
 
-        return context?.items.first { item in
+        return context?.bibliographicItems.first { item in
             !Set(item.identifiers).isDisjoint(with: suggestionIdentifiers)
         }
     }

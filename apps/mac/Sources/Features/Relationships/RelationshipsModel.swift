@@ -26,7 +26,7 @@ final class RelationshipsModel {
         guard let context, let selectedItemID = context.selectedItemID else {
             return []
         }
-        return context.items.filter { $0.id != selectedItemID }
+        return context.bibliographicItems.filter { $0.id != selectedItemID }
     }
 
     func bind(context: any LibraryContext) {
@@ -124,7 +124,8 @@ final class RelationshipsModel {
 
     func titleForRelatedItem(in relationship: LibraryRelationship) -> String {
         let relatedID = relatedItemID(in: relationship)
-        return context?.items.first { $0.id == relatedID }?.title.bcCollapsedWhitespace() ?? "Missing item"
+        return context?.bibliographicItems.first { $0.id == relatedID }?.title.bcCollapsedWhitespace()
+            ?? "Missing item"
     }
 
     // MARK: Private

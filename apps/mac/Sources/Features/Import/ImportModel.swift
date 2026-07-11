@@ -52,10 +52,9 @@ final class ImportModel {
         !metadataWarnings.isEmpty || !metadataConflicts.isEmpty
     }
 
-    func bind(context: any LibraryContext, collections: CollectionsModel, reader: ReaderModel) {
+    func bind(context: any LibraryContext, collections: CollectionsModel) {
         self.context = context
         self.collections = collections
-        self.reader = reader
     }
 
     // MARK: - Identifier entry
@@ -161,7 +160,7 @@ final class ImportModel {
         Task {
             do {
                 try await attachmentStore.removeAttachment(attachment)
-                await reader?.handleAttachmentRemoved(attachment)
+                await context?.handleAttachmentRemoved(attachment)
                 await refreshSelectedItemAttachments()
                 context?.statusMessage = "Removed attachment"
             } catch {
@@ -178,10 +177,12 @@ final class ImportModel {
 
         do {
             selectedItemAttachments = try await attachmentStore.listAttachments(for: selectedItemID)
-            reader?.clearIfActiveMissing(from: selectedItemAttachments)
+            context?.reconcileOpenDocuments(
+                itemID: selectedItemID,
+                availableAttachments: selectedItemAttachments
+            )
         } catch {
             selectedItemAttachments = []
-            reader?.clear()
             context?.statusMessage = "Failed to load attachments"
         }
     }
@@ -213,8 +214,6 @@ final class ImportModel {
     @ObservationIgnored private weak var context: (any LibraryContext)?
 
     @ObservationIgnored private weak var collections: CollectionsModel?
-
-    @ObservationIgnored private weak var reader: ReaderModel?
 
     private let store: any BCItemStore
     private let metadataRegistry: MetadataProviderRegistry

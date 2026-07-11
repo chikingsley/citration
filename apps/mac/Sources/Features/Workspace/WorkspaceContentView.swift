@@ -5,11 +5,11 @@ struct WorkspaceContentView: View {
     // MARK: Internal
 
     @Bindable var model: AppModel
-    let filteredItems: [BCItem]
+    let filteredItems: [SynchronizedLibraryItem]
     let emptyState: LibraryEmptyState
-    @Binding var selectedItemIDs: Set<UUID>
+    @Binding var selectedItemIdentities: Set<SynchronizedLibraryItemIdentity>
 
-    let onSelectionChange: (Set<UUID>) -> Void
+    let onSelectionChange: (Set<SynchronizedLibraryItemIdentity>) -> Void
 
     var body: some View {
         VStack(spacing: 0) {
@@ -30,21 +30,21 @@ struct WorkspaceContentView: View {
             LibraryDetailView(
                 filteredItems: filteredItems,
                 emptyState: emptyState,
-                selectedItemIDs: $selectedItemIDs,
+                selectedItemIdentities: $selectedItemIdentities,
                 onSelectionChange: onSelectionChange
             )
 
         case let .document(attachmentKey):
-            if let attachment = model.openDocuments.first(where: { $0.objectKey == attachmentKey }) {
+            if let session = model.documentSessions.first(where: { $0.id == attachmentKey }) {
                 ReaderPane(
-                    attachment: attachment,
-                    item: model.items.first(where: { $0.id == attachment.itemID }),
-                    reader: model.reader,
+                    attachment: session.attachment,
+                    item: model.items.first { $0.identity.appUUID == session.attachment.itemID }?.bibliographic,
+                    reader: session.reader,
                     onClose: {
-                        model.closeDocument(attachmentKey: attachment.objectKey)
+                        model.closeDocument(attachmentKey: session.id)
                     },
                     onDetach: {
-                        detach(attachment)
+                        detach(session.attachment)
                     }
                 )
             } else {

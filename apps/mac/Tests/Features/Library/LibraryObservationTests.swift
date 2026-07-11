@@ -31,9 +31,14 @@ struct LibraryObservationTests {
 
         try await waitUntil {
             model.libraryObservationRevision > initialRevision
-                && model.items.contains(where: { $0.id == item.id })
+                && model.items.contains(where: { $0.identity.appUUID == item.id })
         }
+        let visibleItem = try #require(model.items.first { $0.identity.appUUID == item.id })
+        let store = try #require(model.store as? CitrationLibraryStore)
         #expect(model.selectedItemID == item.id)
+        #expect(model.selectedItemIdentity == visibleItem.identity)
+        #expect(visibleItem.identity.libraryID == store.initialLibraryID)
+        #expect(!visibleItem.identity.objectKey.isEmpty)
     }
 
     @Test("Saved searches and trash counts refresh from the observed database")

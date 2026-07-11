@@ -24,6 +24,48 @@ enum LegacyZoteroObjectFactory {
         return try rawObject(key: key, data: data)
     }
 
+    /// Applies changes from the compatibility bibliographic value without
+    /// narrowing a synchronized Zotero object to only the fields BCItem knows.
+    static func mergingItemObject(
+        _ item: BCItem,
+        previous: BCItem?,
+        key: String,
+        collectionKeys: [String],
+        existingObject: JSONValue?
+    ) throws -> ZoteroRawObject {
+        guard
+            var envelope = existingObject?.objectValue,
+            var data = envelope["data"]?.objectValue
+        else {
+            return try itemObject(item, key: key, collectionKeys: collectionKeys)
+        }
+
+        if previous?.title != item.title {
+            data["title"] = .string(item.title)
+        }
+        if previous?.itemType != item.itemType, item.itemType != .unknown {
+            data["itemType"] = .string(zoteroItemType(item.itemType))
+        }
+        if !creatorsMatch(previous?.creators, item.creators) {
+            data["creators"] = .array(item.creators.map(creatorValue))
+        }
+        if previous?.publicationYear != item.publicationYear {
+            data["date"] = .string(item.publicationYear.map(String.init) ?? "")
+        }
+        if previous?.tags != item.tags {
+            data["tags"] = .array(mergedTagValues(item.tags, existingValue: data["tags"]))
+        }
+        if previous?.identifiers != item.identifiers {
+            addIdentifiers(item.identifiers, to: &data)
+        }
+
+        data["dateModified"] = .string(dateString(item.updatedAt))
+        data["key"] = .string(key)
+        envelope["key"] = .string(key)
+        envelope["data"] = .object(data)
+        return try ZoteroRawObject(rawValue: .object(envelope))
+    }
+
     static func collectionObject(
         _ collection: LibraryCollection,
         key: String,
@@ -220,6 +262,26 @@ enum LegacyZoteroObjectFactory {
             "firstName": .string(creator.givenName ?? ""),
             "lastName": .string(creator.familyName ?? ""),
         ])
+    }
+
+    private static func creatorsMatch(_ lhs: [Creator]?, _ rhs: [Creator]) -> Bool {
+        guard let lhs, lhs.count == rhs.count else {
+            return false
+        }
+        return zip(lhs, rhs).allSatisfy { left, right in
+            left.givenName == right.givenName
+                && left.familyName == right.familyName
+                && left.literalName == right.literalName
+        }
+    }
+
+    private static func mergedTagValues(_ tags: [String], existingValue: JSONValue?) -> [JSONValue] {
+        let existing = existingValue?.arrayValue ?? []
+        return tags.map { tag in
+            existing.first { value in
+                value.objectValue?["tag"]?.stringValue?.localizedCaseInsensitiveCompare(tag) == .orderedSame
+            } ?? .object(["tag": .string(tag)])
+        }
     }
 
     private static func dateString(_ date: Date) -> String {

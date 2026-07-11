@@ -99,8 +99,47 @@ struct CitrationLibraryStoreTests {
             libraryName: "Remote Fixture"
         )
 
-        #expect(await store.listItems().count == 1)
-        #expect(await store.listItems().first?.title == item.data["title"]?.stringValue)
+        let libraryItem = try #require(await store.listLibraryItems().first)
+        #expect(await store.listLibraryItems().count == 1)
+        #expect(libraryItem.bibliographic.title == item.data["title"]?.stringValue)
+        #expect(libraryItem.identity.libraryID == libraryID)
+        #expect(libraryItem.identity.objectKey == item.key)
+        #expect(libraryItem.identity.appUUID == libraryItem.bibliographic.id)
+    }
+
+    @Test("Compatibility edits preserve unmodeled synchronized Zotero fields")
+    func compatibilityEditsPreserveRawFields() async throws {
+        let fixture = try StoreFixture()
+        defer { fixture.remove() }
+        let identity = ZoteroLibraryIdentity(type: "user", remoteID: 42)
+        let libraryID = try fixture.database.upsertLibrary(identity: identity, name: "Remote Fixture")
+        let item = try #require(try fixture.capturedItems().first { $0.itemType == "book" })
+        let itemKey = try #require(item.key)
+        try fixture.database.storeRemoteCollections(fixture.capturedCollections(), libraryID: libraryID)
+        try fixture.database.storeRemoteItems([item], libraryID: libraryID)
+        try fixture.database.ensureAppIdentities(collections: [], items: [item], libraryID: libraryID)
+        let store = try CitrationLibraryStore(
+            database: fixture.database,
+            attachmentsDirectory: fixture.root.appending(path: "remote-attachments", directoryHint: .isDirectory),
+            libraryIdentity: identity,
+            libraryName: "Remote Fixture"
+        )
+        let before = try #require(try fixture.database.fetchProjectedItem(libraryID: libraryID, key: itemKey))
+        var edited = try #require(await store.listLibraryItems().first).bibliographic
+        edited.tags.append("preserved-edit")
+
+        await store.upsert(edited)
+
+        let after = try #require(try fixture.database.fetchProjectedItem(libraryID: libraryID, key: itemKey))
+        #expect(after.abstractNote == before.abstractNote)
+        #expect(after.publicationTitle == before.publicationTitle)
+        #expect(after.creators == before.creators)
+        #expect(after.collectionKeys == before.collectionKeys)
+        #expect(after.fields["series"] == before.fields["series"])
+        #expect(after.fields["rights"] == before.fields["rights"])
+        #expect(after.tags.dropLast() == before.tags[...])
+        #expect(after.tags.last?.value == "preserved-edit")
+        #expect(after.tags.last?.type == nil)
     }
 }
 

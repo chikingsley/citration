@@ -8,6 +8,25 @@ enum WorkspaceTab: Hashable {
     case document(String)
 }
 
+// MARK: - DocumentSession
+
+@MainActor
+final class DocumentSession: Identifiable {
+    // MARK: Lifecycle
+
+    init(attachment: LocalAttachment, reader: ReaderModel) {
+        id = attachment.objectKey
+        self.attachment = attachment
+        self.reader = reader
+    }
+
+    // MARK: Internal
+
+    nonisolated let id: String
+    var attachment: LocalAttachment
+    let reader: ReaderModel
+}
+
 // MARK: - DocumentWindowRoute
 
 struct DocumentWindowRoute: Codable, Hashable {

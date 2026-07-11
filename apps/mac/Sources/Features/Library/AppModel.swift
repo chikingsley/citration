@@ -12,7 +12,7 @@ final class AppModel {
     init(
         database: CitrationDatabase,
         connectionManager: ZoteroConnectionManager,
-        store: any BCItemStore,
+        store: any SynchronizedLibraryItemStoring,
         metadataRegistry: MetadataProviderRegistry,
         citationFormatter: any CitationFormattingEngine,
         storageConnectors: [StorageConnector],
@@ -48,7 +48,7 @@ final class AppModel {
             pdfDOIExtractor: pdfDOIExtractor,
             ocrService: ocrService
         )
-        reader = ReaderModel(
+        libraryReader = ReaderModel(
             progressStore: readerProgressStore,
             annotationStore: annotationStore
         )
@@ -58,13 +58,13 @@ final class AppModel {
         notes.bind(context: self)
         tags.bind(context: self)
         relationships.bind(context: self)
-        reader.bind(context: self)
+        libraryReader.bind(context: self)
         citation.bind(context: self)
         insights.bind(context: self, relationships: relationships)
         zoteroSettings.bind(context: self)
         ocrSettings.bind(context: self)
         openAlexSettings.bind(context: self, insights: insights)
-        importer.bind(context: self, collections: collections, reader: reader)
+        importer.bind(context: self, collections: collections)
 
         startLibraryObservation()
         startNavigationObservation()
@@ -87,11 +87,11 @@ final class AppModel {
 
     var route: Route = .workspace
     var statusMessage: String = "Ready"
-    var items: [BCItem] = []
-    var selectedItemID: UUID?
+    var items: [SynchronizedLibraryItem] = []
+    var selectedItemIdentity: SynchronizedLibraryItemIdentity?
     var storageConnectors: [StorageConnector]
     var selectedWorkspaceTab: WorkspaceTab = .library
-    private(set) var openDocuments: [LocalAttachment] = []
+    private(set) var documentSessions: [DocumentSession] = []
     var libraryObservationRevision = 0
     var navigationObservationRevision = 0
     var savedSearches: [ZoteroSavedSearchSummary] = []
@@ -102,7 +102,6 @@ final class AppModel {
     let notes: NotesModel
     let tags: TagsModel = .init()
     let relationships: RelationshipsModel
-    let reader: ReaderModel
     let importer: ImportModel
     let citation: CitationModel
     let insights: InsightsModel
@@ -111,7 +110,7 @@ final class AppModel {
     let openAlexSettings: OpenAlexSettingsModel
     let database: CitrationDatabase
     let connectionManager: ZoteroConnectionManager
-    let store: any BCItemStore
+    let store: any SynchronizedLibraryItemStoring
     let annotationStore: any LibraryAnnotationStoring
     let readerProgressStore: any LibraryReaderProgressStoring
 
@@ -122,20 +121,50 @@ final class AppModel {
     @ObservationIgnored var syncStatusObservation: CitrationDatabaseObservation?
     @ObservationIgnored var observedLibraryID: Int64?
 
-    var selectedItem: BCItem? {
-        guard let selectedItemID else {
+    var openDocuments: [LocalAttachment] {
+        documentSessions.map(\.attachment)
+    }
+
+    var reader: ReaderModel {
+        guard case let .document(attachmentKey) = selectedWorkspaceTab else {
+            return libraryReader
+        }
+        return documentSessions.first { $0.id == attachmentKey }?.reader ?? libraryReader
+    }
+
+    var bibliographicItems: [BCItem] {
+        items.map(\.bibliographic)
+    }
+
+    var selectedItemID: UUID? {
+        get {
+            selectedItemIdentity?.appUUID
+        }
+        set {
+            selectedItemIdentity = newValue.flatMap { appUUID in
+                items.first { $0.identity.appUUID == appUUID }?.identity
+            }
+        }
+    }
+
+    var selectedLibraryItem: SynchronizedLibraryItem? {
+        guard let selectedItemIdentity else {
             return nil
         }
-        return items.first { $0.id == selectedItemID }
+        return items.first { $0.identity == selectedItemIdentity }
+    }
+
+    var selectedItem: BCItem? {
+        selectedLibraryItem?.bibliographic
     }
 
     func refreshItems() async {
-        items = await store.listItems()
-        let hasValidSelection = selectedItemID.map { selectedID in
-            items.contains { $0.id == selectedID }
+        items = await store.listLibraryItems()
+        let hasValidSelection = selectedItemIdentity.map { selectedIdentity in
+            items.contains { $0.identity == selectedIdentity }
         } ?? false
         if !hasValidSelection {
-            selectedItemID = items.first?.id
+            selectedItemIdentity = items.first?.identity
         }
         await citation.renderPreviewForSelection()
         await importer.refreshSelectedItemAttachments()
@@ -149,7 +178,7 @@ final class AppModel {
             let item = BCItem(title: "Untitled Item")
             await store.upsert(item)
             await refreshItems()
-            selectedItemID = item.id
+            selectedItemIdentity = items.first { $0.identity.appUUID == item.id }?.identity
             statusMessage = "Added: \(item.title)"
         }
     }
@@ -169,14 +198,14 @@ final class AppModel {
         }
 
         Task { @MainActor in
-            for attachment in openDocuments where uniqueIDs.contains(attachment.itemID) {
-                closeDocument(attachmentKey: attachment.objectKey)
+            for session in documentSessions where uniqueIDs.contains(session.attachment.itemID) {
+                closeDocument(attachmentKey: session.id)
             }
             for id in uniqueIDs {
                 await store.removeItem(id: id)
             }
             await notes.removeItems(ids: uniqueIDs)
-            await reader.removeItems(ids: uniqueIDs)
+            await libraryReader.removeItems(ids: uniqueIDs)
             await collections.removeItems(ids: uniqueIDs)
             await relationships.removeItems(ids: uniqueIDs)
             await refreshItems()
@@ -190,15 +219,21 @@ final class AppModel {
     }
 
     func selectItem(id: UUID?) {
-        if selectedItemID != id {
+        selectItem(identity: id.flatMap { appUUID in
+            items.first { $0.identity.appUUID == appUUID }?.identity
+        })
+    }
+
+    func selectItem(identity: SynchronizedLibraryItemIdentity?) {
+        if selectedItemIdentity != identity {
             notes.draft = ""
             citation.clearExport()
             relationships.clearSelectionDrafts()
             insights.clearForSelectionChange()
             importer.clearMetadataDiagnostics()
         }
-        reader.clearIfSelectionChanged(to: id)
-        selectedItemID = id
+        libraryReader.clearIfSelectionChanged(to: identity?.appUUID)
+        selectedItemIdentity = identity
         Task {
             await citation.renderPreviewForSelection()
             await importer.refreshSelectedItemAttachments()
@@ -223,16 +258,18 @@ final class AppModel {
         Task { @MainActor in
             await store.upsert(item)
             await refreshItems()
-            selectedItemID = selectedID
+            selectedItemIdentity = items.first { $0.identity.appUUID == selectedID }?.identity
             statusMessage = status
         }
     }
 
     func openDocument(_ attachment: LocalAttachment) {
-        if let index = openDocuments.firstIndex(where: { $0.objectKey == attachment.objectKey }) {
-            openDocuments[index] = attachment
+        if let index = documentSessions.firstIndex(where: { $0.id == attachment.objectKey }) {
+            documentSessions[index].attachment = attachment
         } else {
-            openDocuments.append(attachment)
+            let reader = makeReaderModel()
+            reader.open(attachment)
+            documentSessions.append(DocumentSession(attachment: attachment, reader: reader))
         }
         selectWorkspaceTab(.document(attachment.objectKey))
     }
@@ -241,33 +278,59 @@ final class AppModel {
         switch tab {
         case .library:
             selectedWorkspaceTab = .library
-            reader.clear()
 
         case let .document(attachmentKey):
-            guard let attachment = openDocuments.first(where: { $0.objectKey == attachmentKey }) else {
+            guard let session = documentSessions.first(where: { $0.id == attachmentKey }) else {
                 selectedWorkspaceTab = .library
-                reader.clear()
                 return
             }
             selectedWorkspaceTab = tab
-            reader.open(attachment)
+            session.reader.open(session.attachment)
         }
     }
 
     func closeDocument(attachmentKey: String) {
-        guard let index = openDocuments.firstIndex(where: { $0.objectKey == attachmentKey }) else {
+        guard let index = documentSessions.firstIndex(where: { $0.id == attachmentKey }) else {
             return
         }
         let wasSelected = selectedWorkspaceTab == .document(attachmentKey)
-        openDocuments.remove(at: index)
+        let removed = documentSessions.remove(at: index)
+        removed.reader.clear()
         guard wasSelected else {
             return
         }
-        if openDocuments.isEmpty {
+        if documentSessions.isEmpty {
             selectWorkspaceTab(.library)
         } else {
-            let nextIndex = min(index, openDocuments.index(before: openDocuments.endIndex))
-            selectWorkspaceTab(.document(openDocuments[nextIndex].objectKey))
+            let nextIndex = min(index, documentSessions.index(before: documentSessions.endIndex))
+            selectWorkspaceTab(.document(documentSessions[nextIndex].id))
+        }
+    }
+
+    func closeAllDocuments() {
+        let keys = documentSessions.map(\.id)
+        for key in keys {
+            closeDocument(attachmentKey: key)
+        }
+        selectedWorkspaceTab = .library
+    }
+
+    func handleAttachmentRemoved(_ attachment: LocalAttachment) async {
+        if let session = documentSessions.first(where: { $0.id == attachment.objectKey }) {
+            await session.reader.handleAttachmentRemoved(attachment)
+            closeDocument(attachmentKey: attachment.objectKey)
+        } else {
+            await libraryReader.handleAttachmentRemoved(attachment)
+        }
+    }
+
+    func reconcileOpenDocuments(itemID: UUID, availableAttachments: [LocalAttachment]) {
+        let availableKeys = Set(availableAttachments.map(\.objectKey))
+        let missingKeys = documentSessions
+            .filter { $0.attachment.itemID == itemID && !availableKeys.contains($0.id) }
+            .map(\.id)
+        for key in missingKeys {
+            closeDocument(attachmentKey: key)
         }
     }
 
@@ -276,4 +339,8 @@ final class AppModel {
         model.bind(context: self)
         return model
     }
+
+    // MARK: Private
+
+    @ObservationIgnored private let libraryReader: ReaderModel
 }

@@ -157,7 +157,7 @@ struct AppModelImportTests {
             !model.importer.isImporting && model.importer.selectedItemAttachments.count == 1
         }
 
-        #expect(model.items.map(\.id) == [item.id])
+        #expect(model.items.map(\.identity.appUUID) == [item.id])
         let attachment = try #require(model.importer.selectedItemAttachments.first)
         #expect(attachment.fileName == "drop-target.txt")
         #expect(try Data(contentsOf: attachment.localURL) == Data("fixture".utf8))

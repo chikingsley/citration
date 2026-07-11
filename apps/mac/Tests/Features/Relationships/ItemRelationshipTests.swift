@@ -65,7 +65,7 @@ struct ItemRelationshipTests {
         try await waitUntil { model.relationships.selectedItemRelationships.count == 1 }
 
         model.removeSelectedItem()
-        try await waitUntil { model.items.map(\.id) == [target.id] }
+        try await waitUntil { model.items.map(\.identity.appUUID) == [target.id] }
 
         #expect(try await model.relationships.store.listRelationships(itemID: source.id).isEmpty)
         #expect(try await model.relationships.store.listRelationships(itemID: target.id).isEmpty)

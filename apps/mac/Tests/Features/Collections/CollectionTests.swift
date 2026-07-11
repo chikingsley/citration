@@ -34,7 +34,7 @@ struct CollectionTests {
 
         model.collections.set(item, memberOf: collection, isMember: true)
         try await waitUntil { model.collections.selectedItemCollectionIDs == [collection.id] }
-        #expect(model.collections.selectedCollectionItems.map(\.id) == [item.id])
+        #expect(model.collections.selectedCollectionItems.map(\.identity.appUUID) == [item.id])
 
         model.collections.set(item, memberOf: collection, isMember: false)
         try await waitUntil { model.collections.selectedItemCollectionIDs.isEmpty }
@@ -60,7 +60,7 @@ struct CollectionTests {
         try await waitUntil(timeout: 3.0) { model.items.count == 1 && model.collections.memberships.count == 1 }
 
         #expect(model.collections.memberships.first?.collectionID == collectionID)
-        #expect(model.collections.memberships.first?.itemID == model.items.first?.id)
+        #expect(model.collections.memberships.first?.itemID == model.items.first?.identity.appUUID)
         #expect(model.collections.selectedCollectionItems.map(\.id) == model.items.map(\.id))
     }
 }

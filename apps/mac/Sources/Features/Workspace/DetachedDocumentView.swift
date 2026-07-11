@@ -17,7 +17,7 @@ struct DetachedDocumentView: View {
     var body: some View {
         ReaderPane(
             attachment: route.attachment,
-            item: model.items.first(where: { $0.id == route.itemID }),
+            item: model.items.first(where: { $0.identity.appUUID == route.itemID })?.bibliographic,
             reader: reader,
             onClose: {
                 dismissWindow(value: route)

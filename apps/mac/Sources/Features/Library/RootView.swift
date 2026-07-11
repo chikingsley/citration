@@ -50,7 +50,7 @@ struct RootView: View {
                 model: model,
                 filteredItems: filteredItems,
                 emptyState: emptyState,
-                selectedItemIDs: $selectedItemIDs,
+                selectedItemIdentities: $selectedItemIdentities,
                 onSelectionChange: syncPrimarySelection(from:)
             )
         }
@@ -97,10 +97,10 @@ struct RootView: View {
             deleteSelection()
         }
         .onAppear {
-            syncTableSelection(with: model.selectedItemID)
+            syncTableSelection(with: model.selectedItemIdentity)
         }
-        .onChange(of: model.selectedItemID) { _, id in
-            syncTableSelection(with: id)
+        .onChange(of: model.selectedItemIdentity) { _, identity in
+            syncTableSelection(with: identity)
         }
         .onChange(of: isImportDropTargeted) { _, targeted in
             updateImportDropAnimation(targeted: targeted)
@@ -117,7 +117,7 @@ struct RootView: View {
     @State private var searchText = ""
     @State private var searchScope: SearchScope = .allFields
     @State private var selectedSource: LibrarySource? = .allItems
-    @State private var selectedItemIDs: Set<UUID> = []
+    @State private var selectedItemIdentities: Set<SynchronizedLibraryItemIdentity> = []
     @State private var addItemPresented = false
     @State private var attachmentImporterPresented = false
     @State private var isImportDropTargeted = false
@@ -127,8 +127,8 @@ struct RootView: View {
 
     @ObserveInjection private var inject
 
-    private var filteredItems: [BCItem] {
-        let scopedItems: [BCItem] = switch selectedSource ?? .allItems {
+    private var filteredItems: [SynchronizedLibraryItem] {
+        let scopedItems: [SynchronizedLibraryItem] = switch selectedSource ?? .allItems {
         case .allItems:
             model.items
 
@@ -149,23 +149,24 @@ struct RootView: View {
             return scopedItems
         }
         return scopedItems.filter { item in
-            switch searchScope {
+            let bibliographic = item.bibliographic
+            return switch searchScope {
             case .allFields:
-                item.title.localizedCaseInsensitiveContains(searchText)
-                    || (item.creators.first?.displayName.localizedCaseInsensitiveContains(searchText) ?? false)
-                    || item.tags.contains { $0.localizedCaseInsensitiveContains(searchText) }
+                bibliographic.title.localizedCaseInsensitiveContains(searchText)
+                    || (bibliographic.creators.first?.displayName.localizedCaseInsensitiveContains(searchText) ?? false)
+                    || bibliographic.tags.contains { $0.localizedCaseInsensitiveContains(searchText) }
 
             case .title:
-                item.title.localizedCaseInsensitiveContains(searchText)
+                bibliographic.title.localizedCaseInsensitiveContains(searchText)
 
             case .creator:
-                item.creators.first?.displayName.localizedCaseInsensitiveContains(searchText) ?? false
+                bibliographic.creators.first?.displayName.localizedCaseInsensitiveContains(searchText) ?? false
 
             case .year:
-                item.publicationYear.map(String.init)?.contains(searchText) ?? false
+                bibliographic.publicationYear.map(String.init)?.contains(searchText) ?? false
 
             case .tags:
-                item.tags.contains { $0.localizedCaseInsensitiveContains(searchText) }
+                bibliographic.tags.contains { $0.localizedCaseInsensitiveContains(searchText) }
             }
         }
     }
@@ -244,45 +245,45 @@ struct RootView: View {
     }
 
     private func deleteSelection() {
-        if selectedItemIDs.isEmpty {
+        if selectedItemIdentities.isEmpty {
             model.removeSelectedItem()
             return
         }
-        model.removeItems(ids: Array(selectedItemIDs))
-        selectedItemIDs.removeAll()
+        model.removeItems(ids: selectedItemIdentities.map(\.appUUID))
+        selectedItemIdentities.removeAll()
     }
 
-    private func syncPrimarySelection(from selection: Set<UUID>) {
+    private func syncPrimarySelection(from selection: Set<SynchronizedLibraryItemIdentity>) {
         guard !selection.isEmpty else {
-            model.selectItem(id: nil)
+            model.selectItem(identity: nil)
             return
         }
 
         if selection.count == 1 {
-            model.selectItem(id: selection.first)
+            model.selectItem(identity: selection.first)
             return
         }
 
-        if let current = model.selectedItemID, selection.contains(current) {
+        if let current = model.selectedItemIdentity, selection.contains(current) {
             return
         }
 
         if let visible = filteredItems.first(where: { selection.contains($0.id) })?.id {
-            model.selectItem(id: visible)
+            model.selectItem(identity: visible)
             return
         }
 
-        model.selectItem(id: selection.first)
+        model.selectItem(identity: selection.first)
     }
 
-    private func syncTableSelection(with selectedItemID: UUID?) {
-        guard selectedItemIDs.count <= 1 else {
+    private func syncTableSelection(with identity: SynchronizedLibraryItemIdentity?) {
+        guard selectedItemIdentities.count <= 1 else {
             return
         }
 
-        let expected = selectedItemID.map { Set([$0]) } ?? []
-        if expected != selectedItemIDs {
-            selectedItemIDs = expected
+        let expected = identity.map { Set([$0]) } ?? []
+        if expected != selectedItemIdentities {
+            selectedItemIdentities = expected
         }
     }
 

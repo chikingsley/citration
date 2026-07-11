@@ -6,6 +6,7 @@ extension AppModel {
         guard let store = store as? CitrationLibraryStore else {
             throw AppLibrarySelectionError.productionStoreUnavailable
         }
+        closeAllDocuments()
         let libraryID = try await store.selectLibrary(
             identity: profile.libraryIdentity,
             name: profile.displayName
@@ -18,6 +19,7 @@ extension AppModel {
         guard let store = store as? CitrationLibraryStore else {
             throw AppLibrarySelectionError.productionStoreUnavailable
         }
+        closeAllDocuments()
         let libraryID = try await store.selectLibrary(
             identity: .init(type: "local", remoteID: 0),
             name: "Local Library"

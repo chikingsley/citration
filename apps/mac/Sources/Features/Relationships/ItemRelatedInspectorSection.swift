@@ -52,8 +52,12 @@ struct ItemRelatedInspectorSection: View {
                     .foregroundStyle(.secondary)
             } else {
                 ForEach(model.insights.recommendations) { recommendation in
-                    if let candidate = model.items.first(where: { $0.id == recommendation.candidateItemID }) {
-                        recommendationRow(candidate: candidate, recommendation: recommendation)
+                    if
+                        let candidate = model.items.first(where: {
+                            $0.identity.appUUID == recommendation.candidateItemID
+                        })
+                    {
+                        recommendationRow(candidate: candidate.bibliographic, recommendation: recommendation)
                     }
                 }
             }

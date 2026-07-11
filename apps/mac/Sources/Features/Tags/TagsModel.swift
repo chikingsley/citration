@@ -13,7 +13,7 @@ final class TagsModel {
         guard let context else {
             return []
         }
-        return BCItem.normalizedTags(context.items.flatMap(\.tags))
+        return BCItem.normalizedTags(context.bibliographicItems.flatMap(\.tags))
             .sorted { $0.localizedCaseInsensitiveCompare($1) == .orderedAscending }
     }
 
