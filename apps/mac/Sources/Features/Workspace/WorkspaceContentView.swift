@@ -6,6 +6,7 @@ struct WorkspaceContentView: View {
 
     @Bindable var model: AppModel
     let filteredItems: [BCItem]
+    let emptyState: LibraryEmptyState
     @Binding var selectedItemIDs: Set<UUID>
 
     let onSelectionChange: (Set<UUID>) -> Void
@@ -28,6 +29,7 @@ struct WorkspaceContentView: View {
         case .library:
             LibraryDetailView(
                 filteredItems: filteredItems,
+                emptyState: emptyState,
                 selectedItemIDs: $selectedItemIDs,
                 onSelectionChange: onSelectionChange
             )

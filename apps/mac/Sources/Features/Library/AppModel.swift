@@ -59,6 +59,7 @@ final class AppModel {
         importer.bind(context: self, collections: collections, reader: reader)
 
         startLibraryObservation()
+        startNavigationObservation()
 
         Task {
             await settings.refreshKeyStatus()
@@ -81,6 +82,9 @@ final class AppModel {
     var selectedWorkspaceTab: WorkspaceTab = .library
     private(set) var openDocuments: [LocalAttachment] = []
     private(set) var libraryObservationRevision = 0
+    private(set) var navigationObservationRevision = 0
+    private(set) var savedSearches: [ZoteroSavedSearchSummary] = []
+    private(set) var deletedItemCount = 0
 
     let collections: CollectionsModel
     let notes: NotesModel
@@ -255,6 +259,7 @@ final class AppModel {
     // MARK: Private
 
     @ObservationIgnored private var libraryObservation: CitrationDatabaseObservation?
+    @ObservationIgnored private var navigationObservation: CitrationDatabaseObservation?
 
     private func startLibraryObservation() {
         guard let store = store as? CitrationLibraryStore else {
@@ -273,7 +278,32 @@ final class AppModel {
                         return
                     }
                     libraryObservationRevision += 1
+                    await collections.refresh()
                     await refreshItems()
+                }
+            }
+        )
+    }
+
+    private func startNavigationObservation() {
+        guard let store = store as? CitrationLibraryStore else {
+            return
+        }
+        navigationObservation = database.observeLibraryNavigation(
+            libraryID: store.libraryID,
+            onError: { [weak self] _ in
+                Task { @MainActor [weak self] in
+                    self?.statusMessage = "Failed to observe library navigation"
+                }
+            },
+            onChange: { [weak self] snapshot in
+                Task { @MainActor [weak self] in
+                    guard let self else {
+                        return
+                    }
+                    savedSearches = snapshot.savedSearches
+                    deletedItemCount = snapshot.deletedItemCount
+                    navigationObservationRevision += 1
                 }
             }
         )

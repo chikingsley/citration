@@ -24,9 +24,7 @@ struct RootView: View {
         NavigationSplitView {
             RootLibrarySidebar(
                 model: model,
-                selectedCollection: $selectedCollection,
-                selectedTag: $selectedTag,
-                libraryExpanded: $libraryExpanded,
+                selectedSource: $selectedSource,
                 isImportDropTargeted: $isImportDropTargeted,
                 importDragBorderPhase: importDragBorderPhase,
                 onDropURLs: { urls in
@@ -35,19 +33,23 @@ struct RootView: View {
                 onRemoveCollection: removeCollection
             )
             .onAppear {
-                model.collections.select(id: LibrarySelectionIdentifier.collectionID(from: selectedCollection))
+                selectLibrarySource(selectedSource)
             }
-            .onChange(of: selectedCollection) { _, selection in
-                selectedTag = nil
-                model.collections.select(id: LibrarySelectionIdentifier.collectionID(from: selection))
+            .onChange(of: selectedSource) { _, source in
+                selectLibrarySource(source)
             }
             .onChange(of: model.collections.selectedID) { _, collectionID in
-                selectedCollection = LibrarySelectionIdentifier.value(for: collectionID)
+                if let collectionID {
+                    selectedSource = .collection(collectionID)
+                } else if case .some(.collection) = selectedSource {
+                    selectedSource = .allItems
+                }
             }
         } detail: {
             WorkspaceContentView(
                 model: model,
                 filteredItems: filteredItems,
+                emptyState: emptyState,
                 selectedItemIDs: $selectedItemIDs,
                 onSelectionChange: syncPrimarySelection(from:)
             )
@@ -105,10 +107,8 @@ struct RootView: View {
     @State private var inspectorPresented = true
     @State private var searchText = ""
     @State private var searchScope: SearchScope = .allFields
-    @State private var selectedTag: String?
-    @State private var selectedCollection: String? = LibrarySelectionIdentifier.library
+    @State private var selectedSource: LibrarySource? = .allItems
     @State private var selectedItemIDs: Set<UUID> = []
-    @State private var libraryExpanded = true
     @State private var attachmentImporterPresented = false
     @State private var isImportDropTargeted = false
     @State private var isAttachDropTargeted = false
@@ -118,13 +118,21 @@ struct RootView: View {
     @ObserveInjection private var inject
 
     private var filteredItems: [BCItem] {
-        let collectionItems = model.collections.selectedCollectionItems
-        let scopedItems: [BCItem] = if let selectedTag {
-            collectionItems.filter { item in
-                item.tags.contains { $0.localizedCaseInsensitiveCompare(selectedTag) == .orderedSame }
+        let scopedItems: [BCItem] = switch selectedSource ?? .allItems {
+        case .allItems:
+            model.items
+
+        case let .collection(collectionID):
+            model.collections.items(in: collectionID)
+
+        case let .tag(tag):
+            model.items.filter { item in
+                item.tags.contains { $0.localizedCaseInsensitiveCompare(tag) == .orderedSame }
             }
-        } else {
-            collectionItems
+
+        case .savedSearch,
+             .trash:
+            []
         }
 
         guard !searchText.isEmpty else {
@@ -149,6 +157,47 @@ struct RootView: View {
             case .tags:
                 item.tags.contains { $0.localizedCaseInsensitiveContains(searchText) }
             }
+        }
+    }
+
+    private var emptyState: LibraryEmptyState {
+        switch selectedSource ?? .allItems {
+        case .allItems:
+            LibraryEmptyState(
+                title: "No Items",
+                systemImage: "tray",
+                description: "Your library is empty. Add items to get started."
+            )
+
+        case let .collection(collectionID):
+            LibraryEmptyState(
+                title: "No Items",
+                systemImage: "folder",
+                description: model.collections.all.first(where: { $0.id == collectionID })
+                    .map { "\($0.name) does not contain any items." }
+                    ?? "This collection does not contain any items."
+            )
+
+        case let .tag(tag):
+            LibraryEmptyState(
+                title: "No Tagged Items",
+                systemImage: "tag",
+                description: "No items are tagged \(tag)."
+            )
+
+        case let .savedSearch(key):
+            LibraryEmptyState(
+                title: model.savedSearches.first(where: { $0.key == key })?.name ?? "Saved Search",
+                systemImage: "magnifyingglass",
+                description: "Saved-search condition evaluation is not available in this slice yet."
+            )
+
+        case .trash:
+            LibraryEmptyState(
+                title: model.deletedItemCount == 0 ? "Trash Is Empty" : "\(model.deletedItemCount) Deleted Items",
+                systemImage: "trash",
+                description: "Deleted object keys remain preserved for synchronization. Restore is not available yet."
+            )
         }
     }
 
@@ -275,9 +324,17 @@ struct RootView: View {
     }
 
     private func removeCollection(_ collection: LibraryCollection) {
-        if selectedCollection == LibrarySelectionIdentifier.value(for: collection) {
-            selectedCollection = LibrarySelectionIdentifier.library
+        if selectedSource == .collection(collection.id) {
+            selectedSource = .allItems
         }
         model.collections.remove(collection)
+    }
+
+    private func selectLibrarySource(_ source: LibrarySource?) {
+        if case let .some(.collection(collectionID)) = source {
+            model.collections.select(id: collectionID)
+        } else {
+            model.collections.select(id: nil)
+        }
     }
 }

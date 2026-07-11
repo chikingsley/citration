@@ -37,6 +37,18 @@ final class CollectionsModel {
         return context.items.filter { itemIDs.contains($0.id) }
     }
 
+    func items(in collectionID: UUID) -> [BCItem] {
+        guard let context else {
+            return []
+        }
+        let itemIDs = Set(
+            memberships
+                .filter { $0.collectionID == collectionID }
+                .map(\.itemID)
+        )
+        return context.items.filter { itemIDs.contains($0.id) }
+    }
+
     func bind(context: any LibraryContext) {
         self.context = context
     }

@@ -181,6 +181,12 @@ public final class CitrationDatabase: @unchecked Sendable {
                 }
                 try Self.upsert(object: object, libraryID: libraryID, database: database)
             }
+            if !objects.isEmpty {
+                try database.execute(
+                    sql: "UPDATE libraries SET updated_at = unixepoch('subsec') WHERE id = ?",
+                    arguments: [libraryID]
+                )
+            }
         }
     }
 

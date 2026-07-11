@@ -241,7 +241,7 @@ struct CitrationDatabaseTests {
 
         try database.storeRemoteCollections(collections, libraryID: libraryID)
         try database.storeRemoteItems(items, libraryID: libraryID)
-        while await recorder.snapshotCount < 2, await recorder.errorDescription == nil {
+        while await recorder.latestSnapshotCount != items.count, await recorder.errorDescription == nil {
             try await Task.sleep(for: .milliseconds(5))
         }
 
@@ -253,6 +253,43 @@ struct CitrationDatabaseTests {
         #expect(updated.map(\.title) == updated.map(\.title).sorted {
             $0.localizedCaseInsensitiveCompare($1) != .orderedDescending
         })
+    }
+
+    @Test("Navigation snapshot reads saved searches and durable item tombstones")
+    func navigationSnapshotReadsDatabaseState() throws {
+        try withTemporaryDatabase { database in
+            let libraryID = try database.upsertLibrary(
+                identity: ZoteroLibraryIdentity(type: "user", remoteID: 1)
+            )
+            let search = ZoteroStoredObject(
+                kind: .search,
+                key: "SEARCH01",
+                version: 4,
+                current: .object([
+                    "key": .string("SEARCH01"),
+                    "version": .integer(4),
+                    "data": .object(["name": .string("Unread Books")]),
+                ])
+            )
+            let deletedItem = ZoteroStoredObject(
+                kind: .item,
+                key: "DELETED1",
+                version: 5,
+                current: .object([
+                    "key": .string("DELETED1"),
+                    "version": .integer(5),
+                    "data": .object(["deleted": .bool(true)]),
+                ]),
+                isDeleted: true
+            )
+            try database.storeRemoteObjects([search, deletedItem], libraryID: libraryID)
+
+            let snapshot = try database.fetchLibraryNavigationSnapshot(libraryID: libraryID)
+            #expect(snapshot.savedSearches == [
+                ZoteroSavedSearchSummary(key: "SEARCH01", name: "Unread Books")
+            ])
+            #expect(snapshot.deletedItemCount == 1)
+        }
     }
 
     // MARK: Private
@@ -310,6 +347,10 @@ private actor ObservationRecorder {
 
     var snapshotCount: Int {
         snapshots.count
+    }
+
+    var latestSnapshotCount: Int {
+        snapshots.last?.count ?? 0
     }
 
     func record(snapshot: [ZoteroLibraryItemSummary]) {

@@ -5,6 +5,7 @@ struct LibraryDetailView: View {
     // MARK: Internal
 
     let filteredItems: [BCItem]
+    let emptyState: LibraryEmptyState
     @Binding var selectedItemIDs: Set<UUID>
 
     let onSelectionChange: (Set<UUID>) -> Void
@@ -12,9 +13,9 @@ struct LibraryDetailView: View {
     var body: some View {
         if filteredItems.isEmpty {
             ContentUnavailableView(
-                "No Items",
-                systemImage: "tray",
-                description: Text("Your library is empty. Add items to get started.")
+                emptyState.title,
+                systemImage: emptyState.systemImage,
+                description: Text(emptyState.description)
             )
         } else {
             Table(filteredItems, selection: $selectedItemIDs) {

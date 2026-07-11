@@ -3,10 +3,10 @@ import SwiftUI
 import UniformTypeIdentifiers
 
 struct RootLibrarySidebar: View {
+    // MARK: Internal
+
     @Bindable var model: AppModel
-    @Binding var selectedCollection: String?
-    @Binding var selectedTag: String?
-    @Binding var libraryExpanded: Bool
+    @Binding var selectedSource: LibrarySource?
     @Binding var isImportDropTargeted: Bool
 
     let importDragBorderPhase: CGFloat
@@ -15,42 +15,67 @@ struct RootLibrarySidebar: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            List(selection: $selectedCollection) {
-                DisclosureGroup(isExpanded: $libraryExpanded) {
-                    Label { Text("All Items") } icon: {
-                        Image(systemName: "tray.full.fill").foregroundStyle(.blue)
+            List(selection: $selectedSource) {
+                Section("Library") {
+                    Label("All Items", systemImage: "tray.full")
+                        .tag(LibrarySource.allItems)
+                    HStack {
+                        Label("Trash", systemImage: "trash")
+                        Spacer()
+                        if model.deletedItemCount > 0 {
+                            Text(model.deletedItemCount, format: .number)
+                                .foregroundStyle(.secondary)
+                                .monospacedDigit()
+                        }
                     }
-                    .tag(LibrarySelectionIdentifier.library)
+                    .tag(LibrarySource.trash)
+                }
 
+                if !model.savedSearches.isEmpty {
+                    Section("Saved Searches") {
+                        ForEach(model.savedSearches, id: \.key) { search in
+                            Label(search.name, systemImage: "magnifyingglass")
+                                .tag(LibrarySource.savedSearch(search.key))
+                        }
+                    }
+                }
+
+                Section("Collections") {
                     if model.collections.all.isEmpty {
                         Text("No collections")
                             .foregroundStyle(.secondary)
                     } else {
-                        ForEach(model.collections.all) { collection in
-                            Label(collection.name, systemImage: "folder.fill")
-                                .tag(LibrarySelectionIdentifier.value(for: collection))
+                        OutlineGroup(model.collections.all.collectionTree(), children: \.children) { node in
+                            Label(node.collection.name, systemImage: "folder")
+                                .tag(LibrarySource.collection(node.collection.id))
                                 .contextMenu {
                                     Button("Remove Collection", systemImage: "trash") {
-                                        onRemoveCollection(collection)
+                                        onRemoveCollection(node.collection)
                                     }
                                 }
                         }
                     }
-                } label: {
-                    Label { Text("My Library") } icon: {
-                        Image(systemName: "building.columns.fill").foregroundStyle(.blue)
+                }
+
+                if !tags.isEmpty {
+                    Section("Tags") {
+                        DisclosureGroup("All Tags") {
+                            ForEach(tags, id: \.self) { tag in
+                                Label(tag, systemImage: "tag")
+                                    .tag(LibrarySource.tag(tag))
+                            }
+                        }
                     }
                 }
             }
             .listStyle(.sidebar)
             .navigationTitle("Citration")
-            .navigationSplitViewColumnWidth(min: 200, ideal: 220)
+            .navigationSplitViewColumnWidth(min: 200, ideal: 230)
 
             RootImportDropZone(
                 targeted: isImportDropTargeted,
                 dragBorderPhase: importDragBorderPhase
             )
-            TagFilterPanel(items: model.collections.selectedCollectionItems, selectedTag: $selectedTag)
         }
         .onDrop(
             of: [.fileURL],
@@ -61,5 +86,13 @@ struct RootLibrarySidebar: View {
                 onDropURLs: onDropURLs
             )
         )
+    }
+
+    // MARK: Private
+
+    private var tags: [String] {
+        Set(model.items.flatMap(\.tags)).sorted {
+            $0.localizedCaseInsensitiveCompare($1) == .orderedAscending
+        }
     }
 }
