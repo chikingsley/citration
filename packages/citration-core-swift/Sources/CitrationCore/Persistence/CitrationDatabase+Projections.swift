@@ -444,7 +444,7 @@ extension CitrationDatabase {
         )
     }
 
-    private static func string(_ key: String, in object: [String: JSONValue]) -> String {
+    static func string(_ key: String, in object: [String: JSONValue]) -> String {
         object[key]?.stringValue ?? ""
     }
 

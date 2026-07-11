@@ -172,6 +172,37 @@ struct CitrationDatabaseTests {
         #expect(try restored.integrityCheck() == "ok")
     }
 
+    @Test("Captured full text is durable and participates in FTS5 search")
+    func capturedFullTextIsSearchable() throws {
+        try withTemporaryDatabase { database in
+            let libraryID = try database.upsertLibrary(
+                identity: ZoteroLibraryIdentity(type: "user", remoteID: 1),
+                currentVersion: 1291
+            )
+            try database.storeRemoteCollections(capturedObjects(filename: "collections.json"), libraryID: libraryID)
+            try database.storeRemoteItems(capturedObjects(filename: "items.json"), libraryID: libraryID)
+
+            let fixture = try ZoteroJSON.decode(
+                Data(contentsOf: fixtureDirectory().appending(path: "fulltext.json"))
+            ).objectValue ?? [:]
+            let itemKey = try #require(fixture["itemKey"]?.stringValue)
+            let response = try #require(fixture["data"])
+
+            try database.storeRemoteFullText(
+                itemKey: itemKey,
+                version: 1291,
+                response: response,
+                libraryID: libraryID
+            )
+
+            let fetched = try database.fetchFullText(libraryID: libraryID, itemKey: itemKey)
+            let fullText = try #require(fetched)
+            #expect(fullText.content == response.objectValue?["content"]?.stringValue)
+            #expect(fullText.indexedPages == response.objectValue?["indexedPages"]?.integerValue.map(Int.init))
+            #expect(try database.searchObjectKeys(libraryID: libraryID, query: "fixture").contains(itemKey))
+        }
+    }
+
     // MARK: Private
 
     private static let requiredSchemaObjects: Set<String> = [

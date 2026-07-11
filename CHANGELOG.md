@@ -16,6 +16,8 @@ All notable completed changes to Citration are tracked here. Entries are newest 
 - Added real temporary-SQLite tests proving every captured response and every captured Zotero object persists, reloads, and re-encodes without structural loss, including repeatable migrations and integrity checks.
 - Added transactional projections for items, ordered creator roles, tags, collection membership, notes, PDF/EPUB/HTML attachments, and exact highlight/underline/note/ink annotation positions from the captured contract.
 - Added SQLite online backups with post-copy integrity verification and a real backup/reopen/restore test.
+- Added durable full-text projection plus FTS5 queries spanning titles, creators, tags, notes, annotation text/comments, and downloaded document content.
+- Hardened fixture sanitization to remap Zotero item keys embedded inside dynamic setting names before fixtures are written.
 
 ### Changed
 

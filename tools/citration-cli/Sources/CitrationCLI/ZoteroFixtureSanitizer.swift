@@ -158,6 +158,14 @@ final class ZoteroFixtureSanitizer {
         if isZoteroKey(key) {
             return mappedKey(key)
         }
+        if
+            key.contains("_u_"),
+            let suffix = key.split(separator: "_").last.map(String.init),
+            isZoteroKey(suffix)
+        {
+            unsafeOriginalStrings.insert(key)
+            return String(key.dropLast(suffix.count)) + mappedKey(suffix)
+        }
         if key.hasPrefix("http://") || key.hasPrefix("https://") {
             unsafeOriginalStrings.insert(key)
             stringCounter += 1

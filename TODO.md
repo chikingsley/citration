@@ -19,7 +19,7 @@ Done when the real library contract—not `BCItem` or an invented schema—deter
 - [x] Create migrations for libraries, raw Zotero objects, typed item projections, collection hierarchy/membership, attachment cache state, full-text content/indexes, synchronization failures, and app-only reader state.
 - [x] Store library identity/version plus each object’s type, key, version, current JSON, last-synced pristine JSON, dirty/synced state, deletion state, and failure state.
 - [ ] Create typed projections for all item types, fields, identifiers, ordered creator roles, notes, attachments, annotations, collections, tags, and full-text state present in the live baseline.
-- [ ] Add FTS5 projections for metadata, creators, tags, notes, annotation text/comments, and downloaded full text.
+- [x] Add FTS5 projections for metadata, creators, tags, notes, annotation text/comments, and downloaded full text.
 - [ ] Add transactional backup, integrity checking, migration tests, and database observation used by future SwiftUI views.
 
 Done when all captured fixtures persist in one real temporary SQLite database, queries reproduce their relationships and counts, unknown data survives, migrations are repeatable, and CitrationCore’s targeted gate is green.
