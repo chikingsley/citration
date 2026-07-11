@@ -199,22 +199,12 @@ public actor ZoteroAPIClient {
         )
     }
 
-    // MARK: Private
+    // MARK: Internal
 
-    private let connection: ZoteroConnection
-    private let session: URLSession
-    private var notBefore: Date = .distantPast
+    let connection: ZoteroConnection
+    let session: URLSession
 
-    private static func editableWriteValue(_ object: ZoteroStoredObject) throws -> JSONValue {
-        guard var value = object.current.objectValue?["data"]?.objectValue else {
-            throw ZoteroTransportError.invalidResponse
-        }
-        value["key"] = .string(object.key)
-        value["version"] = .integer(object.version)
-        return .object(value)
-    }
-
-    private func request(
+    func request(
         method: String,
         path: String,
         query: [URLQueryItem],
@@ -252,6 +242,19 @@ public actor ZoteroAPIClient {
             notBefore = max(notBefore, Date().addingTimeInterval(seconds))
         }
         throw ZoteroTransportError.invalidResponse
+    }
+
+    // MARK: Private
+
+    private var notBefore: Date = .distantPast
+
+    private static func editableWriteValue(_ object: ZoteroStoredObject) throws -> JSONValue {
+        guard var value = object.current.objectValue?["data"]?.objectValue else {
+            throw ZoteroTransportError.invalidResponse
+        }
+        value["key"] = .string(object.key)
+        value["version"] = .integer(object.version)
+        return .object(value)
     }
 
     private func requestURL(path: String, query: [URLQueryItem]) throws -> URL {
@@ -298,11 +301,12 @@ public actor ZoteroAPIClient {
 
 // MARK: - RawZoteroResponse
 
-private struct RawZoteroResponse {
+struct RawZoteroResponse {
     // MARK: Lifecycle
 
     init(data: Data, response: HTTPURLResponse) throws {
         self.data = data
+        self.response = response
         libraryVersion = try Self.integerHeader("Last-Modified-Version", response: response)
         totalResults = try Self.integerHeader("Total-Results", response: response).map(Int.init)
     }
@@ -312,6 +316,7 @@ private struct RawZoteroResponse {
     let data: Data
     let libraryVersion: Int64?
     let totalResults: Int?
+    let response: HTTPURLResponse
 
     static func integerHeader(
         _ name: String,

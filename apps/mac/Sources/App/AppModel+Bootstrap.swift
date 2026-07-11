@@ -3,7 +3,7 @@ import Foundation
 
 extension AppModel {
     static func bootstrap() -> AppModel {
-        let (database, store) = makePersistence()
+        let (database, store, attachmentsDirectory) = makePersistence()
 
         let providers: [any MetadataProvider] = [
             ArXivMetadataProvider(),
@@ -22,7 +22,8 @@ extension AppModel {
         ]
         let connectionManager = ZoteroConnectionManager(
             database: database,
-            credentialStore: FileZoteroCredentialStore()
+            credentialStore: FileZoteroCredentialStore(),
+            attachmentsDirectory: attachmentsDirectory
         )
 
         return AppModel(
@@ -44,7 +45,7 @@ extension AppModel {
         )
     }
 
-    private static func makePersistence() -> (CitrationDatabase, CitrationLibraryStore) {
+    private static func makePersistence() -> (CitrationDatabase, CitrationLibraryStore, URL) {
         do {
             let database = try CitrationDatabase(at: CitrationCorePaths.defaultDatabaseURL())
             let applicationDirectory = try CitrationCorePaths.applicationSupportDirectory()
@@ -55,13 +56,14 @@ extension AppModel {
             )
             _ = try migrator.migrateSynchronously()
             let connectionProfile = try database.loadZoteroConnectionProfile()
+            let attachmentsDirectory = applicationDirectory.appending(path: "attachments", directoryHint: .isDirectory)
             let store = try CitrationLibraryStore(
                 database: database,
-                attachmentsDirectory: applicationDirectory.appending(path: "attachments", directoryHint: .isDirectory),
+                attachmentsDirectory: attachmentsDirectory,
                 libraryIdentity: connectionProfile?.libraryIdentity ?? .init(type: "local", remoteID: 0),
                 libraryName: connectionProfile?.displayName ?? "Local Library"
             )
-            return (database, store)
+            return (database, store, attachmentsDirectory)
         } catch {
             fatalError("Failed to migrate and initialize the GRDB library: \(error)")
         }

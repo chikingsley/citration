@@ -33,6 +33,8 @@ All notable completed changes to Citration are tracked here. Entries are newest 
 - Added safe bidirectional metadata synchronization: valid client-generated keys, preserved pristine bases, version-zero creates, version-preconditioned batch writes and deletions, persistent retry timing, three-way disjoint merges, durable same-field conflicts with base/local/remote data, and explicit keep-local, keep-remote, or delete resolution.
 - Passed a self-cleaning live write drill against Zotero Self-Host covering create, intentional stale-version `412`, disjoint local/remote merge, same-field conflict preservation, resolution, sync-engine deletion, independent absence verification, database integrity, and zero remaining failures or disposable records.
 - Added transactional local-library promotion when a Zotero connection is made. Existing items, collections, notes, attachment files, reader progress, and relationships retain their app identities; colliding Zotero keys are remapped safely; the local source remains available for rollback; and repeated promotion is idempotent.
+- Added restart-safe attachment transfer state, streaming MD5 and SHA-256 verification, lazy atomic downloads, stale-cache detection, registration, bounded retries, standard Zotero form uploads, and self-host direct single and multipart R2 uploads without persisting credentials or signed URLs.
+- Passed a self-cleaning live attachment drill covering a stock form upload, direct single upload, 65 MiB multipart upload with retryable parts, three independently verified downloads, remote cleanup, and database integrity.
 
 ### Changed
 

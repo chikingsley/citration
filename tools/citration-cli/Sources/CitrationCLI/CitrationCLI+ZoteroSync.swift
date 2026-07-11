@@ -15,7 +15,10 @@ extension CitrationCLI {
         )
         let profile = try await ZoteroConnectionManager(
             database: database,
-            credentialStore: credentialStore
+            credentialStore: credentialStore,
+            attachmentsDirectory: URL(filePath: databasePath)
+                .deletingLastPathComponent()
+                .appending(path: "attachments", directoryHint: .isDirectory)
         ).connect(serverURL: serverURL, apiKey: apiKey)
         try printJSON(ConnectionOutput(
             mode: "connected",

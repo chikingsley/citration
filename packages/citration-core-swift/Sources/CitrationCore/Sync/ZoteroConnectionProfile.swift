@@ -45,7 +45,15 @@ public enum ZoteroConnectionConfiguration: Equatable, Sendable {
 // MARK: - ZoteroConnectionManagerError
 
 public enum ZoteroConnectionManagerError: Error, Equatable, Sendable {
+    case attachmentStorageUnavailable
     case missingCredential
+}
+
+// MARK: - ZoteroClientSynchronizationReport
+
+public struct ZoteroClientSynchronizationReport: Equatable, Sendable {
+    public let metadata: ZoteroSynchronizationReport
+    public let attachments: ZoteroAttachmentUploadReport?
 }
 
 // MARK: - ZoteroConnectionManager
@@ -56,10 +64,12 @@ public actor ZoteroConnectionManager {
     public init(
         database: CitrationDatabase,
         credentialStore: any ZoteroCredentialStore,
+        attachmentsDirectory: URL? = nil,
         session: URLSession = .shared
     ) {
         self.database = database
         self.credentialStore = credentialStore
+        self.attachmentsDirectory = attachmentsDirectory
         self.session = session
     }
 
@@ -86,6 +96,16 @@ public actor ZoteroConnectionManager {
         _ = try database.promoteLocalLibrary(to: profile.libraryIdentity, targetName: profile.displayName)
         if profile.canWrite {
             _ = try await engine.synchronize()
+            if profile.canAccessFiles, let attachmentsDirectory {
+                let report = try await ZoteroAttachmentTransfer(
+                    database: database,
+                    client: client,
+                    attachmentsDirectory: attachmentsDirectory
+                ).uploadPending()
+                if report.uploadedCount + report.alreadyCurrentCount > 0 {
+                    _ = try await engine.pullReadOnly()
+                }
+            }
         }
         let previousCredential = try await credentialStore.loadCredential()
         try await credentialStore.saveCredential(connection.apiKey)
@@ -129,9 +149,48 @@ public actor ZoteroConnectionManager {
         ).pullReadOnly()
     }
 
+    public func synchronize() async throws -> ZoteroClientSynchronizationReport? {
+        guard let connection = try await activeConnection() else {
+            return nil
+        }
+        let client = ZoteroAPIClient(connection: connection, session: session)
+        let engine = ZoteroSyncEngine(database: database, client: client)
+        let metadata = try await engine.synchronize()
+        guard
+            let attachmentsDirectory,
+            try database.loadZoteroConnectionProfile()?.canAccessFiles == true
+        else {
+            return ZoteroClientSynchronizationReport(metadata: metadata, attachments: nil)
+        }
+        let attachments = try await ZoteroAttachmentTransfer(
+            database: database,
+            client: client,
+            attachmentsDirectory: attachmentsDirectory
+        ).uploadPending()
+        if attachments.uploadedCount + attachments.alreadyCurrentCount > 0 {
+            _ = try await engine.pullReadOnly()
+        }
+        return ZoteroClientSynchronizationReport(metadata: metadata, attachments: attachments)
+    }
+
+    public func downloadAttachment(itemKey: String) async throws -> URL {
+        guard let attachmentsDirectory else {
+            throw ZoteroConnectionManagerError.attachmentStorageUnavailable
+        }
+        guard let connection = try await activeConnection() else {
+            throw ZoteroConnectionManagerError.missingCredential
+        }
+        return try await ZoteroAttachmentTransfer(
+            database: database,
+            client: ZoteroAPIClient(connection: connection, session: session),
+            attachmentsDirectory: attachmentsDirectory
+        ).download(itemKey: itemKey)
+    }
+
     // MARK: Private
 
     private let database: CitrationDatabase
     private let credentialStore: any ZoteroCredentialStore
+    private let attachmentsDirectory: URL?
     private let session: URLSession
 }

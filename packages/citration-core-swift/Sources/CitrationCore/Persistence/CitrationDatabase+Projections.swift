@@ -189,7 +189,7 @@ extension CitrationDatabase {
     private static func clearChildProjections(libraryID: Int64, key: String, database: Database) throws {
         for table in [
             "item_fields", "item_identifiers", "item_creators", "item_tags", "collection_items",
-            "attachment_projections", "annotation_projections",
+            "annotation_projections",
         ] {
             try database.execute(
                 sql: "DELETE FROM \(table) WHERE library_id = ? AND item_key = ?",
@@ -282,6 +282,10 @@ extension CitrationDatabase {
         database: Database
     ) throws {
         guard object.itemType == "attachment" else {
+            try database.execute(
+                sql: "DELETE FROM attachment_projections WHERE library_id = ? AND item_key = ?",
+                arguments: [libraryID, key]
+            )
             return
         }
         try database.execute(
@@ -290,6 +294,22 @@ extension CitrationDatabase {
                 library_id, item_key, parent_item_key, link_mode, content_type,
                 charset, filename, remote_url, remote_md5, remote_mtime
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT (library_id, item_key) DO UPDATE SET
+                parent_item_key = excluded.parent_item_key,
+                link_mode = excluded.link_mode,
+                content_type = excluded.content_type,
+                charset = excluded.charset,
+                filename = excluded.filename,
+                remote_url = excluded.remote_url,
+                remote_md5 = excluded.remote_md5,
+                remote_mtime = excluded.remote_mtime,
+                cache_state = CASE
+                    WHEN attachment_projections.remote_md5 IS NOT excluded.remote_md5
+                     AND attachment_projections.verified_md5 IS NOT excluded.remote_md5
+                     AND attachment_projections.local_path IS NOT NULL
+                    THEN 'stale'
+                    ELSE attachment_projections.cache_state
+                END
             """,
             arguments: [
                 libraryID,

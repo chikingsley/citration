@@ -111,6 +111,7 @@ public enum CitrationDatabaseError: Error, Equatable, Sendable {
     case invalidLibraryIdentity
     case invalidObjectKey
     case missingObjectKey
+    case unknownAttachmentCacheState(String)
     case unknownSyncState(String)
 }
 

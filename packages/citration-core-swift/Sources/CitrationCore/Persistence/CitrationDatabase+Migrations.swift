@@ -353,6 +353,13 @@ extension CitrationDatabase {
                 ON synchronization_failures(library_id, object_kind, object_key, operation, resolved_at);
             """)
         }
+        migrator.registerMigration("v8_preserve_attachment_transfer_state") { database in
+            try database.execute(sql: """
+            ALTER TABLE attachment_projections ADD COLUMN verified_md5 TEXT;
+            ALTER TABLE attachment_projections ADD COLUMN transfer_error TEXT;
+            ALTER TABLE attachment_projections ADD COLUMN transfer_attempted_at REAL;
+            """)
+        }
         return migrator
     }
 }

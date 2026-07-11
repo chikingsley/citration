@@ -144,6 +144,8 @@ struct CitrationCLI {
             try await useLocalOnly(arguments: commandArguments)
         case "zotero-disposable-acceptance":
             try await runZoteroDisposableAcceptance(arguments: commandArguments)
+        case "zotero-attachment-acceptance":
+            try await runZoteroAttachmentAcceptance(arguments: commandArguments)
         default:
             return false
         }
@@ -169,6 +171,8 @@ struct CitrationCLI {
           SELFHOST_API_KEY=<private environment> swift run citration configure-zotero --server <url> --database <path> [--credential-file <path>]
           swift run citration use-local-only --database <path> [--credential-file <path>]
           SELFHOST_API_KEY=<private environment> swift run citration zotero-disposable-acceptance \
+            --confirm-disposable --server <url> --database <temporary-path>
+          SELFHOST_API_KEY=<private environment> swift run citration zotero-attachment-acceptance \
             --confirm-disposable --server <url> --database <temporary-path>
         """)
     }
