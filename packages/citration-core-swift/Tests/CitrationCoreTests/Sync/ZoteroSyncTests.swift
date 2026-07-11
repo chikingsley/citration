@@ -24,6 +24,13 @@ struct ZoteroSyncTests {
         )
         #expect(connection.serverURL.absoluteString == "http://127.0.0.1:8787/")
         #expect(connection.apiKey == "fixture-key")
+        #expect(connection.streamingURL?.absoluteString == "ws://127.0.0.1:8787/stream")
+
+        let official = try ZoteroConnection(
+            serverURL: #require(URL(string: "https://api.zotero.org")),
+            apiKey: "fixture-key"
+        )
+        #expect(official.streamingURL?.absoluteString == "wss://stream.zotero.org")
     }
 
     @Test("Connection profile and scoped credential persist separately in real files")

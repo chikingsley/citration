@@ -187,6 +187,19 @@ public actor ZoteroConnectionManager {
         ).download(itemKey: itemKey)
     }
 
+    public func streamingSubscription() async throws -> ZoteroStreamingSubscription {
+        guard let connection = try await activeConnection() else {
+            throw ZoteroConnectionManagerError.missingCredential
+        }
+        let client = ZoteroAPIClient(connection: connection, session: session)
+        return ZoteroStreamingSync(
+            database: database,
+            client: client,
+            connection: connection,
+            session: session
+        ).subscribe()
+    }
+
     // MARK: Private
 
     private let database: CitrationDatabase

@@ -146,6 +146,8 @@ struct CitrationCLI {
             try await runZoteroDisposableAcceptance(arguments: commandArguments)
         case "zotero-attachment-acceptance":
             try await runZoteroAttachmentAcceptance(arguments: commandArguments)
+        case "zotero-streaming-acceptance":
+            try await runZoteroStreamingAcceptance(arguments: commandArguments)
         default:
             return false
         }
@@ -173,6 +175,8 @@ struct CitrationCLI {
           SELFHOST_API_KEY=<private environment> swift run citration zotero-disposable-acceptance \
             --confirm-disposable --server <url> --database <temporary-path>
           SELFHOST_API_KEY=<private environment> swift run citration zotero-attachment-acceptance \
+            --confirm-disposable --server <url> --database <temporary-path>
+          SELFHOST_API_KEY=<private environment> swift run citration zotero-streaming-acceptance \
             --confirm-disposable --server <url> --database <temporary-path>
         """)
     }

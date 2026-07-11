@@ -30,6 +30,22 @@ public struct ZoteroConnection: Hashable, Sendable {
     public let serverURL: URL
     public let apiKey: String
 
+    public var streamingURL: URL? {
+        guard var components = URLComponents(url: serverURL, resolvingAgainstBaseURL: false) else {
+            return nil
+        }
+        components.scheme = components.scheme == "https" ? "wss" : "ws"
+        if components.host?.lowercased() == "api.zotero.org" {
+            components.host = "stream.zotero.org"
+            components.path = ""
+        } else {
+            components.path = "/stream"
+        }
+        components.query = nil
+        components.fragment = nil
+        return components.url
+    }
+
     // MARK: Private
 
     private static func isLoopback(_ host: String?) -> Bool {

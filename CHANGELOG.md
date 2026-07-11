@@ -35,6 +35,8 @@ All notable completed changes to Citration are tracked here. Entries are newest 
 - Added transactional local-library promotion when a Zotero connection is made. Existing items, collections, notes, attachment files, reader progress, and relationships retain their app identities; colliding Zotero keys are remapped safely; the local source remains available for rollback; and repeated promotion is idempotent.
 - Added restart-safe attachment transfer state, streaming MD5 and SHA-256 verification, lazy atomic downloads, stale-cache detection, registration, bounded retries, standard Zotero form uploads, and self-host direct single and multipart R2 uploads without persisting credentials or signed URLs.
 - Passed a self-cleaning live attachment drill covering a stock form upload, direct single upload, 65 MiB multipart upload with retryable parts, three independently verified downloads, remote cleanup, and database integrity.
+- Added cancelable Zotero streaming subscriptions with same-origin self-host routing, official Zotero stream routing, explicit user-library topics, server-directed reconnect timing, and an initial plus notification-triggered pull through the one authoritative sync engine.
+- Passed a self-cleaning live streaming drill proving that remote creation and deletion notifications trigger ordinary incremental pulls rather than carrying trusted object data.
 
 ### Changed
 
