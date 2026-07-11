@@ -27,4 +27,12 @@ app-test:
     xcodegen generate
     xcodebuild test -quiet -project Citration.xcodeproj -scheme Citration -destination 'platform=macOS,arch=arm64'
 
-check: format-lint lint core-test cli-build app-test
+ipad-build:
+    xcodegen generate
+    xcodebuild build -quiet -project Citration.xcodeproj -scheme CitrationPad -destination 'platform=iOS Simulator,name=iPad Pro 13-inch (M5),OS=26.5'
+
+ipad-test:
+    xcodegen generate
+    xcodebuild test -quiet -project Citration.xcodeproj -scheme CitrationPad -destination 'platform=iOS Simulator,name=iPad Pro 13-inch (M5),OS=26.5'
+
+check: format-lint lint core-test cli-build app-test ipad-test

@@ -1,12 +1,11 @@
 import Foundation
+import ZIPFoundation
 
 // MARK: - EPUBPackageReaderError
 
 enum EPUBPackageReaderError: Error, LocalizedError {
-    case missingUnzipTool
     case invalidArchive
     case unsafeArchiveEntry(String)
-    case extractionFailed(String)
     case packageDocumentMissing
     case initialDocumentMissing
 
@@ -14,14 +13,10 @@ enum EPUBPackageReaderError: Error, LocalizedError {
 
     var errorDescription: String? {
         switch self {
-        case .missingUnzipTool:
-            "The system unzip tool is not available."
         case .invalidArchive:
             "The EPUB archive could not be read."
         case let .unsafeArchiveEntry(entry):
             "The EPUB archive contains an unsafe path: \(entry)"
-        case let .extractionFailed(details):
-            "The EPUB archive could not be unpacked: \(details)"
         case .packageDocumentMissing:
             "The EPUB package document could not be found."
         case .initialDocumentMissing:
@@ -37,11 +32,9 @@ struct EPUBPackageReader {
 
     init(
         unpackRoot: URL = Self.defaultUnpackRoot(),
-        unzipURL: URL = URL(fileURLWithPath: "/usr/bin/unzip"),
         fileManager: FileManager = .default
     ) {
         self.unpackRoot = unpackRoot
-        self.unzipURL = unzipURL
         self.fileManager = fileManager
     }
 
@@ -53,10 +46,6 @@ struct EPUBPackageReader {
     }
 
     func publication(from epubURL: URL) throws -> EPUBPublication {
-        guard fileManager.isExecutableFile(atPath: unzipURL.path) else {
-            throw EPUBPackageReaderError.missingUnzipTool
-        }
-
         let entries = try archiveEntries(in: epubURL)
         guard !entries.isEmpty else {
             throw EPUBPackageReaderError.invalidArchive
@@ -82,7 +71,6 @@ struct EPUBPackageReader {
     // MARK: Private
 
     private let unpackRoot: URL
-    private let unzipURL: URL
     private let fileManager: FileManager
 }
 
@@ -145,27 +133,37 @@ private extension EPUBPackageReader {
     }
 
     private func archiveEntries(in epubURL: URL) throws -> [String] {
-        let result = try runProcess(
-            executableURL: unzipURL,
-            arguments: ["-Z1", epubURL.path]
-        )
-        guard result.exitStatus == 0 else {
+        let archive: Archive
+        do {
+            archive = try Archive(url: epubURL, accessMode: .read)
+        } catch {
             throw EPUBPackageReaderError.invalidArchive
         }
-
-        return result.output
-            .components(separatedBy: .newlines)
-            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
-            .filter { !$0.isEmpty }
+        return archive.map(\.path)
     }
 
     private func extract(_ epubURL: URL, to destinationURL: URL) throws {
-        let result = try runProcess(
-            executableURL: unzipURL,
-            arguments: ["-q", "-o", epubURL.path, "-d", destinationURL.path]
-        )
-        guard result.exitStatus == 0 else {
-            throw EPUBPackageReaderError.extractionFailed(result.errorOutput)
+        let archive: Archive
+        do {
+            archive = try Archive(url: epubURL, accessMode: .read)
+        } catch {
+            throw EPUBPackageReaderError.invalidArchive
+        }
+        for entry in archive {
+            try validateArchiveEntry(entry.path)
+            guard entry.type != .symlink else {
+                throw EPUBPackageReaderError.unsafeArchiveEntry(entry.path)
+            }
+            let destination = try resolvedURL(
+                for: entry.path,
+                relativeTo: destinationURL,
+                rootDirectory: destinationURL
+            )
+            try fileManager.createDirectory(
+                at: destination.deletingLastPathComponent(),
+                withIntermediateDirectories: true
+            )
+            _ = try archive.extract(entry, to: destination)
         }
     }
 
@@ -418,38 +416,6 @@ private extension EPUBPackageReader {
             }
         }
     }
-
-    private func runProcess(
-        executableURL: URL,
-        arguments: [String]
-    ) throws -> EPUBProcessResult {
-        let process = Process()
-        process.executableURL = executableURL
-        process.arguments = arguments
-
-        let stdout = Pipe()
-        let stderr = Pipe()
-        process.standardOutput = stdout
-        process.standardError = stderr
-
-        try process.run()
-        process.waitUntilExit()
-
-        let output = String(
-            data: stdout.fileHandleForReading.readDataToEndOfFile(),
-            encoding: .utf8
-        ) ?? ""
-        let errorOutput = String(
-            data: stderr.fileHandleForReading.readDataToEndOfFile(),
-            encoding: .utf8
-        ) ?? ""
-
-        return EPUBProcessResult(
-            exitStatus: process.terminationStatus,
-            output: output,
-            errorOutput: errorOutput
-        )
-    }
 }
 
 // MARK: - EPUBManifestItem
@@ -472,12 +438,4 @@ private struct EPUBManifestItem {
     var isNCX: Bool {
         mediaType?.lowercased() == "application/x-dtbncx+xml"
     }
-}
-
-// MARK: - EPUBProcessResult
-
-private struct EPUBProcessResult {
-    var exitStatus: Int32
-    var output: String
-    var errorOutput: String
 }

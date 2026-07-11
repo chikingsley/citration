@@ -23,7 +23,7 @@ Protocol compatibility is infrastructure, not the product. Citration’s product
 
 Zotero Self-Host Server is the canonical remote library. Citration does not reimplement D1/R2 synchronization, version allocation, groups, attachments, authentication, streaming, or tombstones in another service.
 
-CitrationCore owns the native client implementation: the Zotero API transport, object decoding, SQLite persistence, synchronization engine, attachment cache, metadata services, citation services, and reader-domain models. Mac, iPad, and iPhone targets consume that shared Swift package and provide platform-specific interface and reader code.
+CitrationCore owns the native client implementation: the Zotero API transport, object decoding, SQLite persistence, synchronization engine, attachment cache, metadata services, citation services, and reader-domain models. The accepted Mac and iPad targets consume that shared Swift package and provide platform-specific interface and reader code; the later iPhone target will use the same boundary.
 
 The client accepts a compatible server URL and scoped API/device key. That connection is not a Citration user account. Local-only operation remains possible, and connecting later synchronizes local work through the same object model.
 
@@ -82,7 +82,7 @@ Zotero-compatible annotations are canonical library objects. Citration preserves
 
 The synchronized model renders and edits exact PDF highlight, underline, note, and ink objects. New PDF selections and pointer strokes create compatible version-zero objects without modifying the canonical attachment.
 
-The current live library contains more ink annotations than every other annotation type combined. Rendering existing ink is therefore part of baseline compatibility, not a later novelty. The iPad app should create Apple Pencil strokes that round-trip as compatible Zotero ink annotations when the format can be proven with fixtures.
+The current live library contains more ink annotations than every other annotation type combined. Rendering existing ink is therefore part of baseline compatibility, not a later novelty. The accepted iPad app creates Apple Pencil strokes that round-trip as compatible Zotero ink annotations through the same exact position JSON used by the other clients.
 
 EPUB progress and annotations use stable EPUB CFI locations. Synchronized highlights and underlines use Zotero's Web Annotation `FragmentSelector` representation, which the real package, SQLite, visible reader, and cross-restart drills proved sufficient without a server extension.
 
@@ -119,5 +119,6 @@ Extension state must be isolated from standard Zotero library objects and versio
 3. Open cached attachments and render all existing annotation types, especially ink.
 4. Implement safe bidirectional writes, conflicts, deletions, files, retry queues, and streaming-triggered pulls.
 5. Rebuild the Mac library and reader UI around the complete synchronized model.
-6. Ship native iPad and iPhone targets from the same core, with Apple Pencil annotation on iPad.
-7. Add optional server extensions only for proven gaps in the standard protocol.
+6. Ship and accept the native iPad target from the same core, with exact Apple Pencil annotation round trips.
+7. Design the iPhone client next and decide Android architecture only after the accepted iPad interaction and portability evidence exists.
+8. Add optional server extensions only for proven gaps in the standard protocol.

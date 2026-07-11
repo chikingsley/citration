@@ -4,7 +4,7 @@ Every agent must read this file, `TODO.md`, `docs/product-direction.md`, and `do
 
 ## Objective
 
-Complete steps 1 through 7 in `TODO.md`: build a production-quality native Mac client for the existing Zotero Self-Host library. Native iPhone/iPad clients and Citration-only server extensions are later steps 8 and 9 and are not part of the current execution goal.
+Steps 1 through 8 in `TODO.md` are accepted. Preserve the native Mac and iPad clients and CitrationCore foundation while the user decides the later iPhone/Android client direction. Citration-only server extensions remain later work.
 
 ## Product Invariants
 
@@ -14,11 +14,11 @@ Complete steps 1 through 7 in `TODO.md`: build a production-quality native Mac c
 - The local source of truth is one app-owned SQLite database accessed through GRDB.
 - Preserve raw Zotero JSON, unknown fields, item types, creator roles, versions, settings, and annotation positions even when the UI does not yet understand them.
 - The permanent Mac interaction model is a non-closable Library tab, document tabs beside it, detachable document windows, a source sidebar, and a contextual inspector.
-- Do not begin step 8 or step 9 before steps 1 through 7 are accepted.
+- Keep the accepted Mac and iPad clients green. Do not begin the iPhone/Android or extension steps without a new explicit product decision.
 
 ## Ordered Work
 
-Work in the order written in `TODO.md`. Do not create a temporary architecture that a later step replaces.
+Work in the order written in `TODO.md`. Do not create a temporary architecture that a later step replaces. Steps 1 through 8 are accepted; later client and extension work remains deliberately deferred.
 
 1. Capture representative real Zotero protocol fixtures and establish the test safety net.
 2. Build the final GRDB/SQLite schema around those real objects.
@@ -27,6 +27,7 @@ Work in the order written in `TODO.md`. Do not create a temporary architecture t
 5. Install the permanent SwiftUI Library/document-tab shell and rewire existing features.
 6. Reach complete parity with the real self-hosted library and Zotero Desktop.
 7. Finish and accept the Mac application as a primary client.
+8. Build and accept the native iPad client over the same core, with a touch-first reader and exact Apple Pencil annotation round trips.
 
 ## Safety-Net Rule
 
@@ -72,7 +73,7 @@ Do not repeatedly run full Xcode builds while changing only core database or pro
 
 Steps 1 through 4 should not redesign production UI. Compilation adapters and a minimal connection boundary are allowed only when necessary to integrate the final core. Preserve the current reader/import behavior until the final database and sync model are ready.
 
-Step 5 replaces the temporary shell with the agreed permanent structure. Do not polish the current one-reader/one-long-inspector composition as if it were final.
+Step 5 replaced the temporary Mac shell with the agreed permanent structure. Step 8 must preserve the shared domain and synchronization behavior while providing an adaptive iPad shell; do not force Mac table, inspector, tab-detachment, or AppKit assumptions into the iPad interface.
 
 ## Progress And Commits
 

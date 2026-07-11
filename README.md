@@ -6,7 +6,9 @@ The first supported backend is [Zotero Self-Host Server](https://github.com/chik
 
 ## Current State
 
-The macOS app uses one GRDB/SQLite library, synchronizes ordinary Zotero API v3 objects and attachments, and provides the permanent native Library/document-tab workspace. It imports documents, edits schema-backed metadata and creators, safely renders notes, reads PDF, EPUB, HTML, and text attachments, preserves exact Zotero annotations including ink, renders CSL citations, performs OCR, and discovers related works.
+The macOS and iPadOS apps use the same CitrationCore GRDB/SQLite schema, lossless Zotero objects, synchronization engine, attachment cache, and portable reader state. The Mac app provides the permanent native Library/document-tab workspace, while the iPad app provides adaptive library navigation and full-screen touch readers across compact and large iPad layouts.
+
+Both clients read PDF, EPUB, HTML, and text attachments offline. The iPad client restores PDF/EPUB/HTML/text reading position, renders synchronized annotations, creates exact highlight, underline, note, and Apple Pencil ink objects, safely renders Zotero notes and HTML snapshots, and exposes local search, collections, tags, attachment state, connection settings, synchronization status, and recovery controls without creating another account or persistence path.
 
 The inspector's Data surface makes the lossless boundary visible: raw object counts, collections, tags, attachment cache and full-text state, synchronized settings, tombstones, and any unprojected future object can be inspected without changing canonical data.
 
@@ -18,12 +20,14 @@ See [`AGENTS.md`](AGENTS.md) for the execution baseline, [`TODO.md`](TODO.md) fo
 
 ```text
 apps/mac/                              current native macOS app
+apps/ipad/                             native adaptive iPadOS app
+apps/shared/                           reader and document code shared by Mac and iPad
 packages/citration-core-swift/         shared Apple-native domain, database, sync, and reader logic
 tools/citration-cli/                   development and migration utilities
 docs/                                  product direction and Zotero compatibility evidence
 ```
 
-Native iPhone and iPad targets are later work. They will share CitrationCore rather than inherit the removed Expo placeholder or introduce a second client architecture.
+Native iPhone and Android clients are later product work. The iPhone client will share CitrationCore; Android architecture will be decided only after the accepted Apple interaction and portability requirements are understood.
 
 `project.yml` is the XcodeGen source of truth. `Citration.xcodeproj` is generated and is not committed.
 
@@ -43,6 +47,8 @@ Run the current repository checks with:
 ```bash
 just check
 ```
+
+The full gate includes the shared core, CLI, Mac suite, and iPad suite. `just ipad-build` and `just ipad-test` provide focused iPad checks.
 
 SwiftFormat owns formatting. SwiftLint enforces semantic and safety rules. Lefthook runs both before commits.
 

@@ -3,11 +3,13 @@ options:
   minimumXcodeGenVersion: 2.44.0
   deploymentTarget:
     macOS: "14.0"
+    iOS: "17.0"
 settings:
   base:
     SWIFT_VERSION: "6.0"
     SWIFT_TREAT_WARNINGS_AS_ERRORS: YES
     MACOSX_DEPLOYMENT_TARGET: "14.0"
+    IPHONEOS_DEPLOYMENT_TARGET: "17.0"
     PRODUCT_BUNDLE_IDENTIFIER: com.citration.app
     CODE_SIGN_STYLE: Automatic
     GENERATE_INFOPLIST_FILE: NO
@@ -17,6 +19,9 @@ packages:
   Inject:
     url: https://github.com/krzysztofzablocki/Inject.git
     from: 1.5.2
+  ZIPFoundation:
+    url: https://github.com/weichsel/ZIPFoundation.git
+    exactVersion: 0.9.20
 targets:
   Citration:
     type: application
@@ -36,12 +41,14 @@ targets:
               public.mime-type: application/epub+zip
     sources:
       - path: apps/mac/Sources
+      - path: apps/shared/Sources
       - path: apps/mac/Resources
         buildPhase: resources
     dependencies:
       - package: citrationCore
         product: CitrationCore
       - package: Inject
+      - package: ZIPFoundation
     settings:
       base:
         PRODUCT_NAME: Citration
@@ -70,6 +77,65 @@ targets:
         Debug:
           CODE_SIGNING_ALLOWED: NO
           CODE_SIGNING_REQUIRED: NO
+  CitrationPad:
+    type: application
+    platform: iOS
+    sources:
+      - path: apps/ipad/Sources
+      - path: apps/shared/Sources
+    dependencies:
+      - package: citrationCore
+        product: CitrationCore
+      - package: ZIPFoundation
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.citration.app.ipad
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_CFBundleDisplayName: Citration
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
+        INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad: >-
+          UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown
+          UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight
+        TARGETED_DEVICE_FAMILY: 2
+        SUPPORTS_MACCATALYST: NO
+      configs:
+        Debug:
+          CODE_SIGNING_ALLOWED: NO
+          CODE_SIGNING_REQUIRED: NO
+  CitrationPadTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: apps/ipad/Tests
+    dependencies:
+      - target: CitrationPad
+      - package: citrationCore
+        product: CitrationCore
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        TARGETED_DEVICE_FAMILY: 2
+      configs:
+        Debug:
+          CODE_SIGNING_ALLOWED: NO
+          CODE_SIGNING_REQUIRED: NO
+  CitrationPadUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: apps/ipad/UITests
+    dependencies:
+      - target: CitrationPad
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        TARGETED_DEVICE_FAMILY: 2
+        TEST_TARGET_NAME: CitrationPad
+      configs:
+        Debug:
+          CODE_SIGNING_ALLOWED: NO
+          CODE_SIGNING_REQUIRED: NO
 schemes:
   Citration:
     build:
@@ -82,6 +148,22 @@ schemes:
       gatherCoverageData: false
       targets:
         - CitrationTests
+    profile:
+      config: Release
+    archive:
+      config: Release
+  CitrationPad:
+    build:
+      targets:
+        CitrationPad: all
+    run:
+      config: Debug
+    test:
+      config: Debug
+      gatherCoverageData: false
+      targets:
+        - CitrationPadTests
+        - CitrationPadUITests
     profile:
       config: Release
     archive:

@@ -87,18 +87,31 @@ Done when all 414 baseline objects are represented or visibly preserved as unsup
 
 Done when Citration is reliable as the primary native Mac interface for the self-hosted library and the repository contains no known temporary architecture from steps 1 through 7.
 
-## 8. Native iPhone And iPad Clients — Later
+## 8. Build And Accept The Native iPad Client
 
-- [ ] Create native SwiftUI iPhone and iPad targets from the accepted CitrationCore database, sync, cache, and reader models.
-- [ ] Design the iPad reader around Apple Pencil, split view, keyboard commands, multiple windows, and offline documents.
-- [ ] Design the iPhone app around library search, capture, reading, notes, and selective offline downloads.
+- [x] Make CitrationCore compile and operate on iPadOS with the same GRDB schema, lossless Zotero objects, synchronization engine, attachment cache, and reader-domain models used by Mac.
+- [x] Add a native SwiftUI iPad target and shared production bootstrap without copying the Mac application model or creating a second persistence path.
+- [x] Build adaptive library navigation for full-screen, split-view, compact-width, portrait, landscape, keyboard, pointer, and multiple-window use.
+- [x] Connect server settings, scoped device credentials, synchronization status, failure recovery, local search, collections, tags, metadata, notes, and attachment state to the shared production stores.
+- [x] Open cached PDF, EPUB, HTML, and plain-text attachments through touch-first readers with full-screen document presentation and durable offline progress.
+- [x] Render all synchronized PDF annotation types and create exact Zotero-compatible highlight, underline, note, and Apple Pencil ink objects without modifying canonical files.
+- [x] Preserve EPUB CFI highlights, underlines, progress, navigation, search, and typography through the shared compatibility contract.
+- [x] Exercise real SQLite databases, real document files, migration-free clean install, offline launch, interrupted synchronization, memory pressure, rotation, scene restoration, keyboard accessibility, and representative iPad sizes.
+- [x] Run strict formatting and linting, shared-core and Mac regression suites, iPad unit/integration suites, visible simulator acceptance, read-only live sync, disposable annotation acceptance, and cleanup before documenting and pushing the accepted state.
 
-Do not start until step 7 is accepted.
+Done when an iPad can connect to the same self-hosted library, work offline, search and organize the complete library, read every supported format, create portable Pencil annotations that appear through the Zotero contract, and leave the accepted Mac client green.
 
-## 9. Citration Extensions — Later
+## 9. Native iPhone And Android Clients — Later
+
+- [ ] Design the native iPhone app from the accepted shared core around library search, capture, reading, notes, and selective offline downloads.
+- [ ] Decide the Android client architecture only after the iPad and iPhone interaction and portability requirements are understood.
+
+Do not start until step 8 is accepted.
+
+## 10. Citration Extensions — Later
 
 - [ ] Add a namespaced server extension only after a desired feature is proven impossible to represent safely through the standard Zotero API.
 - [ ] Candidate areas include cross-document workspace state, richer EPUB reader state, OCR artifacts, metadata-repair history, and recommendation data.
 - [ ] Require portability and compatibility tests proving ordinary Zotero clients remain unaffected.
 
-Do not start until step 7 is accepted and a concrete feature justifies the extension.
+Do not start until step 8 is accepted and a concrete feature justifies the extension.

@@ -65,7 +65,7 @@ final class EPUBReaderState {
         return currentIndex + 1 < publication.readingOrder.count
     }
 
-    func load(attachment: LocalAttachment, progress: ReaderProgress?) {
+    func load(attachment: LibraryAttachment, progress: ReaderProgress?) {
         if loadedAttachmentKey == attachment.objectKey {
             restore(progress)
             return

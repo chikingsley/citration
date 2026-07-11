@@ -4,7 +4,8 @@ import PackageDescription
 let package = Package(
     name: "citration-core-swift",
     platforms: [
-        .macOS(.v14)
+        .macOS(.v14),
+        .iOS(.v17),
     ],
     products: [
         .library(name: "CitrationCore", targets: ["CitrationCore"])
