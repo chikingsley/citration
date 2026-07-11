@@ -53,6 +53,20 @@ public enum DocumentFormat: String, Codable, CaseIterable, Sendable {
         !readerCapabilities.isEmpty
     }
 
+    public var isSupportedInApp: Bool {
+        switch self {
+        case .pdf,
+             .epub,
+             .html,
+             .plainText:
+            true
+        case .image,
+             .audio,
+             .unknown:
+            false
+        }
+    }
+
     public static func infer(fileName: String, contentType: String? = nil) -> DocumentFormat {
         let normalizedContentType = contentType?.lowercased()
         switch normalizedContentType {

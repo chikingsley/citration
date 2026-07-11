@@ -1,0 +1,4 @@
+Citration plain-text reader fixture
+
+Résumé notes remain selectable, offline, and encoded as UTF-8.
+This second paragraph proves that line breaks are preserved.

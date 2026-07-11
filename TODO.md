@@ -66,7 +66,7 @@ Done when the real running Mac app uses the agreed Library/document-tab structur
 - [x] Display and edit every scalar bibliographic field present in the live baseline while retaining complex and unknown raw compatibility data.
 - [x] Add schema-aware item-type conversion and structured creator-role editing to complete every live bibliographic type and field.
 - [x] Render Zotero note HTML safely and preserve note parents, tags, keys, and versions.
-- [ ] Open cached PDFs, EPUBs, HTML snapshots, and plain text through explicit supported reader behavior.
+- [x] Open cached PDFs, EPUBs, HTML snapshots, and plain text through explicit supported reader behavior.
 - [ ] Render and edit compatible highlight, underline, note, and ink annotations with exact position JSON, page labels, sort indexes, comments, text, colors, tags, keys, and versions.
 - [ ] Render the 61 existing ink annotations and create compatible ink objects from a real input path before the later iPad client.
 - [ ] Complete EPUB navigation, durable progress, selection, annotation, typography, and search with proven portable locations.
@@ -80,7 +80,7 @@ Done when all 414 baseline objects are represented or visibly preserved as unsup
 - [ ] Add local FTS5 search across metadata, creators, tags, collections, notes, annotations, and downloaded document text.
 - [ ] Finish reader tabs/windows, annotation navigation/editing, portable sidecar export, and annotated PDF-copy export without modifying canonical attachments.
 - [ ] Complete sync/conflict/retry/download diagnostics and recovery controls.
-- [ ] Exercise keyboard, accessibility, multiple windows, offline launch, interrupted synchronization, database migration, backup/restore, and large-library performance.
+- [ ] Exercise keyboard, accessibility, multiple windows, offline launch, interrupted synchronization, database migration, backup/restore, and large-library performance; eliminate runtime AttributeGraph cycles during import, tab, and reader interactions.
 - [ ] Run strict formatting, strict linting, targeted suites, the full repository gate, live read-only sync, disposable bidirectional acceptance, and visible Mac UI acceptance.
 - [ ] Remove obsolete `services/citration-api`, `packages/citration-contracts`, `apps/web`, the old remote auth/workspace code, and temporary compatibility paths after their replacements are proven.
 - [ ] Update README and product documentation, move completed work to CHANGELOG, commit coherent final slices, and push the verified state.

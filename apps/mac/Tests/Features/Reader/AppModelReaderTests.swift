@@ -39,6 +39,30 @@ struct AppModelReaderTests {
         #expect(model.statusMessage == "Reading book.epub")
     }
 
+    @Test("opening HTML and text starts explicit in-app reading")
+    func openingHTMLAndTextStartsInAppReading() {
+        let itemID = UUID()
+        let html = makeAttachment(
+            itemID: itemID,
+            fileName: "snapshot.html",
+            contentType: "text/html"
+        )
+        let text = makeAttachment(
+            itemID: itemID,
+            fileName: "notes.txt",
+            contentType: "text/plain"
+        )
+        let model = makeAppModel(providers: [NoopMetadataProvider()])
+
+        model.reader.open(html)
+        #expect(model.reader.activeAttachment == html)
+        #expect(model.statusMessage == "Reading snapshot.html")
+
+        model.reader.open(text)
+        #expect(model.reader.activeAttachment == text)
+        #expect(model.statusMessage == "Reading notes.txt")
+    }
+
     @Test("selecting a different item clears active reader")
     func selectingDifferentItemClearsActiveReader() {
         let attachment = makeAttachment(

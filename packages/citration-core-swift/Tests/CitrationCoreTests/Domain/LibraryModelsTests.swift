@@ -17,6 +17,11 @@ struct LibraryModelsTests {
         #expect(DocumentFormat.pdf.readerCapabilities.contains(.annotations))
         #expect(DocumentFormat.epub.readerCapabilities.contains(.reflowableText))
         #expect(DocumentFormat.image.isReadableDocument == false)
+        #expect(DocumentFormat.pdf.isSupportedInApp)
+        #expect(DocumentFormat.epub.isSupportedInApp)
+        #expect(DocumentFormat.html.isSupportedInApp)
+        #expect(DocumentFormat.plainText.isSupportedInApp)
+        #expect(!DocumentFormat.audio.isSupportedInApp)
     }
 
     @Test("reader progress clamps fraction complete")

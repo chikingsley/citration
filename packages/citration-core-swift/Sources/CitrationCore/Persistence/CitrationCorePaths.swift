@@ -9,7 +9,19 @@ public enum CitrationCorePaths {
             .appending(path: fileName)
     }
 
-    public static func applicationSupportDirectory(appDirectoryName: String = "Citration") throws -> URL {
+    public static func applicationSupportDirectory(
+        appDirectoryName: String = "Citration",
+        environment: [String: String] = ProcessInfo.processInfo.environment
+    ) throws -> URL {
+        if
+            let override = environment["CITRATION_APPLICATION_SUPPORT_DIRECTORY"]?
+                .trimmingCharacters(in: .whitespacesAndNewlines),
+            !override.isEmpty
+        {
+            let directory = URL(fileURLWithPath: override, isDirectory: true).standardizedFileURL
+            try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+            return directory
+        }
         let baseDirectory = try FileManager.default.url(
             for: .applicationSupportDirectory,
             in: .userDomainMask,

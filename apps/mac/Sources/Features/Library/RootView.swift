@@ -79,7 +79,7 @@ struct RootView: View {
         }
         .fileImporter(
             isPresented: $attachmentImporterPresented,
-            allowedContentTypes: [.pdf, .citrationEPUB],
+            allowedContentTypes: [.pdf, .citrationEPUB, .html, .plainText],
             allowsMultipleSelection: true
         ) { result in
             handleImportedAttachments(result)

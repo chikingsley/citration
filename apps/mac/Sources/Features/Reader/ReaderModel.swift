@@ -31,7 +31,7 @@ final class ReaderModel {
             progress = nil
         }
 
-        guard attachment.documentFormat == .pdf || attachment.documentFormat == .epub else {
+        guard attachment.documentFormat.isSupportedInApp else {
             activeAttachment = attachment
             context?.selectedItemID = attachment.itemID
             context?.statusMessage = "\(attachment.documentFormat.displayName) reader is not implemented yet"

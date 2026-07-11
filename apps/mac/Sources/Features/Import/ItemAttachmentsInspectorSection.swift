@@ -50,7 +50,7 @@ struct ItemAttachmentsInspectorSection: View {
                 Image(systemName: "book.pages")
             }
             .buttonStyle(.borderless)
-            .disabled(!attachment.documentFormat.isReadableDocument)
+            .disabled(!attachment.documentFormat.isSupportedInApp)
             .help("Read in Citration")
             Link("Open", destination: attachment.localURL)
             Button {
@@ -67,12 +67,11 @@ struct ItemAttachmentsInspectorSection: View {
         let size = ByteCountFormatter.string(fromByteCount: attachment.size, countStyle: .file)
         let format = attachment.documentFormat.displayName
         switch attachment.documentFormat {
-        case .pdf:
-            return "\(format) · In-app reader · \(size)"
-        case .epub,
+        case .pdf,
+             .epub,
              .html,
              .plainText:
-            return "\(format) · Reader pending · \(size)"
+            return "\(format) · In-app reader · \(size)"
         case .image,
              .audio,
              .unknown:

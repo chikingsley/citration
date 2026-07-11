@@ -128,12 +128,18 @@ struct ReaderPane: View {
                 onProgressChange: reader.updateProgress
             )
 
-        case .html,
-             .plainText:
-            ContentUnavailableView(
-                "\(attachment.documentFormat.displayName) Reader Pending",
-                systemImage: iconName(for: attachment.documentFormat),
-                description: Text("Open externally for now.")
+        case .html:
+            HTMLSnapshotReaderView(
+                attachment: attachment,
+                progress: reader.progress,
+                onProgressChange: reader.updateProgress
+            )
+
+        case .plainText:
+            PlainTextReaderView(
+                attachment: attachment,
+                progress: reader.progress,
+                onProgressChange: reader.updateProgress
             )
 
         case .image,
