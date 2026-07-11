@@ -2,6 +2,7 @@ import AppKit
 import CitrationCore
 import PDFKit
 import SwiftUI
+import UniformTypeIdentifiers
 import WebKit
 
 // MARK: - ReaderPane
@@ -22,9 +23,21 @@ struct ReaderPane: View {
             readerContent
         }
         .background(Color(nsColor: .windowBackgroundColor))
+        .fileExporter(
+            isPresented: $exportPresented,
+            document: exportDocument,
+            contentType: exportContentType,
+            defaultFilename: exportFileName,
+            onCompletion: exportCompleted
+        )
     }
 
     // MARK: Private
+
+    @State private var exportPresented = false
+    @State private var exportDocument: ReaderExportDocument?
+    @State private var exportContentType: UTType = .data
+    @State private var exportFileName = "Annotations"
 
     private let pdfProxy: PDFViewProxy = .init()
 
@@ -93,6 +106,20 @@ struct ReaderPane: View {
                 }
                 .help(reader.isInkMode ? "Drawing on the PDF" : "Draw on the PDF")
             }
+
+            Menu {
+                Button("Annotation Sidecar", systemImage: "doc.text") {
+                    prepareSidecarExport()
+                }
+                if attachment.documentFormat == .pdf {
+                    Button("Annotated PDF Copy", systemImage: "doc.richtext") {
+                        prepareAnnotatedPDFExport()
+                    }
+                }
+            } label: {
+                Image(systemName: "square.and.arrow.up")
+            }
+            .help("Export annotations")
 
             Button {
                 NSWorkspace.shared.activateFileViewerSelecting([attachment.localURL])
@@ -186,6 +213,57 @@ struct ReaderPane: View {
             color: color,
             kind: kind
         )
+    }
+
+    private func prepareSidecarExport() {
+        Task { @MainActor in
+            do {
+                let data = try await AnnotationExportService.sidecarData(
+                    attachment: attachment,
+                    annotations: reader.annotations
+                )
+                presentExport(
+                    data: data,
+                    contentType: .json,
+                    fileName: "\(attachment.localURL.deletingPathExtension().lastPathComponent).annotations.json"
+                )
+            } catch {
+                reader.context?.statusMessage = "Failed to prepare annotation sidecar"
+            }
+        }
+    }
+
+    private func prepareAnnotatedPDFExport() {
+        do {
+            let data = try AnnotationExportService.annotatedPDFData(
+                attachment: attachment,
+                annotations: reader.annotations
+            )
+            presentExport(
+                data: data,
+                contentType: .pdf,
+                fileName: "\(attachment.localURL.deletingPathExtension().lastPathComponent).annotated.pdf"
+            )
+        } catch {
+            reader.context?.statusMessage = "Failed to prepare annotated PDF"
+        }
+    }
+
+    private func presentExport(data: Data, contentType: UTType, fileName: String) {
+        exportDocument = ReaderExportDocument(data: data)
+        exportContentType = contentType
+        exportFileName = fileName
+        exportPresented = true
+    }
+
+    private func exportCompleted(_ result: Result<URL, any Error>) {
+        switch result {
+        case let .success(url):
+            reader.context?.statusMessage = "Exported \(url.lastPathComponent)"
+        case .failure:
+            reader.context?.statusMessage = "Export cancelled"
+        }
+        exportDocument = nil
     }
 
     private func iconName(for format: DocumentFormat) -> String {

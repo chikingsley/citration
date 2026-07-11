@@ -116,6 +116,7 @@ enum ZoteroPDFAnnotationRenderer {
             rendered.color = annotation.compatibilityAnnotation().color.nsColor.withAlphaComponent(
                 subtype == .underline ? 1 : 0.45
             )
+            applyMetadata(annotation, to: rendered)
             page.addAnnotation(rendered)
             return rendered
         }
@@ -131,6 +132,7 @@ enum ZoteroPDFAnnotationRenderer {
         let rendered = PDFAnnotation(bounds: bounds, forType: .text, withProperties: nil)
         rendered.contents = annotation.comment
         rendered.color = annotation.compatibilityAnnotation().color.nsColor
+        applyMetadata(annotation, to: rendered)
         page.addAnnotation(rendered)
         return [rendered]
     }
@@ -151,6 +153,7 @@ enum ZoteroPDFAnnotationRenderer {
         else {
             return []
         }
+        applyMetadata(annotation, to: rendered)
         page.addAnnotation(rendered)
         return [rendered]
     }
@@ -184,5 +187,14 @@ enum ZoteroPDFAnnotationRenderer {
             width: rect.maxX - rect.minX,
             height: rect.maxY - rect.minY
         )
+    }
+
+    private static func applyMetadata(
+        _ annotation: SynchronizedLibraryAnnotation,
+        to rendered: PDFAnnotation
+    ) {
+        rendered.contents = annotation.comment.bcTrimmedNonEmpty ?? annotation.text.bcTrimmedNonEmpty
+        rendered.modificationDate = annotation.updatedAt
+        rendered.userName = "Citration"
     }
 }

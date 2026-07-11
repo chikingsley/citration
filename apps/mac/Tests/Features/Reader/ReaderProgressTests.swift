@@ -68,7 +68,9 @@ struct ReaderProgressTests {
                 fractionComplete: 0.25
             )
         )
-        try await waitUntil { model.reader.progress?.location == .page(3) }
+        try await waitUntilAsync {
+            try await progressStore.progress(for: attachment.objectKey)?.location == .page(3)
+        }
         let persisted = try await progressStore.progress(for: attachment.objectKey)
 
         #expect(persisted?.location == .page(3))

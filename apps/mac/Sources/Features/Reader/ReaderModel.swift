@@ -120,9 +120,13 @@ final class ReaderModel {
             return
         }
 
+        progress = newProgress
         Task {
             do {
-                progress = try await progressStore.upsert(newProgress)
+                let stored = try await progressStore.upsert(newProgress)
+                if activeAttachment?.objectKey == stored.attachmentKey {
+                    progress = stored
+                }
             } catch {
                 context?.statusMessage = "Failed to save reader position"
             }

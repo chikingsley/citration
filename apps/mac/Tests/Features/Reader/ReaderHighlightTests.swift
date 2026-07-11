@@ -48,6 +48,26 @@ struct ReaderHighlightTests {
         #expect(model.statusMessage == "Added underline")
     }
 
+    @Test("annotation navigation restores its exact PDF page through the real progress store")
+    func annotationNavigationRestoresExactPage() async throws {
+        let (model, attachment) = try await makeModelWithRealPDF()
+        model.reader.open(attachment)
+        try model.reader.addHighlight(
+            selection: selection(text: "return here", attachment: attachment, pageNumber: 7),
+            color: .purple
+        )
+        try await waitUntil { model.reader.annotations.count == 1 }
+        let annotation = try #require(model.reader.annotations.first)
+
+        model.reader.navigate(to: annotation)
+
+        #expect(model.reader.progress?.location == .page(7))
+        #expect(model.statusMessage == "Opened annotation")
+        try await Task.sleep(for: .milliseconds(50))
+        let stored = try await model.reader.progressStore.progress(for: attachment.objectKey)
+        #expect(stored?.location == .page(7))
+    }
+
     @Test("highlighting without an open document reports status")
     func highlightWithoutDocumentReportsStatus() throws {
         let model = makeAppModel()

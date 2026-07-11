@@ -150,6 +150,22 @@ func waitUntil(
     Issue.record("Timed out waiting for condition")
 }
 
+@MainActor
+func waitUntilAsync(
+    timeout: TimeInterval = 2.0,
+    pollInterval: UInt64 = 10_000_000,
+    _ condition: @MainActor () async throws -> Bool
+) async throws {
+    let start = Date()
+    while Date().timeIntervalSince(start) < timeout {
+        if try await condition() {
+            return
+        }
+        try await Task.sleep(nanoseconds: pollInterval)
+    }
+    Issue.record("Timed out waiting for asynchronous condition")
+}
+
 // MARK: - StubMetadataProvider
 
 struct StubMetadataProvider: MetadataProvider {

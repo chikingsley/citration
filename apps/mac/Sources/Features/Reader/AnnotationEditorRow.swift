@@ -8,10 +8,12 @@ struct AnnotationEditorRow: View {
 
     init(
         annotation: SynchronizedLibraryAnnotation,
+        onNavigate: @escaping () -> Void,
         onSave: @escaping (AnnotationKind, AnnotationColor, String, [ZoteroProjectedTag]) -> Void,
         onRemove: @escaping () -> Void
     ) {
         self.annotation = annotation
+        self.onNavigate = onNavigate
         self.onSave = onSave
         self.onRemove = onRemove
         _kind = State(initialValue: annotation.kind ?? .note)
@@ -23,6 +25,7 @@ struct AnnotationEditorRow: View {
     // MARK: Internal
 
     let annotation: SynchronizedLibraryAnnotation
+    let onNavigate: () -> Void
     let onSave: (AnnotationKind, AnnotationColor, String, [ZoteroProjectedTag]) -> Void
     let onRemove: () -> Void
 
@@ -102,6 +105,11 @@ struct AnnotationEditorRow: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
             Spacer()
+            Button(action: onNavigate) {
+                Image(systemName: "arrow.forward.circle")
+            }
+            .buttonStyle(.borderless)
+            .help("Go to annotation")
             Button(action: onRemove) {
                 Image(systemName: "trash")
             }

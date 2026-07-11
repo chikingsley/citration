@@ -116,6 +116,22 @@ final class EPUBReaderState {
         selection = nil
     }
 
+    @discardableResult
+    func navigate(toCFI cfi: String) -> Bool {
+        guard
+            let publication,
+            let index = publication.readingOrderIndex(forCFI: cfi)
+        else {
+            return false
+        }
+        currentIndex = index
+        requestedCFI = cfi
+        requestedFragment = nil
+        requestedSearchQuery = nil
+        selection = nil
+        return true
+    }
+
     func performSearch() {
         searchResults = publication?.search(searchText) ?? []
     }

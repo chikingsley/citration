@@ -34,7 +34,10 @@ struct AppModelDOITests {
             ],
             delayNanoseconds: 50_000_000
         )
-        let model = makeAppModel(providers: [provider])
+        let model = makeAppModel(
+            providers: [provider],
+            citationFormatter: CSLCitationFormatter()
+        )
         await model.refreshItems()
 
         model.importer.identifierKind = .doi

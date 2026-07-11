@@ -49,6 +49,9 @@ struct ItemAnnotationsInspectorSection: View {
             ForEach(model.reader.annotations) { annotation in
                 AnnotationEditorRow(
                     annotation: annotation,
+                    onNavigate: {
+                        model.reader.navigate(to: annotation)
+                    },
                     onSave: { kind, color, comment, tags in
                         model.reader.updateAnnotation(
                             annotation,
