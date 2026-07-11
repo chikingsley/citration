@@ -23,6 +23,15 @@ public struct ZoteroFullTextContent: Hashable, Sendable {
     public let totalPages: Int?
 }
 
+// MARK: - LibrarySearchField
+
+public enum LibrarySearchField: Sendable {
+    case all
+    case title
+    case creator
+    case tags
+}
+
 public extension CitrationDatabase {
     func storeRemoteFullText(
         itemKey: String,
@@ -119,4 +128,105 @@ public extension CitrationDatabase {
             )
         }
     }
+
+    /// Searches every indexed representation of a library item and resolves
+    /// child note, attachment, annotation, full-text, and collection hits back
+    /// to the owning top-level bibliographic item.
+    func searchLibraryItemKeys(
+        libraryID: Int64,
+        query: String,
+        field: LibrarySearchField = .all,
+        limit: Int = 200
+    ) throws -> [String] {
+        guard let matchQuery = Self.librarySearchMatchQuery(query, field: field), limit > 0 else {
+            return []
+        }
+        let includeCollections = field == .all ? 1 : 0
+        return try databaseQueue.read { database in
+            try String.fetchAll(
+                database,
+                sql: Self.libraryItemSearchSQL,
+                arguments: [
+                    matchQuery,
+                    libraryID,
+                    libraryID,
+                    libraryID,
+                    includeCollections,
+                    libraryID,
+                    limit,
+                ]
+            )
+        }
+    }
+
+    private static func librarySearchMatchQuery(_ query: String, field: LibrarySearchField) -> String? {
+        let terms = query
+            .split(whereSeparator: { $0.isWhitespace })
+            .map { term in
+                "\"\(term.replacingOccurrences(of: "\"", with: "\"\""))\"*"
+            }
+        guard !terms.isEmpty else {
+            return nil
+        }
+        let expression = terms.joined(separator: " AND ")
+        return switch field {
+        case .all:
+            expression
+        case .title:
+            "title : (\(expression))"
+        case .creator:
+            "creators : (\(expression))"
+        case .tags:
+            "tags : (\(expression))"
+        }
+    }
+
+    private static let libraryItemSearchSQL = """
+    WITH fts_hits AS (
+        SELECT object_key, object_kind, bm25(library_search) AS score
+        FROM library_search
+        WHERE library_search MATCH ? AND library_id = ?
+    ),
+    item_hits AS (
+        SELECT
+            CASE
+                WHEN item.item_type NOT IN ('attachment', 'annotation', 'note')
+                    THEN item.item_key
+                WHEN item.item_type = 'annotation'
+                    THEN COALESCE(parent.parent_item_key, item.parent_item_key)
+                ELSE item.parent_item_key
+            END AS root_key,
+            hit.score
+        FROM fts_hits hit
+        JOIN item_projections item
+          ON hit.object_kind = 'item'
+         AND item.library_id = ?
+         AND item.item_key = hit.object_key
+        LEFT JOIN item_projections parent
+          ON parent.library_id = item.library_id
+         AND parent.item_key = item.parent_item_key
+    ),
+    collection_hits AS (
+        SELECT membership.item_key AS root_key, hit.score
+        FROM fts_hits hit
+        JOIN collection_items membership
+          ON hit.object_kind = 'collection'
+         AND membership.library_id = ?
+         AND membership.collection_key = hit.object_key
+        WHERE ? = 1
+    ),
+    ranked AS (
+        SELECT root_key, score FROM item_hits WHERE root_key IS NOT NULL
+        UNION ALL
+        SELECT root_key, score FROM collection_hits
+    )
+    SELECT ranked.root_key
+    FROM ranked
+    JOIN item_projections root
+      ON root.library_id = ? AND root.item_key = ranked.root_key
+    WHERE root.item_type NOT IN ('attachment', 'annotation', 'note')
+    GROUP BY ranked.root_key
+    ORDER BY MIN(ranked.score), root.title COLLATE NOCASE
+    LIMIT ?
+    """
 }

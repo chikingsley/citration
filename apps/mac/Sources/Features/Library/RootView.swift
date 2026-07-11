@@ -6,7 +6,7 @@ import UniformTypeIdentifiers
 // MARK: - SearchScope
 
 enum SearchScope: String, CaseIterable {
-    case allFields = "All Fields & Tags"
+    case allFields = "Everything"
     case title = "Title"
     case creator = "Creator"
     case year = "Year"
@@ -102,6 +102,15 @@ struct RootView: View {
         .onChange(of: model.selectedItemIdentity) { _, identity in
             syncTableSelection(with: identity)
         }
+        .onChange(of: searchText) {
+            scheduleLibrarySearch()
+        }
+        .onChange(of: searchScope) {
+            scheduleLibrarySearch()
+        }
+        .onChange(of: model.libraryObservationRevision) {
+            scheduleLibrarySearch(immediately: true)
+        }
         .onChange(of: isImportDropTargeted) { _, targeted in
             updateImportDropAnimation(targeted: targeted)
         }
@@ -116,6 +125,8 @@ struct RootView: View {
     @State private var inspectorPresented = true
     @State private var searchText = ""
     @State private var searchScope: SearchScope = .allFields
+    @State private var searchResultKeys: Set<String> = []
+    @State private var librarySearchTask: Task<Void, Never>?
     @State private var selectedSource: LibrarySource? = .allItems
     @State private var selectedItemIdentities: Set<SynchronizedLibraryItemIdentity> = []
     @State private var addItemPresented = false
@@ -145,30 +156,16 @@ struct RootView: View {
             []
         }
 
-        guard !searchText.isEmpty else {
+        let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !query.isEmpty else {
             return scopedItems
         }
-        return scopedItems.filter { item in
-            let bibliographic = item.bibliographic
-            return switch searchScope {
-            case .allFields:
-                bibliographic.title.localizedCaseInsensitiveContains(searchText)
-                    || (bibliographic.creators.first?.displayName.localizedCaseInsensitiveContains(searchText) ?? false)
-                    || bibliographic.tags.contains { $0.localizedCaseInsensitiveContains(searchText) }
-
-            case .title:
-                bibliographic.title.localizedCaseInsensitiveContains(searchText)
-
-            case .creator:
-                bibliographic.creators.first?.displayName.localizedCaseInsensitiveContains(searchText) ?? false
-
-            case .year:
-                bibliographic.publicationYear.map(String.init)?.contains(searchText) ?? false
-
-            case .tags:
-                bibliographic.tags.contains { $0.localizedCaseInsensitiveContains(searchText) }
+        if searchScope == .year {
+            return scopedItems.filter { item in
+                item.bibliographic.publicationYear.map(String.init)?.contains(query) ?? false
             }
         }
+        return scopedItems.filter { searchResultKeys.contains($0.identity.objectKey) }
     }
 
     private var emptyState: LibraryEmptyState {
@@ -232,6 +229,25 @@ struct RootView: View {
             .keyboardShortcut("i", modifiers: [.command, .option])
             .accessibilityLabel(inspectorPresented ? "Hide Inspector" : "Show Inspector")
             .help(inspectorPresented ? "Hide Inspector" : "Show Inspector")
+        }
+    }
+
+    private func scheduleLibrarySearch(immediately: Bool = false) {
+        librarySearchTask?.cancel()
+        let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !query.isEmpty, let field = searchScope.librarySearchField else {
+            searchResultKeys = []
+            return
+        }
+
+        librarySearchTask = Task { @MainActor in
+            if !immediately {
+                try? await Task.sleep(for: .milliseconds(120))
+            }
+            guard !Task.isCancelled else {
+                return
+            }
+            searchResultKeys = Set(model.searchLibraryItemKeys(query: query, field: field))
         }
     }
 
@@ -327,6 +343,23 @@ struct RootView: View {
             model.collections.select(id: collectionID)
         } else {
             model.collections.select(id: nil)
+        }
+    }
+}
+
+private extension SearchScope {
+    var librarySearchField: LibrarySearchField? {
+        switch self {
+        case .allFields:
+            .all
+        case .title:
+            .title
+        case .creator:
+            .creator
+        case .tags:
+            .tags
+        case .year:
+            nil
         }
     }
 }

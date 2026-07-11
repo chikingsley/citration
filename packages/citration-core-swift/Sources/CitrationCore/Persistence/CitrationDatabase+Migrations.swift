@@ -360,6 +360,31 @@ extension CitrationDatabase {
             ALTER TABLE attachment_projections ADD COLUMN transfer_attempted_at REAL;
             """)
         }
+        migrator.registerMigration("v9_complete_library_search_and_memberships") { database in
+            try database.execute(sql: """
+            DELETE FROM library_search WHERE object_kind = 'collection';
+            INSERT INTO library_search (
+                library_id, object_key, object_kind, title, creators, tags,
+                note_text, annotation_text, fulltext
+            )
+            SELECT library_id, collection_key, 'collection', name, '', '', '', '', ''
+            FROM collection_projections;
+
+            INSERT OR IGNORE INTO app_collection_memberships (
+                library_id, collection_key, item_key, membership_uuid, created_at
+            )
+            SELECT library_id, collection_key, item_key,
+                lower(
+                    substr(hex(randomblob(16)), 1, 8) || '-' ||
+                    substr(hex(randomblob(16)), 1, 4) || '-' ||
+                    substr(hex(randomblob(16)), 1, 4) || '-' ||
+                    substr(hex(randomblob(16)), 1, 4) || '-' ||
+                    substr(hex(randomblob(16)), 1, 12)
+                ),
+                unixepoch('subsec')
+            FROM collection_items;
+            """)
+        }
         return migrator
     }
 }

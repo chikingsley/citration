@@ -122,6 +122,19 @@ extension CitrationDatabase {
                 optionalString("parentCollection", in: object.data),
             ]
         )
+        try database.execute(
+            sql: "DELETE FROM library_search WHERE library_id = ? AND object_key = ? AND object_kind = 'collection'",
+            arguments: [libraryID, key]
+        )
+        try database.execute(
+            sql: """
+            INSERT INTO library_search (
+                library_id, object_key, object_kind, title, creators, tags,
+                note_text, annotation_text, fulltext
+            ) VALUES (?, ?, 'collection', ?, '', '', '', '', '')
+            """,
+            arguments: [libraryID, key, string("name", in: object.data)]
+        )
     }
 
     static func replaceItemProjection(
@@ -272,7 +285,27 @@ extension CitrationDatabase {
                 """,
                 arguments: [libraryID, collectionKey, key, position]
             )
+            try database.execute(
+                sql: """
+                INSERT INTO app_collection_memberships (
+                    library_id, collection_key, item_key, membership_uuid, created_at
+                ) VALUES (?, ?, ?, ?, unixepoch('subsec'))
+                ON CONFLICT (library_id, collection_key, item_key) DO NOTHING
+                """,
+                arguments: [libraryID, collectionKey, key, UUID().uuidString]
+            )
         }
+        try database.execute(
+            sql: """
+            DELETE FROM app_collection_memberships
+            WHERE library_id = ? AND item_key = ?
+              AND collection_key NOT IN (
+                  SELECT collection_key FROM collection_items
+                  WHERE library_id = ? AND item_key = ?
+              )
+            """,
+            arguments: [libraryID, key, libraryID, key]
+        )
     }
 
     private static func insertAttachment(

@@ -254,6 +254,22 @@ final class AppModel {
         await refreshItems()
     }
 
+    func searchLibraryItemKeys(query: String, field: LibrarySearchField) -> [String] {
+        guard let observedLibraryID else {
+            return []
+        }
+        do {
+            return try database.searchLibraryItemKeys(
+                libraryID: observedLibraryID,
+                query: query,
+                field: field
+            )
+        } catch {
+            statusMessage = "Search failed"
+            return []
+        }
+    }
+
     func addItem(_ item: BCItem) async {
         await store.upsert(item)
         await refreshItems()
@@ -263,9 +279,9 @@ final class AppModel {
         let selectedID = item.id
         Task { @MainActor in
             await store.upsert(item)
+            statusMessage = status
             await refreshItems()
             selectedItemIdentity = items.first { $0.identity.appUUID == selectedID }?.identity
-            statusMessage = status
         }
     }
 
