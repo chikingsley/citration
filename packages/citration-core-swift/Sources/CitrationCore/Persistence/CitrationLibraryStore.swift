@@ -53,10 +53,13 @@ public actor CitrationLibraryStore:
         }
     }
 
+    // MARK: Public
+
+    public nonisolated let libraryID: Int64
+
     // MARK: Internal
 
     let database: CitrationDatabase
-    let libraryID: Int64
     let attachmentsDirectory: URL
     let fileManager: FileManager
 }

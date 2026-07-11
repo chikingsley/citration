@@ -58,10 +58,14 @@ final class AppModel {
         settings.bind(context: self, insights: insights)
         importer.bind(context: self, collections: collections, reader: reader)
 
+        startLibraryObservation()
+
         Task {
             await settings.refreshKeyStatus()
             await collections.refresh()
-            await refreshItems()
+            if libraryObservation == nil {
+                await refreshItems()
+            }
             await relationships.refresh()
             await notes.refreshForSelection()
         }
@@ -76,6 +80,7 @@ final class AppModel {
     var storageConnectors: [StorageConnector]
     var selectedWorkspaceTab: WorkspaceTab = .library
     private(set) var openDocuments: [LocalAttachment] = []
+    private(set) var libraryObservationRevision = 0
 
     let collections: CollectionsModel
     let notes: NotesModel
@@ -245,5 +250,32 @@ final class AppModel {
         let model = ReaderModel(progressStore: readerProgressStore, annotationStore: annotationStore)
         model.bind(context: self)
         return model
+    }
+
+    // MARK: Private
+
+    @ObservationIgnored private var libraryObservation: CitrationDatabaseObservation?
+
+    private func startLibraryObservation() {
+        guard let store = store as? CitrationLibraryStore else {
+            return
+        }
+        libraryObservation = database.observeLibraryItems(
+            libraryID: store.libraryID,
+            onError: { [weak self] _ in
+                Task { @MainActor [weak self] in
+                    self?.statusMessage = "Failed to observe library changes"
+                }
+            },
+            onChange: { [weak self] _ in
+                Task { @MainActor [weak self] in
+                    guard let self else {
+                        return
+                    }
+                    libraryObservationRevision += 1
+                    await refreshItems()
+                }
+            }
+        )
     }
 }
