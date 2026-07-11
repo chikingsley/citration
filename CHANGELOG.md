@@ -30,6 +30,8 @@ All notable completed changes to Citration are tracked here. Entries are newest 
 - Corrected the acceptance inventory to distinguish 128 bibliographic top-level items from 21 top-level attachments, matching the authoritative `/items/top` total of 149.
 - Removed the abandoned Citration account, Sign in with Apple, SaaS environment, workspace service, session, and Keychain stack from CitrationCore and the Mac app boundary.
 - Added a singleton Zotero connection profile backed by GRDB, a separate permission-checked 0600 device-key file, explicit local-only mode, remote-library store binding, and credential-safe configure/disconnect commands. Live acceptance verified the production key capabilities, absence of secret database columns, credential permissions, cached-library retention, and credential removal.
+- Added safe bidirectional metadata synchronization: valid client-generated keys, preserved pristine bases, version-zero creates, version-preconditioned batch writes and deletions, persistent retry timing, three-way disjoint merges, durable same-field conflicts with base/local/remote data, and explicit keep-local, keep-remote, or delete resolution.
+- Passed a self-cleaning live write drill against Zotero Self-Host covering create, intentional stale-version `412`, disjoint local/remote merge, same-field conflict preservation, resolution, sync-engine deletion, independent absence verification, database integrity, and zero remaining failures or disposable records.
 
 ### Changed
 

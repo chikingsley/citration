@@ -74,30 +74,6 @@ extension CitrationLibraryStore {
     }
 
     func markDeleted(kind: ZoteroObjectKind, key: String) throws {
-        try database.databaseQueue.write { database in
-            try database.execute(
-                sql: """
-                UPDATE zotero_objects
-                SET sync_state = 'deleted', is_deleted = 1, updated_at = ?
-                WHERE library_id = ? AND object_kind = ? AND object_key = ?
-                """,
-                arguments: [Date().timeIntervalSince1970, libraryID, kind.rawValue, key]
-            )
-            if kind == .item {
-                try database.execute(
-                    sql: "DELETE FROM item_projections WHERE library_id = ? AND item_key = ?",
-                    arguments: [libraryID, key]
-                )
-                try database.execute(
-                    sql: "DELETE FROM library_search WHERE library_id = ? AND object_key = ?",
-                    arguments: [libraryID, key]
-                )
-            } else if kind == .collection {
-                try database.execute(
-                    sql: "DELETE FROM collection_projections WHERE library_id = ? AND collection_key = ?",
-                    arguments: [libraryID, key]
-                )
-            }
-        }
+        try database.markLocalDeletion(kind: kind, key: key, libraryID: libraryID)
     }
 }

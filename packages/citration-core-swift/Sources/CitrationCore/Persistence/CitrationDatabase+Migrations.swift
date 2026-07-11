@@ -345,6 +345,14 @@ extension CitrationDatabase {
             );
             """)
         }
+        migrator.registerMigration("v7_add_synchronization_failure_details") { database in
+            try database.execute(sql: """
+            ALTER TABLE synchronization_failures ADD COLUMN details_json BLOB;
+            ALTER TABLE synchronization_failures ADD COLUMN last_attempt_at REAL;
+            CREATE INDEX synchronization_failures_by_object
+                ON synchronization_failures(library_id, object_kind, object_key, operation, resolved_at);
+            """)
+        }
         return migrator
     }
 }

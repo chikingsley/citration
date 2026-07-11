@@ -61,10 +61,12 @@ public struct ZoteroSyncEngine: Sendable {
         throw ZoteroSyncError.remoteLibraryKeptChanging(attempts: maxConsistencyAttempts)
     }
 
-    // MARK: Private
+    // MARK: Internal
 
-    private let database: CitrationDatabase
-    private let client: ZoteroAPIClient
+    let database: CitrationDatabase
+    let client: ZoteroAPIClient
+
+    // MARK: Private
 
     private static func maximumVersion(_ values: [Int64?], fallback: Int64) -> Int64 {
         values.compactMap(\.self).max() ?? fallback
@@ -166,8 +168,8 @@ public struct ZoteroSyncEngine: Sendable {
     }
 
     private func persist(_ data: ZoteroPullData, libraryID: Int64) throws {
-        try database.storeRemoteCollections(data.collections, libraryID: libraryID)
-        try database.storeRemoteItems(data.items, libraryID: libraryID)
+        try database.integrateRemoteCollections(data.collections, libraryID: libraryID)
+        try database.integrateRemoteItems(data.items, libraryID: libraryID)
         try database.ensureAppIdentities(
             collections: data.collections,
             items: data.items,

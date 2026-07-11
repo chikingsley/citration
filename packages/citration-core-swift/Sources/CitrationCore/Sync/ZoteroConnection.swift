@@ -72,4 +72,7 @@ public enum ZoteroTransportError: Error, Equatable, Sendable {
     case missingHeader(String)
     case invalidHeader(String, value: String)
     case keyCannotReadLibrary
+    case keyCannotWriteLibrary
+    case preconditionFailed(remoteVersion: Int64?)
+    case tooManyWriteObjects(Int)
 }

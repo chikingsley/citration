@@ -152,7 +152,7 @@ struct ZoteroSyncTests {
             )
             let conflictedObject = try #require(fetchedConflictedObject)
             #expect(!conflictedObject.isDeleted)
-            #expect(conflictedObject.syncState == .dirty)
+            #expect(conflictedObject.syncState == .failed)
             #expect(try database.fetchProjectedItem(libraryID: libraryID, key: dirtyKey) != nil)
             let failureCount = try database.databaseQueue.read { sqlDatabase in
                 try Int.fetchOne(
@@ -160,7 +160,7 @@ struct ZoteroSyncTests {
                     sql: """
                     SELECT COUNT(*) FROM synchronization_failures
                     WHERE library_id = ? AND object_kind = 'item' AND object_key = ?
-                        AND operation = 'remote-delete' AND resolved_at IS NULL
+                        AND operation = 'merge-conflict' AND resolved_at IS NULL
                     """,
                     arguments: [libraryID, dirtyKey]
                 ) ?? 0
@@ -170,13 +170,155 @@ struct ZoteroSyncTests {
         }
     }
 
+    @Test("Local edits preserve the remote version and pristine conflict base")
+    func localEditsPreservePristineBase() throws {
+        try withTemporaryDatabase { database in
+            let libraryID = try database.upsertLibrary(
+                identity: ZoteroLibraryIdentity(type: "user", remoteID: 1),
+                currentVersion: 1291
+            )
+            let items = try capturedItems()
+            let original = try #require(items.first { $0.itemType == "journalArticle" })
+            let key = try #require(original.key)
+            let originalVersion = try #require(original.version)
+            try database.storeRemoteCollections(capturedObjects(filename: "collections.json"), libraryID: libraryID)
+            try database.storeRemoteItems([original], libraryID: libraryID)
+
+            let firstEdit = try replacingTitle(in: original, with: "First local title")
+            try database.storeLocalItems([firstEdit], libraryID: libraryID)
+            let storedFirstEdit = try #require(
+                try database.fetchObject(libraryID: libraryID, kind: .item, key: key)
+            )
+            #expect(storedFirstEdit.version == originalVersion)
+            #expect(storedFirstEdit.pristine == original.rawValue)
+            #expect(storedFirstEdit.current.objectValue?["data"]?.objectValue?["title"] == .string("First local title"))
+            #expect(storedFirstEdit.syncState == .dirty)
+
+            let secondEdit = try replacingTitle(in: firstEdit, with: "Second local title")
+            try database.storeLocalItems([secondEdit], libraryID: libraryID)
+            let storedSecondEdit = try #require(
+                try database.fetchObject(libraryID: libraryID, kind: .item, key: key)
+            )
+            #expect(storedSecondEdit.version == originalVersion)
+            #expect(storedSecondEdit.pristine == original.rawValue)
+            #expect(storedSecondEdit.current.objectValue?["data"]?.objectValue?["title"] == .string("Second local title"))
+        }
+    }
+
+    @Test("Disjoint local and remote fields merge and remain dirty against the new pristine base")
+    func disjointRemoteChangesMerge() throws {
+        try withTemporaryDatabase { database in
+            let (libraryID, original) = try seedRemoteArticle(in: database)
+            let key = try #require(original.key)
+            try database.storeLocalItems(
+                [replacingField("title", with: .string("Local title"), in: original)],
+                libraryID: libraryID
+            )
+            let remote = try replacingField(
+                "abstractNote",
+                with: .string("Remote abstract"),
+                in: original,
+                version: 1300
+            )
+
+            try database.integrateRemoteItems([remote], libraryID: libraryID)
+
+            let integrated = try #require(
+                try database.fetchObject(libraryID: libraryID, kind: .item, key: key)
+            )
+            #expect(integrated.syncState == .dirty)
+            #expect(integrated.version == 1300)
+            #expect(integrated.current.objectValue?["data"]?.objectValue?["title"] == .string("Local title"))
+            #expect(
+                integrated.current.objectValue?["data"]?.objectValue?["abstractNote"]
+                    == .string("Remote abstract")
+            )
+            #expect(integrated.pristine == remote.rawValue)
+        }
+    }
+
+    @Test("A same-field merge conflict preserves all three versions in the retry record")
+    func sameFieldConflictIsPersistent() throws {
+        try withTemporaryDatabase { database in
+            let (libraryID, original) = try seedRemoteArticle(in: database)
+            let key = try #require(original.key)
+            try database.storeLocalItems(
+                [replacingField("title", with: .string("Local title"), in: original)],
+                libraryID: libraryID
+            )
+            let remote = try replacingField("title", with: .string("Remote title"), in: original, version: 1300)
+
+            try database.integrateRemoteItems([remote], libraryID: libraryID)
+
+            let integrated = try #require(
+                try database.fetchObject(libraryID: libraryID, kind: .item, key: key)
+            )
+            #expect(integrated.syncState == .failed)
+            #expect(integrated.pristine == original.rawValue)
+            #expect(integrated.current.objectValue?["data"]?.objectValue?["title"] == .string("Local title"))
+            let details = try database.databaseQueue.read { sqlDatabase -> JSONValue? in
+                let data = try Data.fetchOne(
+                    sqlDatabase,
+                    sql: """
+                    SELECT details_json FROM synchronization_failures
+                    WHERE library_id = ? AND object_kind = 'item' AND object_key = ?
+                        AND operation = 'merge-conflict' AND resolved_at IS NULL
+                    """,
+                    arguments: [libraryID, key]
+                )
+                return try data.map(ZoteroJSON.decode)
+            }
+            let conflictDetails = try #require(details?.objectValue)
+            #expect(conflictDetails["fields"] == .array([.string("title")]))
+            #expect(conflictDetails["base"] == original.rawValue)
+            #expect(conflictDetails["local"] == integrated.current)
+            #expect(conflictDetails["remote"] == remote.rawValue)
+        }
+    }
+
     // MARK: Private
 
     private func capturedItems() throws -> [ZoteroRawObject] {
+        try capturedObjects(filename: "items.json")
+    }
+
+    private func capturedObjects(filename: String) throws -> [ZoteroRawObject] {
         let fixtureURL = try #require(
-            Bundle.module.resourceURL?.appending(path: "Fixtures/Zotero/items.json")
+            Bundle.module.resourceURL?.appending(path: "Fixtures/Zotero/\(filename)")
         )
         return try JSONDecoder().decode([ZoteroRawObject].self, from: Data(contentsOf: fixtureURL))
+    }
+
+    private func replacingTitle(in object: ZoteroRawObject, with title: String) throws -> ZoteroRawObject {
+        try replacingField("title", with: .string(title), in: object)
+    }
+
+    private func replacingField(
+        _ field: String,
+        with value: JSONValue,
+        in object: ZoteroRawObject,
+        version: Int64? = nil
+    ) throws -> ZoteroRawObject {
+        var envelope = try #require(object.rawValue.objectValue)
+        var data = try #require(envelope["data"]?.objectValue)
+        data[field] = value
+        if let version {
+            data["version"] = .integer(version)
+            envelope["version"] = .integer(version)
+        }
+        envelope["data"] = .object(data)
+        return try ZoteroRawObject(rawValue: .object(envelope))
+    }
+
+    private func seedRemoteArticle(in database: CitrationDatabase) throws -> (Int64, ZoteroRawObject) {
+        let libraryID = try database.upsertLibrary(
+            identity: ZoteroLibraryIdentity(type: "user", remoteID: 1),
+            currentVersion: 1291
+        )
+        let original = try #require(capturedItems().first { $0.itemType == "journalArticle" })
+        try database.storeRemoteCollections(capturedObjects(filename: "collections.json"), libraryID: libraryID)
+        try database.storeRemoteItems([original], libraryID: libraryID)
+        return (libraryID, original)
     }
 
     private func withTemporaryDatabase(_ body: (CitrationDatabase) throws -> Void) throws {

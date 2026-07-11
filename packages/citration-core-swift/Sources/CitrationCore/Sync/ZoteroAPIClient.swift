@@ -141,11 +141,57 @@ public actor ZoteroAPIClient {
         try await get(path: "users/\(userID)/groups")
     }
 
+    public func writeObjects(
+        path: String,
+        objects: [ZoteroStoredObject],
+        libraryVersion: Int64
+    ) async throws -> ZoteroResponse<ZoteroWriteReport> {
+        guard objects.count <= 50 else {
+            throw ZoteroTransportError.tooManyWriteObjects(objects.count)
+        }
+        let values = try objects.map(Self.editableWriteValue)
+        let body = try JSONEncoder().encode(values)
+        let response = try await request(
+            method: "POST",
+            path: path,
+            query: [],
+            body: body,
+            headers: [
+                "Content-Type": "application/json",
+                "If-Unmodified-Since-Version": String(libraryVersion),
+            ]
+        )
+        return try ZoteroResponse(
+            value: JSONDecoder().decode(ZoteroWriteReport.self, from: response.data),
+            libraryVersion: response.libraryVersion,
+            totalResults: nil
+        )
+    }
+
+    public func deleteObjects(
+        path: String,
+        keyParameter: String,
+        keys: [String],
+        libraryVersion: Int64
+    ) async throws -> Int64 {
+        guard !keys.isEmpty else {
+            return libraryVersion
+        }
+        let response = try await request(
+            method: "DELETE",
+            path: path,
+            query: [URLQueryItem(name: keyParameter, value: keys.joined(separator: ","))],
+            body: nil,
+            headers: ["If-Unmodified-Since-Version": String(libraryVersion)]
+        )
+        return response.libraryVersion ?? libraryVersion
+    }
+
     public func get<Value: Decodable & Sendable>(
         path: String,
         query: [URLQueryItem] = []
     ) async throws -> ZoteroResponse<Value> {
-        let response = try await request(path: path, query: query)
+        let response = try await request(method: "GET", path: path, query: query, body: nil, headers: [:])
         return try ZoteroResponse(
             value: JSONDecoder().decode(Value.self, from: response.data),
             libraryVersion: response.libraryVersion,
@@ -159,17 +205,34 @@ public actor ZoteroAPIClient {
     private let session: URLSession
     private var notBefore: Date = .distantPast
 
+    private static func editableWriteValue(_ object: ZoteroStoredObject) throws -> JSONValue {
+        guard var value = object.current.objectValue?["data"]?.objectValue else {
+            throw ZoteroTransportError.invalidResponse
+        }
+        value["key"] = .string(object.key)
+        value["version"] = .integer(object.version)
+        return .object(value)
+    }
+
     private func request(
+        method: String,
         path: String,
-        query: [URLQueryItem]
+        query: [URLQueryItem],
+        body: Data?,
+        headers: [String: String]
     ) async throws -> RawZoteroResponse {
         let url = try requestURL(path: path, query: query)
         for attempt in 0 ..< 4 {
             try await waitForBackoff()
             var request = URLRequest(url: url)
+            request.httpMethod = method
+            request.httpBody = body
             request.setValue("3", forHTTPHeaderField: "Zotero-API-Version")
             request.setValue(connection.apiKey, forHTTPHeaderField: "Zotero-API-Key")
             request.setValue("Citration/1", forHTTPHeaderField: "User-Agent")
+            for (name, value) in headers {
+                request.setValue(value, forHTTPHeaderField: name)
+            }
             let (data, response) = try await session.data(for: request)
             guard let http = response as? HTTPURLResponse else {
                 throw ZoteroTransportError.invalidResponse
@@ -177,6 +240,10 @@ public actor ZoteroAPIClient {
             applyBackoff(from: http)
             if (200 ... 299).contains(http.statusCode) {
                 return try RawZoteroResponse(data: data, response: http)
+            }
+            if http.statusCode == 412 {
+                let version = try RawZoteroResponse.integerHeader("Last-Modified-Version", response: http)
+                throw ZoteroTransportError.preconditionFailed(remoteVersion: version)
             }
             guard attempt < 3, http.statusCode == 429 || (500 ... 599).contains(http.statusCode) else {
                 throw ZoteroTransportError.httpStatus(http.statusCode)
@@ -246,9 +313,7 @@ private struct RawZoteroResponse {
     let libraryVersion: Int64?
     let totalResults: Int?
 
-    // MARK: Private
-
-    private static func integerHeader(
+    static func integerHeader(
         _ name: String,
         response: HTTPURLResponse
     ) throws -> Int64? {

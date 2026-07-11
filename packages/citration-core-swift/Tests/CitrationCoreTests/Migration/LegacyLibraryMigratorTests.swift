@@ -1,5 +1,6 @@
 @testable import CitrationCore
 import Foundation
+import GRDB
 import Testing
 
 // MARK: - LegacyLibraryMigratorTests
@@ -81,6 +82,10 @@ struct LegacyLibraryMigratorTests {
 
     // MARK: Private
 
+    private static func isValidZoteroKey(_ key: String) -> Bool {
+        ZoteroObjectKey.isValid(key)
+    }
+
     private func verifyBackup(
         _ report: LegacyLibraryMigrationReport,
         fixture: LegacyFixture
@@ -115,6 +120,10 @@ struct LegacyLibraryMigratorTests {
         #expect(inspection.downloadedAttachmentCount == 1)
         #expect(try database.objectCount(libraryID: libraryID, kind: .collection) == 1)
         #expect(try database.objectCount(libraryID: libraryID, kind: .item) == 5)
+        let migratedKeys = try database.databaseQueue.read { sqlDatabase in
+            try String.fetchAll(sqlDatabase, sql: "SELECT object_key FROM zotero_objects WHERE library_id = ?", arguments: [libraryID])
+        }
+        #expect(migratedKeys.allSatisfy(Self.isValidZoteroKey))
         return inspection
     }
 

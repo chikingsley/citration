@@ -2,55 +2,6 @@ import Foundation
 import GRDB
 
 extension CitrationDatabase {
-    public func storeRemoteCollections(_ objects: [ZoteroRawObject], libraryID: Int64) throws {
-        try storeCollections(objects, libraryID: libraryID, syncState: .synced)
-    }
-
-    public func storeLocalCollections(_ objects: [ZoteroRawObject], libraryID: Int64) throws {
-        try storeCollections(objects, libraryID: libraryID, syncState: .dirty)
-    }
-
-    public func storeRemoteItems(_ objects: [ZoteroRawObject], libraryID: Int64) throws {
-        try storeItems(objects, libraryID: libraryID, syncState: .synced)
-    }
-
-    public func storeLocalItems(_ objects: [ZoteroRawObject], libraryID: Int64) throws {
-        try storeItems(objects, libraryID: libraryID, syncState: .dirty)
-    }
-
-    private func storeCollections(
-        _ objects: [ZoteroRawObject],
-        libraryID: Int64,
-        syncState: ZoteroSyncState
-    ) throws {
-        try databaseQueue.write { database in
-            for object in objects {
-                let storedObject = try ZoteroStoredObject(
-                    kind: .collection,
-                    object: object,
-                    syncState: syncState
-                )
-                try Self.upsert(object: storedObject, libraryID: libraryID, database: database)
-                try Self.upsertCollectionProjection(object: object, libraryID: libraryID, database: database)
-            }
-        }
-    }
-
-    private func storeItems(
-        _ objects: [ZoteroRawObject],
-        libraryID: Int64,
-        syncState: ZoteroSyncState
-    ) throws {
-        try databaseQueue.write { database in
-            for object in objects {
-                let storedObject = try ZoteroStoredObject(kind: .item, object: object, syncState: syncState)
-                try Self.upsert(object: storedObject, libraryID: libraryID, database: database)
-                try Self.replaceItemProjection(object: object, libraryID: libraryID, database: database)
-            }
-            try database.notifyChanges(in: Table("item_projections"))
-        }
-    }
-
     public func fetchProjectedItem(libraryID: Int64, key: String) throws -> ZoteroProjectedItem? {
         try databaseQueue.read { database -> ZoteroProjectedItem? in
             guard
@@ -145,7 +96,7 @@ extension CitrationDatabase {
         )
     }
 
-    private static func upsertCollectionProjection(
+    static func upsertCollectionProjection(
         object: ZoteroRawObject,
         libraryID: Int64,
         database: Database
@@ -173,7 +124,7 @@ extension CitrationDatabase {
         )
     }
 
-    private static func replaceItemProjection(
+    static func replaceItemProjection(
         object: ZoteroRawObject,
         libraryID: Int64,
         database: Database

@@ -31,6 +31,9 @@ struct CitrationCLI {
             printHelp()
             return
         }
+        if try await runZoteroCommand(command) {
+            return
+        }
 
         switch command {
         case "help",
@@ -63,18 +66,6 @@ struct CitrationCLI {
 
         case "openalex-smoke":
             try await openAlexSmoke(arguments: Array(arguments.dropFirst()))
-
-        case "capture-zotero-fixtures":
-            try await captureZoteroFixtures(arguments: Array(arguments.dropFirst()))
-
-        case "sync-zotero-read-only":
-            try await syncZoteroReadOnly(arguments: Array(arguments.dropFirst()))
-
-        case "configure-zotero":
-            try await configureZoteroConnection(arguments: Array(arguments.dropFirst()))
-
-        case "use-local-only":
-            try await useLocalOnly(arguments: Array(arguments.dropFirst()))
 
         default:
             throw NSError(
@@ -140,6 +131,25 @@ struct CitrationCLI {
         }
     }
 
+    private func runZoteroCommand(_ command: String) async throws -> Bool {
+        let commandArguments = Array(arguments.dropFirst())
+        switch command {
+        case "capture-zotero-fixtures":
+            try await captureZoteroFixtures(arguments: commandArguments)
+        case "sync-zotero-read-only":
+            try await syncZoteroReadOnly(arguments: commandArguments)
+        case "configure-zotero":
+            try await configureZoteroConnection(arguments: commandArguments)
+        case "use-local-only":
+            try await useLocalOnly(arguments: commandArguments)
+        case "zotero-disposable-acceptance":
+            try await runZoteroDisposableAcceptance(arguments: commandArguments)
+        default:
+            return false
+        }
+        return true
+    }
+
     private func printHelp() {
         print("""
         Citration repo commands
@@ -158,6 +168,8 @@ struct CitrationCLI {
           SELFHOST_API_KEY=<private environment> swift run citration sync-zotero-read-only --server <url> --database <path>
           SELFHOST_API_KEY=<private environment> swift run citration configure-zotero --server <url> --database <path> [--credential-file <path>]
           swift run citration use-local-only --database <path> [--credential-file <path>]
+          SELFHOST_API_KEY=<private environment> swift run citration zotero-disposable-acceptance \
+            --confirm-disposable --server <url> --database <temporary-path>
         """)
     }
 

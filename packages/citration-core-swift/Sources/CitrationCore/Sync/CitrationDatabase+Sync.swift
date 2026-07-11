@@ -153,24 +153,21 @@ public extension CitrationDatabase {
         database: Database
     ) throws {
         for key in keys {
-            let state = try String.fetchOne(
-                database,
-                sql: """
-                SELECT sync_state FROM zotero_objects
-                WHERE library_id = ? AND object_kind = ? AND object_key = ?
-                """,
-                arguments: [libraryID, kind.rawValue, key]
+            let existing = try fetchStoredObject(
+                libraryID: libraryID,
+                kind: kind,
+                key: key,
+                database: database
             )
-            if state == ZoteroSyncState.dirty.rawValue {
-                try recordDeletionConflict(
-                    key: key,
-                    kind: kind,
+            if let existing, existing.syncState == .dirty || existing.syncState == .failed {
+                try recordRemoteDeletionConflict(
+                    existing,
                     libraryID: libraryID,
                     database: database
                 )
                 continue
             }
-            if state == nil {
+            if existing == nil {
                 try upsert(
                     object: ZoteroStoredObject(
                         kind: kind,
@@ -197,23 +194,42 @@ public extension CitrationDatabase {
         }
     }
 
-    private static func recordDeletionConflict(
-        key: String,
-        kind: ZoteroObjectKind,
+    private static func recordRemoteDeletionConflict(
+        _ existing: ZoteroStoredObject,
         libraryID: Int64,
         database: Database
     ) throws {
+        let message = "Remote deletion conflicts with local changes"
+        try recordSyncFailure(
+            key: existing.key,
+            kind: existing.kind,
+            operation: "merge-conflict",
+            message: message,
+            details: conflictDetails(
+                fields: ["<remote-deletion>"],
+                base: existing.pristine,
+                local: existing.current,
+                remote: .null
+            ),
+            libraryID: libraryID,
+            database: database
+        )
         try database.execute(
             sql: """
-            INSERT INTO synchronization_failures (
-                library_id, object_kind, object_key, operation, message, created_at
-            ) VALUES (?, ?, ?, 'remote-delete', 'Remote deletion conflicts with local changes', ?)
+            UPDATE zotero_objects SET sync_state = 'failed', failure_message = ?, updated_at = ?
+            WHERE library_id = ? AND object_kind = ? AND object_key = ?
             """,
-            arguments: [libraryID, kind.rawValue, key, Date().timeIntervalSince1970]
+            arguments: [
+                message,
+                Date().timeIntervalSince1970,
+                libraryID,
+                existing.kind.rawValue,
+                existing.key,
+            ]
         )
     }
 
-    private static func deleteProjection(
+    static func deleteProjection(
         key: String,
         kind: ZoteroObjectKind,
         libraryID: Int64,

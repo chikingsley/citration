@@ -1,4 +1,3 @@
-import CryptoKit
 import Foundation
 
 // MARK: - LegacyZoteroObjectFactory
@@ -143,24 +142,23 @@ enum LegacyZoteroObjectFactory {
     }
 
     static func itemKey(for id: UUID) -> String {
-        "legacy-item-\(id.uuidString.lowercased())"
+        ZoteroObjectKey.deterministic(namespace: "item", value: id.uuidString)
     }
 
     static func collectionKey(for id: UUID) -> String {
-        "legacy-collection-\(id.uuidString.lowercased())"
+        ZoteroObjectKey.deterministic(namespace: "collection", value: id.uuidString)
     }
 
     static func noteKey(for id: UUID) -> String {
-        "legacy-note-\(id.uuidString.lowercased())"
+        ZoteroObjectKey.deterministic(namespace: "note", value: id.uuidString)
     }
 
     static func annotationKey(for id: UUID) -> String {
-        "legacy-annotation-\(id.uuidString.lowercased())"
+        ZoteroObjectKey.deterministic(namespace: "annotation", value: id.uuidString)
     }
 
     static func attachmentKey(for legacyKey: String) -> String {
-        let digest = SHA256.hash(data: Data(legacyKey.utf8))
-        return "legacy-attachment-" + digest.prefix(12).map { String(format: "%02x", $0) }.joined()
+        ZoteroObjectKey.deterministic(namespace: "attachment", value: legacyKey)
     }
 
     // MARK: Private
