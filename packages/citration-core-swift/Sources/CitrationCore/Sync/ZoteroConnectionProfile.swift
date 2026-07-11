@@ -71,7 +71,8 @@ public actor ZoteroConnectionManager {
 
     public func connect(serverURL: URL, apiKey: String) async throws -> ZoteroConnectionProfile {
         let connection = try ZoteroConnection(serverURL: serverURL, apiKey: apiKey)
-        let keyInfo = try await ZoteroAPIClient(connection: connection, session: session).keyInfo()
+        let client = ZoteroAPIClient(connection: connection, session: session)
+        let keyInfo = try await client.keyInfo()
         let profile = ZoteroConnectionProfile(
             serverURL: connection.serverURL,
             userID: keyInfo.userID,
@@ -80,6 +81,12 @@ public actor ZoteroConnectionManager {
             canWrite: keyInfo.canWriteUserLibrary,
             canAccessFiles: keyInfo.canAccessUserFiles
         )
+        let engine = ZoteroSyncEngine(database: database, client: client)
+        _ = try await engine.pullReadOnly()
+        _ = try database.promoteLocalLibrary(to: profile.libraryIdentity, targetName: profile.displayName)
+        if profile.canWrite {
+            _ = try await engine.synchronize()
+        }
         let previousCredential = try await credentialStore.loadCredential()
         try await credentialStore.saveCredential(connection.apiKey)
         do {

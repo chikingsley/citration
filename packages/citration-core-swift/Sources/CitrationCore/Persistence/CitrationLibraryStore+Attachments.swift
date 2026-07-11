@@ -34,6 +34,13 @@ extension CitrationLibraryStore {
             parentKey: parentKey
         )
         try database.storeLocalItems([object], libraryID: libraryID)
+        try upsertIdentity(
+            uuid: UUID(),
+            kind: .item,
+            key: key,
+            createdAt: createdAt,
+            updatedAt: createdAt
+        )
         try markAttachmentDownloaded(key: key, path: destination.path)
         return libraryAttachment(record: attachment, objectKey: key)
     }
