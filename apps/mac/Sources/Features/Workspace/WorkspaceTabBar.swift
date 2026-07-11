@@ -21,6 +21,7 @@ struct WorkspaceTabBar: View {
         }
         .scrollIndicators(.hidden)
         .background(.bar)
+        .accessibilityLabel("Document tabs")
     }
 
     // MARK: Private
@@ -51,6 +52,10 @@ struct WorkspaceTabBar: View {
                     .contentShape(.rect)
             }
             .buttonStyle(.plain)
+            .accessibilityLabel(attachment.fileName)
+            .accessibilityAddTraits(
+                model.selectedWorkspaceTab == .document(attachment.objectKey) ? .isSelected : []
+            )
 
             Button {
                 model.closeDocument(attachmentKey: attachment.objectKey)
@@ -60,6 +65,7 @@ struct WorkspaceTabBar: View {
                     .contentShape(.rect)
             }
             .buttonStyle(.plain)
+            .accessibilityLabel("Close \(attachment.fileName)")
             .help("Close \(attachment.fileName)")
         }
         .padding(.horizontal, 10)

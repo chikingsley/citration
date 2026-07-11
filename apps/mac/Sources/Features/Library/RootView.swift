@@ -228,6 +228,9 @@ struct RootView: View {
             } label: {
                 Image(systemName: "sidebar.right")
             }
+            .keyboardShortcut("i", modifiers: [.command, .option])
+            .accessibilityLabel(inspectorPresented ? "Hide Inspector" : "Show Inspector")
+            .help(inspectorPresented ? "Hide Inspector" : "Show Inspector")
         }
     }
 

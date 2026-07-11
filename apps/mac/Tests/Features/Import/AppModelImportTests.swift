@@ -138,4 +138,28 @@ struct AppModelImportTests {
 
         try await waitUntil(timeout: 4.0) { !model.importer.isImporting }
     }
+
+    @Test("Attachment drop routing adds a real file to the selected item")
+    func attachmentDropRouting() async throws {
+        let tempDirectory = makeTempDirectory()
+        defer { cleanupDirectory(tempDirectory) }
+        let sourceFile = try makeFile(named: "attachment.txt", contents: Data("fixture".utf8), in: tempDirectory)
+        let attachmentStore = try LocalAttachmentStore(
+            baseDirectory: tempDirectory.appending(path: "attachments", directoryHint: .isDirectory)
+        )
+        let item = BCItem(title: "Drop Target")
+        let model = makeAppModel(initialItems: [item], attachmentStore: attachmentStore)
+        await model.refreshItems()
+        model.selectItem(id: item.id)
+
+        model.importer.importAttachments(urls: [sourceFile], mode: .attachToSelectedItem)
+        try await waitUntil {
+            !model.importer.isImporting && model.importer.selectedItemAttachments.count == 1
+        }
+
+        #expect(model.items.map(\.id) == [item.id])
+        let attachment = try #require(model.importer.selectedItemAttachments.first)
+        #expect(attachment.fileName == "drop-target.txt")
+        #expect(try Data(contentsOf: attachment.localURL) == Data("fixture".utf8))
+    }
 }

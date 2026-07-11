@@ -47,6 +47,17 @@ struct CitrationApp: App {
                 .frame(minWidth: 1080, minHeight: 720)
         }
         .windowToolbarStyle(.unified)
+        .commands {
+            CommandMenu("Library") {
+                Button("Sync Now", systemImage: "arrow.triangle.2.circlepath") {
+                    Task {
+                        await model.zoteroSettings.synchronize()
+                    }
+                }
+                .keyboardShortcut("s", modifiers: [.command, .shift])
+                .disabled(!model.zoteroSettings.isConnected || model.zoteroSettings.isWorking)
+            }
+        }
 
         WindowGroup(for: DocumentWindowRoute.self) { $route in
             if let route {
