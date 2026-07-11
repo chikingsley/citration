@@ -44,6 +44,43 @@ public enum JSONValue: Hashable, Sendable {
         }
         return value
     }
+
+    public var numberValue: Double? {
+        switch self {
+        case let .integer(value):
+            Double(value)
+        case let .number(value):
+            value
+        default:
+            nil
+        }
+    }
+
+    public var boolValue: Bool? {
+        guard case let .bool(value) = self else {
+            return nil
+        }
+        return value
+    }
+
+    public var kind: String {
+        switch self {
+        case .null:
+            "null"
+        case .bool:
+            "boolean"
+        case .integer:
+            "integer"
+        case .number:
+            "number"
+        case .string:
+            "string"
+        case .array:
+            "array"
+        case .object:
+            "object"
+        }
+    }
 }
 
 // MARK: Codable

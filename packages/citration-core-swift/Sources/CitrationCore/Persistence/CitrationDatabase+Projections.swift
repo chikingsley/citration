@@ -19,11 +19,12 @@ extension CitrationDatabase {
                 try Self.upsert(object: storedObject, libraryID: libraryID, database: database)
                 try Self.replaceItemProjection(object: object, libraryID: libraryID, database: database)
             }
+            try database.notifyChanges(in: Table("item_projections"))
         }
     }
 
     public func fetchProjectedItem(libraryID: Int64, key: String) throws -> ZoteroProjectedItem? {
-        try databaseQueue.read { database in
+        try databaseQueue.read { database -> ZoteroProjectedItem? in
             guard
                 let item = try Row.fetchOne(
                     database,
@@ -48,6 +49,8 @@ extension CitrationDatabase {
                 language: item["language"],
                 rights: item["rights"],
                 extra: item["extra"],
+                fields: Self.fetchFields(libraryID: libraryID, key: key, database: database),
+                identifiers: Self.fetchIdentifiers(libraryID: libraryID, key: key, database: database),
                 parentItemKey: item["parent_item_key"],
                 noteHTML: item["note_html"],
                 creators: Self.fetchCreators(libraryID: libraryID, key: key, database: database),
@@ -195,6 +198,7 @@ extension CitrationDatabase {
         )
 
         try clearChildProjections(libraryID: libraryID, key: key, database: database)
+        try Self.insertFieldsAndIdentifiers(object: object, libraryID: libraryID, key: key, database: database)
         try insertCreators(object: object, libraryID: libraryID, key: key, database: database)
         try insertTags(object: object, libraryID: libraryID, key: key, database: database)
         try insertCollectionMemberships(object: object, libraryID: libraryID, key: key, database: database)
@@ -205,7 +209,8 @@ extension CitrationDatabase {
 
     private static func clearChildProjections(libraryID: Int64, key: String, database: Database) throws {
         for table in [
-            "item_creators", "item_tags", "collection_items", "attachment_projections", "annotation_projections",
+            "item_fields", "item_identifiers", "item_creators", "item_tags", "collection_items",
+            "attachment_projections", "annotation_projections",
         ] {
             try database.execute(
                 sql: "DELETE FROM \(table) WHERE library_id = ? AND item_key = ?",

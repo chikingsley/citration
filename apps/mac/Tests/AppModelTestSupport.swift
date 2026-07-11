@@ -16,6 +16,7 @@ func makeAppModel(
     ocrService: any OCRServicing = NullOCRService()
 ) -> AppModel {
     AppModel(
+        database: makeDatabase(),
         store: InMemoryItemStore(initialItems: initialItems),
         metadataRegistry: MetadataProviderRegistry(providers: providers),
         citationFormatter: StubCitationFormatter(),
@@ -29,6 +30,18 @@ func makeAppModel(
         readerProgressStore: readerProgressStore,
         ocrService: ocrService
     )
+}
+
+func makeDatabase() -> CitrationDatabase {
+    let directory = FileManager.default.temporaryDirectory
+        .appending(path: "citration-appmodel-databases", directoryHint: .isDirectory)
+        .appending(path: UUID().uuidString, directoryHint: .isDirectory)
+    do {
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        return try CitrationDatabase(at: directory.appending(path: "library.sqlite"))
+    } catch {
+        fatalError("Unable to initialize test database: \(error)")
+    }
 }
 
 // MARK: - NullOCRService

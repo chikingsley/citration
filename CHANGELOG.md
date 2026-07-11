@@ -18,6 +18,8 @@ All notable completed changes to Citration are tracked here. Entries are newest 
 - Added SQLite online backups with post-copy integrity verification and a real backup/reopen/restore test.
 - Added durable full-text projection plus FTS5 queries spanning titles, creators, tags, notes, annotation text/comments, and downloaded document content.
 - Hardened fixture sanitization to remap Zotero item keys embedded inside dynamic setting names before fixtures are written.
+- Completed the GRDB model with queryable lossless field values, explicit identifiers, verified database observation, and a production Application Support `library.sqlite` opened at app bootstrap.
+- Removed the production in-memory fallback for persistence initialization so startup cannot silently present an empty library after a storage failure.
 
 ### Changed
 

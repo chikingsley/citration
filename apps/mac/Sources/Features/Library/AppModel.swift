@@ -8,6 +8,7 @@ final class AppModel {
     // MARK: Lifecycle
 
     init(
+        database: CitrationDatabase,
         store: any BCItemStore,
         metadataRegistry: MetadataProviderRegistry,
         citationFormatter: any CitationFormattingEngine,
@@ -24,6 +25,7 @@ final class AppModel {
         ocrService: any OCRServicing = MistralOCRService(),
         openAlexAPIKeyStore: any APIKeyStore = InMemoryAPIKeyStore()
     ) {
+        self.database = database
         self.store = store
         citation = CitationModel(formatter: citationFormatter)
         self.storageConnectors = storageConnectors
@@ -86,6 +88,7 @@ final class AppModel {
     let citation: CitationModel
     let insights: InsightsModel
     let settings: OpenAlexSettingsModel
+    let database: CitrationDatabase
     let store: any BCItemStore
 
     var selectedItem: BCItem? {

@@ -1,27 +1,6 @@
 import Foundation
 import SwiftData
 
-// MARK: - CitrationCorePaths
-
-public enum CitrationCorePaths {
-    public static func defaultItemStoreURL(
-        appDirectoryName: String = "Citration",
-        fileName: String = "items.store"
-    ) throws -> URL {
-        let appSupportDirectory = try FileManager.default.url(
-            for: .applicationSupportDirectory,
-            in: .userDomainMask,
-            appropriateFor: nil,
-            create: true
-        )
-
-        let storeDirectory = appSupportDirectory.appendingPathComponent(appDirectoryName, isDirectory: true)
-        try FileManager.default.createDirectory(at: storeDirectory, withIntermediateDirectories: true)
-
-        return storeDirectory.appendingPathComponent(fileName)
-    }
-}
-
 // MARK: - ItemRecord
 
 @Model

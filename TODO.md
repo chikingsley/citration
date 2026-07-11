@@ -15,18 +15,18 @@ Done when the real library contract—not `BCItem` or an invented schema—deter
 
 ## 2. Build The Final GRDB/SQLite Model
 
-- [ ] Add GRDB to `packages/citration-core-swift` and open one app-owned SQLite database through the production database layer.
+- [x] Add GRDB to `packages/citration-core-swift` and open one app-owned SQLite database through the production database layer.
 - [x] Create migrations for libraries, raw Zotero objects, typed item projections, collection hierarchy/membership, attachment cache state, full-text content/indexes, synchronization failures, and app-only reader state.
 - [x] Store library identity/version plus each object’s type, key, version, current JSON, last-synced pristine JSON, dirty/synced state, deletion state, and failure state.
-- [ ] Create typed projections for all item types, fields, identifiers, ordered creator roles, notes, attachments, annotations, collections, tags, and full-text state present in the live baseline.
+- [x] Create typed projections for all item types, fields, identifiers, ordered creator roles, notes, attachments, annotations, collections, tags, and full-text state present in the live baseline.
 - [x] Add FTS5 projections for metadata, creators, tags, notes, annotation text/comments, and downloaded full text.
-- [ ] Add transactional backup, integrity checking, migration tests, and database observation used by future SwiftUI views.
+- [x] Add transactional backup, integrity checking, migration tests, and database observation used by future SwiftUI views.
 
 Done when all captured fixtures persist in one real temporary SQLite database, queries reproduce their relationships and counts, unknown data survives, migrations are repeatable, and CitrationCore’s targeted gate is green.
 
 ## 3. Migrate Existing Citration Data Once
 
-- [ ] Inventory the current SwiftData item store and JSON-backed notes, collections, attachments, annotations, relationships, and reader progress.
+- [x] Inventory the current SwiftData item store and JSON-backed notes, collections, attachments, annotations, relationships, and reader progress.
 - [ ] Back up every legacy store before migration.
 - [ ] Import legacy records into the final SQLite schema without creating a permanent parallel model.
 - [ ] Verify counts, IDs, timestamps, relationships, attachment paths, annotation locations, and reader progress against migration fixtures.

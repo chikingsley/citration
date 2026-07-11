@@ -17,7 +17,7 @@ core-test:
     cd packages/citration-core-swift && swift test --parallel
 
 cli-build:
-    cd tools/citration-cli && swift build
+    cd tools/citration-cli && swift build --disable-build-manifest-caching
 
 app-build:
     xcodegen generate

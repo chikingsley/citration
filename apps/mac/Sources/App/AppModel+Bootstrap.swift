@@ -3,13 +3,19 @@ import Foundation
 
 extension AppModel {
     static func bootstrap() -> AppModel {
+        let database: CitrationDatabase
+        do {
+            database = try CitrationDatabase(at: CitrationCorePaths.defaultDatabaseURL())
+        } catch {
+            fatalError("Failed to initialize Citration database: \(error)")
+        }
+
         let store: any BCItemStore
         do {
             let storeURL = try CitrationCorePaths.defaultItemStoreURL()
             store = try SwiftDataItemStore(storeURL: storeURL)
         } catch {
-            assertionFailure("Failed to initialize SwiftData item store: \(error)")
-            store = InMemoryItemStore()
+            fatalError("Failed to initialize legacy SwiftData item store before migration: \(error)")
         }
 
         let providers: [any MetadataProvider] = [
@@ -30,6 +36,7 @@ extension AppModel {
         let sessionStore = KeychainAuthSessionStore()
 
         return AppModel(
+            database: database,
             store: store,
             metadataRegistry: metadataRegistry,
             citationFormatter: citationFormatter,

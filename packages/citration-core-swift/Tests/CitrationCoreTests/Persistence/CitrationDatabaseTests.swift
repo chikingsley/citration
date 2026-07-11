@@ -2,6 +2,8 @@
 import Foundation
 import Testing
 
+// MARK: - CitrationDatabaseTests
+
 @Suite("CitrationDatabase")
 struct CitrationDatabaseTests {
     // MARK: Internal
@@ -125,6 +127,13 @@ struct CitrationDatabaseTests {
                 let fetched = try database.fetchProjectedItem(libraryID: libraryID, key: key)
                 let projected = try #require(fetched)
                 #expect(projected.itemType == object.itemType)
+                #expect(projected.fields == object.data)
+                let expectedIdentifiers = ["DOI", "ISBN", "ISSN", "PMID", "PMCID", "url"].compactMap { field in
+                    object.data[field]?.stringValue.flatMap { value in
+                        value.isEmpty ? nil : ZoteroProjectedIdentifier(type: field, value: value)
+                    }
+                }
+                #expect(projected.identifiers == expectedIdentifiers)
                 #expect(projected.parentItemKey == object.data["parentItem"]?.stringValue)
                 #expect(projected.collectionKeys == object.data["collections"]?.arrayValue?.compactMap(\.stringValue) ?? [])
 
@@ -203,6 +212,49 @@ struct CitrationDatabaseTests {
         }
     }
 
+    @Test("Database observation emits initial and committed library snapshots")
+    func databaseObservationEmitsSnapshots() async throws {
+        let directory = FileManager.default.temporaryDirectory
+            .appending(path: "citration-db-observation-\(UUID().uuidString)", directoryHint: .isDirectory)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+
+        let database = try CitrationDatabase(at: directory.appending(path: "library.sqlite"))
+        let libraryID = try database.upsertLibrary(identity: ZoteroLibraryIdentity(type: "user", remoteID: 1))
+        let collections = try capturedObjects(filename: "collections.json")
+        let items = try capturedObjects(filename: "items.json")
+        let recorder = ObservationRecorder()
+        let observation = database.observeLibraryItems(
+            libraryID: libraryID,
+            onError: { error in
+                Task { await recorder.record(error: error) }
+            },
+            onChange: { snapshot in
+                Task { await recorder.record(snapshot: snapshot) }
+            }
+        )
+
+        while await recorder.snapshotCount == 0 {
+            try await Task.sleep(for: .milliseconds(5))
+        }
+        #expect(await recorder.snapshots == [[]])
+
+        try database.storeRemoteCollections(collections, libraryID: libraryID)
+        try database.storeRemoteItems(items, libraryID: libraryID)
+        while await recorder.snapshotCount < 2, await recorder.errorDescription == nil {
+            try await Task.sleep(for: .milliseconds(5))
+        }
+
+        observation.cancel()
+        #expect(await recorder.errorDescription == nil)
+        let snapshots = await recorder.snapshots
+        let updated = try #require(snapshots.last)
+        #expect(updated.count == items.count)
+        #expect(updated.map(\.title) == updated.map(\.title).sorted {
+            $0.localizedCaseInsensitiveCompare($1) != .orderedDescending
+        })
+    }
+
     // MARK: Private
 
     private static let requiredSchemaObjects: Set<String> = [
@@ -212,6 +264,8 @@ struct CitrationDatabaseTests {
         "collection_projections",
         "fulltext_content",
         "item_creators",
+        "item_fields",
+        "item_identifiers",
         "item_projections",
         "item_tags",
         "libraries",
@@ -239,5 +293,24 @@ struct CitrationDatabaseTests {
             [ZoteroRawObject].self,
             from: Data(contentsOf: fixtureDirectory().appending(path: filename))
         )
+    }
+}
+
+// MARK: - ObservationRecorder
+
+private actor ObservationRecorder {
+    private(set) var snapshots: [[ZoteroLibraryItemSummary]] = []
+    private(set) var errorDescription: String?
+
+    var snapshotCount: Int {
+        snapshots.count
+    }
+
+    func record(snapshot: [ZoteroLibraryItemSummary]) {
+        snapshots.append(snapshot)
+    }
+
+    func record(error: any Error) {
+        errorDescription = String(describing: error)
     }
 }

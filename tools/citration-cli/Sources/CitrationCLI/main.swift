@@ -85,7 +85,7 @@ struct CitrationCLI {
 
         print("-> swift build (citration CLI)")
         try runOrThrow(
-            ["swift", "build"],
+            ["swift", "build", "--disable-build-manifest-caching"],
             in: repoRoot.appendingPathComponent("tools/citration-cli", isDirectory: true)
         )
 

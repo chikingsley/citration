@@ -53,6 +53,12 @@ The existing suite contains several useful controlled doubles, but they are not 
 
 The legacy SwiftData tests use a real temporary on-disk store, and the JSON-backed note, collection, relationship, attachment, annotation, and reader-progress tests use real temporary files. They characterize data that step 3 must migrate, not the final architecture. Step 2 replaces persistence claims with captured Zotero fixtures in real temporary GRDB databases. Step 4 adds production transport plus read-only and disposable-write live gates. Step 6 uses real document files and the live annotation/attachment corpus. A test double remains acceptable for a small pure unit boundary, but its result will continue to be labeled unit evidence only.
 
+## Legacy Migration Inventory
+
+The pre-GRDB Mac application owns one SwiftData `items.store`, JSON files named `collections.json`, `notes.json`, `annotations.json`, `relationships.json`, and `reader-progress.json`, plus an `attachments` directory whose item folders contain imported files. The JSON files encode the corresponding CitrationCore collection, note, annotation, relationship, and reader-progress models. Attachment identity is derived from the legacy item UUID and local filename rather than a separate metadata file.
+
+A read-only inspection on 2026-07-10 found zero `ZITEMRECORD` rows, zero collections and memberships, zero notes, annotations, relationships, reader-progress records, and attachment files in the current Application Support library. One OCR cache result exists, but OCR cache and local provider credentials are application configuration/cache data rather than library records and are not migration inputs. Migration tests must still use populated real SwiftData, JSON, and file fixtures so the empty current profile cannot hide data-loss bugs.
+
 ## Fields Present In The Live Library
 
 The baseline includes the following non-empty Zotero fields and structures:

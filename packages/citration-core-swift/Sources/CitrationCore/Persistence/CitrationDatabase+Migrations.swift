@@ -221,6 +221,42 @@ extension CitrationDatabase {
             );
             """)
         }
+        migrator.registerMigration("v3_create_complete_item_field_projections") { database in
+            try database.execute(sql: """
+            CREATE TABLE item_fields (
+                library_id INTEGER NOT NULL REFERENCES libraries(id) ON DELETE CASCADE,
+                item_key TEXT NOT NULL,
+                field_name TEXT NOT NULL,
+                value_kind TEXT NOT NULL
+                    CHECK (value_kind IN ('null', 'boolean', 'integer', 'number', 'string', 'array', 'object')),
+                field_value BLOB NOT NULL,
+                text_value TEXT,
+                integer_value INTEGER,
+                number_value REAL,
+                boolean_value INTEGER CHECK (boolean_value IS NULL OR boolean_value IN (0, 1)),
+                PRIMARY KEY (library_id, item_key, field_name),
+                FOREIGN KEY (library_id, item_key)
+                    REFERENCES item_projections(library_id, item_key) ON DELETE CASCADE
+            ) WITHOUT ROWID;
+
+            CREATE INDEX item_fields_by_name_text
+                ON item_fields(library_id, field_name, text_value);
+
+            CREATE TABLE item_identifiers (
+                library_id INTEGER NOT NULL REFERENCES libraries(id) ON DELETE CASCADE,
+                item_key TEXT NOT NULL,
+                position INTEGER NOT NULL CHECK (position >= 0),
+                identifier_type TEXT NOT NULL,
+                identifier_value TEXT NOT NULL,
+                PRIMARY KEY (library_id, item_key, position),
+                FOREIGN KEY (library_id, item_key)
+                    REFERENCES item_projections(library_id, item_key) ON DELETE CASCADE
+            ) WITHOUT ROWID;
+
+            CREATE INDEX item_identifiers_by_value
+                ON item_identifiers(library_id, identifier_type, identifier_value);
+            """)
+        }
         return migrator
     }
 }

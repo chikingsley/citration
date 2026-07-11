@@ -114,6 +114,22 @@ public struct ZoteroProjectedAnnotation: Hashable, Sendable {
     public let positionJSON: String
 }
 
+// MARK: - ZoteroProjectedIdentifier
+
+public struct ZoteroProjectedIdentifier: Hashable, Sendable {
+    // MARK: Lifecycle
+
+    public init(type: String, value: String) {
+        self.type = type
+        self.value = value
+    }
+
+    // MARK: Public
+
+    public let type: String
+    public let value: String
+}
+
 // MARK: - ZoteroProjectedItem
 
 public struct ZoteroProjectedItem: Hashable, Sendable {
@@ -133,6 +149,8 @@ public struct ZoteroProjectedItem: Hashable, Sendable {
         language: String,
         rights: String,
         extra: String,
+        fields: [String: JSONValue],
+        identifiers: [ZoteroProjectedIdentifier],
         parentItemKey: String?,
         noteHTML: String?,
         creators: [ZoteroProjectedCreator],
@@ -154,6 +172,8 @@ public struct ZoteroProjectedItem: Hashable, Sendable {
         self.language = language
         self.rights = rights
         self.extra = extra
+        self.fields = fields
+        self.identifiers = identifiers
         self.parentItemKey = parentItemKey
         self.noteHTML = noteHTML
         self.creators = creators
@@ -178,6 +198,8 @@ public struct ZoteroProjectedItem: Hashable, Sendable {
     public let language: String
     public let rights: String
     public let extra: String
+    public let fields: [String: JSONValue]
+    public let identifiers: [ZoteroProjectedIdentifier]
     public let parentItemKey: String?
     public let noteHTML: String?
     public let creators: [ZoteroProjectedCreator]
@@ -185,4 +207,35 @@ public struct ZoteroProjectedItem: Hashable, Sendable {
     public let collectionKeys: [String]
     public let attachment: ZoteroProjectedAttachment?
     public let annotation: ZoteroProjectedAnnotation?
+}
+
+// MARK: - ZoteroLibraryItemSummary
+
+public struct ZoteroLibraryItemSummary: Hashable, Sendable {
+    // MARK: Lifecycle
+
+    public init(
+        key: String,
+        itemType: String,
+        title: String,
+        date: String,
+        publicationTitle: String,
+        parentItemKey: String?
+    ) {
+        self.key = key
+        self.itemType = itemType
+        self.title = title
+        self.date = date
+        self.publicationTitle = publicationTitle
+        self.parentItemKey = parentItemKey
+    }
+
+    // MARK: Public
+
+    public let key: String
+    public let itemType: String
+    public let title: String
+    public let date: String
+    public let publicationTitle: String
+    public let parentItemKey: String?
 }
