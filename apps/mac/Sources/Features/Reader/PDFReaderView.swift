@@ -57,7 +57,7 @@ struct PDFReaderView: NSViewRepresentable {
 
     let attachment: LocalAttachment
     let progress: ReaderProgress?
-    let annotations: [LibraryAnnotation]
+    let annotations: [SynchronizedLibraryAnnotation]
     let proxy: PDFViewProxy
     let onProgressChange: (ReaderProgress) -> Void
 
@@ -145,9 +145,12 @@ struct PDFReaderView: NSViewRepresentable {
     /// document. The file on disk is never modified; records are
     /// re-anchored by searching their selected text on the stored page.
     private func applyAnnotationsIfNeeded(in pdfView: PDFView, context: Context) {
-        let markings = annotations.filter { $0.kind != .note && $0.attachmentKey == attachment.objectKey }
+        let markings = annotations.filter {
+            $0.parentAttachmentIdentity.objectKey == attachment.objectKey
+                && $0.kind != .ink
+        }
         let annotationsToken = markings
-            .map { "\($0.id)|\($0.kind.rawValue)|\($0.color.rawValue)" }
+            .map { "\($0.identity.objectKey)|\($0.version)|\($0.positionJSON)|\($0.color)|\($0.comment)" }
             .sorted()
             .joined(separator: ",")
 
@@ -164,45 +167,99 @@ struct PDFReaderView: NSViewRepresentable {
         context.coordinator.renderedAnnotations = []
 
         for marking in markings {
-            guard
-                case let .page(pageNumber) = marking.location,
-                let selectedText = marking.selectedText?.bcTrimmedNonEmpty,
-                let page = document.page(at: min(max(pageNumber - 1, 0), document.pageCount - 1))
-            else {
-                continue
-            }
-
-            let matches = document.findString(selectedText, withOptions: [.caseInsensitive])
-            guard let match = matches.first(where: { $0.pages.contains(page) }) ?? matches.first else {
-                continue
-            }
-
-            let subtype: PDFAnnotationSubtype = marking.kind == .underline ? .underline : .highlight
-            for lineSelection in match.selectionsByLine() {
-                for linePage in lineSelection.pages {
-                    let bounds = lineSelection.bounds(for: linePage)
-                    guard !bounds.isEmpty else {
-                        continue
-                    }
-                    let pdfAnnotation = PDFAnnotation(bounds: bounds, forType: subtype, withProperties: nil)
-                    pdfAnnotation.color = marking.color.nsColor.withAlphaComponent(
-                        marking.kind == .underline ? 1.0 : 0.45
-                    )
-                    linePage.addAnnotation(pdfAnnotation)
-                    context.coordinator.renderedAnnotations.append(pdfAnnotation)
-                }
-            }
+            context.coordinator.renderedAnnotations += ZoteroPDFAnnotationRenderer.render(
+                marking,
+                in: document
+            )
         }
 
         context.coordinator.appliedAnnotationsToken = annotationsToken
     }
 }
 
+// MARK: - PDFAnnotationAnchor
+
+struct PDFAnnotationAnchor: Sendable {
+    // MARK: Internal
+
+    let pageIndex: Int
+    let pageLabel: String
+    let sortIndex: String
+    let positionJSON: String
+
+    static func note(for attachment: LocalAttachment, pageNumber: Int) -> PDFAnnotationAnchor? {
+        guard
+            let document = PDFDocument(url: attachment.localURL),
+            document.pageCount > 0,
+            let page = document.page(at: min(max(pageNumber - 1, 0), document.pageCount - 1))
+        else {
+            return nil
+        }
+        let pageIndex = document.index(for: page)
+        let pageBounds = page.bounds(for: .cropBox)
+        let size = 22.0
+        let rect = CGRect(
+            x: max(pageBounds.maxX - size - 20, pageBounds.minX),
+            y: max(pageBounds.maxY - size - 20, pageBounds.minY),
+            width: size,
+            height: size
+        )
+        return make(page: page, pageIndex: pageIndex, primaryRects: [rect], nextPageRects: [])
+    }
+
+    // MARK: Fileprivate
+
+    fileprivate static func make(
+        page: PDFPage,
+        pageIndex: Int,
+        primaryRects: [CGRect],
+        nextPageRects: [CGRect]
+    ) -> PDFAnnotationAnchor? {
+        guard let firstRect = primaryRects.first else {
+            return nil
+        }
+        var position: [String: JSONValue] = [
+            "pageIndex": .integer(Int64(pageIndex)),
+            "rects": .array(primaryRects.map(rectValue)),
+        ]
+        if !nextPageRects.isEmpty {
+            position["nextPageRects"] = .array(nextPageRects.map(rectValue))
+        }
+        guard
+            let positionData = try? ZoteroJSON.encode(.object(position)),
+            let positionJSON = String(data: positionData, encoding: .utf8)
+        else {
+            return nil
+        }
+        let characterIndex = page.characterIndex(at: CGPoint(x: firstRect.minX + 1, y: firstRect.midY))
+        let offset = characterIndex == NSNotFound ? 0 : max(characterIndex, 0)
+        let pageBounds = page.bounds(for: .cropBox)
+        let top = max(Int(floor(pageBounds.maxY - firstRect.maxY)), 0)
+        return PDFAnnotationAnchor(
+            pageIndex: pageIndex,
+            pageLabel: page.label ?? String(pageIndex + 1),
+            sortIndex: String(format: "%05d|%06d|%05d", pageIndex, offset, top),
+            positionJSON: positionJSON
+        )
+    }
+
+    // MARK: Private
+
+    private static func rectValue(_ rect: CGRect) -> JSONValue {
+        .array([
+            .number(rect.minX),
+            .number(rect.minY),
+            .number(rect.maxX),
+            .number(rect.maxY),
+        ])
+    }
+}
+
 // MARK: - PDFSelectionInfo
 
-struct PDFSelectionInfo {
-    var text: String
-    var pageNumber: Int
+struct PDFSelectionInfo: Sendable {
+    let text: String
+    let anchor: PDFAnnotationAnchor
 }
 
 // MARK: - PDFViewProxy
@@ -225,9 +282,40 @@ final class PDFViewProxy {
         }
 
         let index = document.index(for: page)
-        guard index != NSNotFound else {
+        let selectedPages = selection.pages
+        guard index != NSNotFound, selectedPages.count <= 2 else {
             return nil
         }
-        return PDFSelectionInfo(text: text, pageNumber: index + 1)
+        let selectionsByLine = selection.selectionsByLine()
+        let primaryRects = selectionsByLine.compactMap { line -> CGRect? in
+            guard line.pages.contains(page) else {
+                return nil
+            }
+            let bounds = line.bounds(for: page)
+            return bounds.isEmpty ? nil : bounds
+        }
+        let nextPageRects: [CGRect] = if selectedPages.count == 2 {
+            selectionsByLine.compactMap { line -> CGRect? in
+                let nextPage = selectedPages[1]
+                guard line.pages.contains(nextPage) else {
+                    return nil
+                }
+                let bounds = line.bounds(for: nextPage)
+                return bounds.isEmpty ? nil : bounds
+            }
+        } else {
+            []
+        }
+        guard
+            let anchor = PDFAnnotationAnchor.make(
+                page: page,
+                pageIndex: index,
+                primaryRects: primaryRects,
+                nextPageRects: nextPageRects
+            )
+        else {
+            return nil
+        }
+        return PDFSelectionInfo(text: text, anchor: anchor)
     }
 }

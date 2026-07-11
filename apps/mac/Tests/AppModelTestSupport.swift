@@ -11,7 +11,6 @@ func makeAppModel(
     providers: [any MetadataProvider] = [NoopMetadataProvider()],
     pdfDOIExtractor: any PDFDOIExtracting = NullPDFDOIExtractor(),
     attachmentStore: LocalAttachmentStore? = nil,
-    annotationStore: LocalAnnotationStore? = nil,
     readerProgressStore: LocalReaderProgressStore? = nil,
     ocrService: any OCRServicing = NullOCRService()
 ) -> AppModel {
@@ -39,7 +38,7 @@ func makeAppModel(
         citationFormatter: StubCitationFormatter(),
         storageConnectors: [],
         attachmentStore: attachmentStore ?? persistence,
-        annotationStore: annotationStore ?? persistence,
+        annotationStore: persistence,
         collectionStore: persistence,
         noteStore: persistence,
         relationshipStore: persistence,
@@ -98,15 +97,6 @@ struct StubOCRService: OCRServicing {
     }
 }
 
-func makeAnnotationStore() -> LocalAnnotationStore? {
-    try? LocalAnnotationStore(
-        storeURL: FileManager.default.temporaryDirectory
-            .appendingPathComponent("citration-appmodel-annotations")
-            .appendingPathComponent(UUID().uuidString)
-            .appendingPathExtension("json")
-    )
-}
-
 func makeReaderProgressStore() -> LocalReaderProgressStore? {
     try? LocalReaderProgressStore(
         storeURL: FileManager.default.temporaryDirectory
@@ -146,6 +136,12 @@ func makeAttachment(itemID: UUID, fileName: String, contentType: String) -> Loca
         size: 128,
         createdAt: Date(timeIntervalSince1970: 0)
     )
+}
+
+func realDocumentFixture(_ name: String) -> URL {
+    URL(fileURLWithPath: #filePath)
+        .deletingLastPathComponent()
+        .appending(path: "Fixtures/\(name)")
 }
 
 // MARK: - Waiting

@@ -62,6 +62,11 @@ public struct LegacyLibraryMigrator: Sendable {
             try database.resetLegacyImport(libraryID: libraryID)
             try database.storeLocalCollections(projection.collections, libraryID: libraryID)
             try database.storeLocalItems(projection.items, libraryID: libraryID)
+            try database.ensureAppIdentities(
+                collections: projection.collections,
+                items: projection.items,
+                libraryID: libraryID
+            )
             try database.storeLegacySupportState(
                 records: projection.records,
                 relationships: projection.relationships,

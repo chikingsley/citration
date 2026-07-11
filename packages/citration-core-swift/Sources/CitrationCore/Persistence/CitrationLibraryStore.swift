@@ -6,7 +6,7 @@ import GRDB
 public actor CitrationLibraryStore:
     BCItemStore,
     SynchronizedLibraryItemStoring,
-    LibraryAnnotationStoring,
+    SynchronizedLibraryAnnotationStoring,
     LibraryAttachmentStoring,
     LibraryCollectionStoring,
     SynchronizedLibraryNoteStoring,

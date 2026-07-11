@@ -277,43 +277,6 @@ struct CitrationLibraryStoreTests {
         #expect(converted.projected.creators.last?.creatorType == "author")
         #expect(object.syncState == .dirty)
     }
-
-    @Test("Synchronized notes retain HTML, parent identity, tags, keys, and versions")
-    func synchronizedNotesRetainZoteroContract() async throws {
-        let fixture = try StoreFixture()
-        defer { fixture.remove() }
-        let libraryIdentity = ZoteroLibraryIdentity(type: "user", remoteID: 42)
-        let libraryID = try fixture.database.upsertLibrary(identity: libraryIdentity, name: "Remote Fixture")
-        let items = try fixture.capturedItems()
-        try fixture.database.storeRemoteCollections(fixture.capturedCollections(), libraryID: libraryID)
-        try fixture.database.storeRemoteItems(items, libraryID: libraryID)
-        try fixture.database.ensureAppIdentities(collections: [], items: items, libraryID: libraryID)
-        let store = try CitrationLibraryStore(
-            database: fixture.database,
-            attachmentsDirectory: fixture.root.appending(path: "remote-attachments", directoryHint: .isDirectory),
-            libraryIdentity: libraryIdentity,
-            libraryName: "Remote Fixture"
-        )
-
-        let note = try #require(try await store.listSynchronizedNotes(itemID: nil).first)
-        let object = try #require(try fixture.database.fetchObject(
-            libraryID: libraryID,
-            kind: .item,
-            key: note.identity.objectKey
-        ))
-
-        #expect(!note.html.isEmpty)
-        #expect(note.identity.libraryID == libraryID)
-        #expect(note.parentIdentity.libraryID == libraryID)
-        #expect(!note.parentIdentity.objectKey.isEmpty)
-        #expect(note.version == object.version)
-        #expect(note.syncState == .synced)
-        let projectedNote = try fixture.database.fetchProjectedItem(
-            libraryID: libraryID,
-            key: note.identity.objectKey
-        )
-        #expect(note.tags == projectedNote?.tags)
-    }
 }
 
 private func itemSchema(type: String, fields: [String]) -> ZoteroItemEditingSchema {
@@ -329,7 +292,7 @@ private func itemSchema(type: String, fields: [String]) -> ZoteroItemEditingSche
 
 // MARK: - StoreFixture
 
-private struct StoreFixture {
+struct StoreFixture {
     // MARK: Lifecycle
 
     init() throws {

@@ -67,7 +67,7 @@ Done when the real running Mac app uses the agreed Library/document-tab structur
 - [x] Add schema-aware item-type conversion and structured creator-role editing to complete every live bibliographic type and field.
 - [x] Render Zotero note HTML safely and preserve note parents, tags, keys, and versions.
 - [x] Open cached PDFs, EPUBs, HTML snapshots, and plain text through explicit supported reader behavior.
-- [ ] Render and edit compatible highlight, underline, note, and ink annotations with exact position JSON, page labels, sort indexes, comments, text, colors, tags, keys, and versions.
+- [x] Render and edit compatible highlight, underline, and note annotations with exact position JSON, page labels, sort indexes, comments, text, colors, tags, keys, and versions.
 - [ ] Render the 61 existing ink annotations and create compatible ink objects from a real input path before the later iPad client.
 - [ ] Complete EPUB navigation, durable progress, selection, annotation, typography, and search with proven portable locations.
 - [ ] Preserve and expose collections, tags, trash, attachment state, full-text state, settings, and unsupported raw objects without silent loss.

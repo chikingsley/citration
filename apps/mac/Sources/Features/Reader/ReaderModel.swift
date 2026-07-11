@@ -7,7 +7,7 @@ import Observation
 final class ReaderModel {
     // MARK: Lifecycle
 
-    init(progressStore: any LibraryReaderProgressStoring, annotationStore: any LibraryAnnotationStoring) {
+    init(progressStore: any LibraryReaderProgressStoring, annotationStore: any SynchronizedLibraryAnnotationStoring) {
         self.progressStore = progressStore
         self.annotationStore = annotationStore
     }
@@ -16,11 +16,11 @@ final class ReaderModel {
 
     var activeAttachment: LocalAttachment?
     var progress: ReaderProgress?
-    var annotations: [LibraryAnnotation] = []
+    var annotations: [SynchronizedLibraryAnnotation] = []
     var noteDraft: String = ""
 
     let progressStore: any LibraryReaderProgressStoring
-    let annotationStore: any LibraryAnnotationStoring
+    let annotationStore: any SynchronizedLibraryAnnotationStoring
 
     func bind(context: any LibraryContext) {
         self.context = context
@@ -129,7 +129,7 @@ final class ReaderModel {
         }
 
         do {
-            annotations = try await annotationStore.listAnnotations(
+            annotations = try await annotationStore.listSynchronizedAnnotations(
                 itemID: activeAttachment.itemID,
                 attachmentKey: activeAttachment.objectKey
             )
@@ -150,14 +150,37 @@ final class ReaderModel {
             context?.statusMessage = "Open a document first"
             return
         }
+        guard activeAttachment.documentFormat == .pdf else {
+            context?.statusMessage = "Creating annotations is currently available for PDFs"
+            return
+        }
+        let pageNumber: Int = if case let .page(number) = progress?.location {
+            number
+        } else {
+            1
+        }
+        guard let anchor = PDFAnnotationAnchor.note(for: activeAttachment, pageNumber: pageNumber) else {
+            context?.statusMessage = "Failed to locate the current PDF page"
+            return
+        }
 
         Task {
             do {
-                _ = try await annotationStore.upsert(
-                    LibraryAnnotation(
-                        itemID: activeAttachment.itemID,
-                        attachmentKey: activeAttachment.objectKey,
-                        note: note
+                let annotationContext = try await annotationStore.annotationContext(
+                    itemID: activeAttachment.itemID,
+                    attachmentKey: activeAttachment.objectKey
+                )
+                _ = try await annotationStore.createSynchronizedAnnotation(
+                    SynchronizedLibraryAnnotationDraft(
+                        parentAttachmentIdentity: annotationContext.parentAttachmentIdentity,
+                        bibliographicItemIdentity: annotationContext.bibliographicItemIdentity,
+                        kind: .note,
+                        color: .yellow,
+                        pageLabel: anchor.pageLabel,
+                        sortIndex: anchor.sortIndex,
+                        text: "",
+                        comment: note,
+                        positionJSON: anchor.positionJSON
                     )
                 )
                 noteDraft = ""
@@ -171,8 +194,7 @@ final class ReaderModel {
 
     /// Persists a highlight or underline over the given selection.
     func addHighlight(
-        text: String,
-        pageNumber: Int,
+        selection: PDFSelectionInfo,
         color: AnnotationColor,
         kind: AnnotationKind = .highlight
     ) {
@@ -183,15 +205,21 @@ final class ReaderModel {
 
         Task {
             do {
-                _ = try await annotationStore.upsert(
-                    LibraryAnnotation(
-                        itemID: activeAttachment.itemID,
-                        attachmentKey: activeAttachment.objectKey,
+                let annotationContext = try await annotationStore.annotationContext(
+                    itemID: activeAttachment.itemID,
+                    attachmentKey: activeAttachment.objectKey
+                )
+                _ = try await annotationStore.createSynchronizedAnnotation(
+                    SynchronizedLibraryAnnotationDraft(
+                        parentAttachmentIdentity: annotationContext.parentAttachmentIdentity,
+                        bibliographicItemIdentity: annotationContext.bibliographicItemIdentity,
                         kind: kind,
-                        location: .page(pageNumber),
-                        selectedText: text,
-                        note: "",
-                        color: color
+                        color: color,
+                        pageLabel: selection.anchor.pageLabel,
+                        sortIndex: selection.anchor.sortIndex,
+                        text: selection.text,
+                        comment: "",
+                        positionJSON: selection.anchor.positionJSON
                     )
                 )
                 await refreshAnnotations()
@@ -206,10 +234,36 @@ final class ReaderModel {
         context?.statusMessage = "Select text to highlight"
     }
 
-    func removeAnnotation(_ annotation: LibraryAnnotation) {
+    func updateAnnotation(
+        _ annotation: SynchronizedLibraryAnnotation,
+        kind: AnnotationKind,
+        color: AnnotationColor,
+        comment: String,
+        tags: [ZoteroProjectedTag]
+    ) {
         Task {
             do {
-                try await annotationStore.remove(id: annotation.id)
+                _ = try await annotationStore.updateSynchronizedAnnotation(
+                    SynchronizedLibraryAnnotationUpdate(
+                        identity: annotation.identity,
+                        kind: kind,
+                        color: color,
+                        comment: comment,
+                        tags: tags
+                    )
+                )
+                await refreshAnnotations()
+                context?.statusMessage = "Updated annotation"
+            } catch {
+                context?.statusMessage = "Failed to update annotation"
+            }
+        }
+    }
+
+    func removeAnnotation(_ annotation: SynchronizedLibraryAnnotation) {
+        Task {
+            do {
+                try await annotationStore.remove(id: annotation.identity.appUUID)
                 await refreshAnnotations()
                 context?.statusMessage = "Removed note"
             } catch {

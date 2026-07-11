@@ -1,0 +1,125 @@
+import CitrationCore
+import PDFKit
+
+enum ZoteroPDFAnnotationRenderer {
+    // MARK: Internal
+
+    static func render(
+        _ annotation: SynchronizedLibraryAnnotation,
+        in document: PDFDocument
+    ) -> [PDFAnnotation] {
+        guard
+            let kind = annotation.kind,
+            kind != .ink,
+            let pageIndex = annotation.pageIndex,
+            pageIndex >= 0,
+            pageIndex < document.pageCount,
+            let page = document.page(at: pageIndex)
+        else {
+            return []
+        }
+
+        switch kind {
+        case .highlight,
+             .underline:
+            return renderMarking(annotation, kind: kind, page: page, document: document)
+        case .note:
+            return renderNote(annotation, page: page)
+        case .ink:
+            return []
+        }
+    }
+
+    // MARK: Private
+
+    private static func renderMarking(
+        _ annotation: SynchronizedLibraryAnnotation,
+        kind: AnnotationKind,
+        page: PDFPage,
+        document: PDFDocument
+    ) -> [PDFAnnotation] {
+        let primaryBounds = annotation.rects.map(rectangle)
+        let resolvedBounds = primaryBounds.isEmpty
+            ? fallbackBounds(for: annotation.text, on: page, in: document)
+            : primaryBounds
+        let subtype: PDFAnnotationSubtype = kind == .underline ? .underline : .highlight
+        var rendered = addMarkings(resolvedBounds, subtype: subtype, annotation: annotation, to: page)
+        if
+            let nextPageIndex = annotation.nextPageIndex,
+            nextPageIndex < document.pageCount,
+            let nextPage = document.page(at: nextPageIndex)
+        {
+            rendered += addMarkings(
+                annotation.nextPageRects.map(rectangle),
+                subtype: subtype,
+                annotation: annotation,
+                to: nextPage
+            )
+        }
+        return rendered
+    }
+
+    private static func addMarkings(
+        _ boundsList: [CGRect],
+        subtype: PDFAnnotationSubtype,
+        annotation: SynchronizedLibraryAnnotation,
+        to page: PDFPage
+    ) -> [PDFAnnotation] {
+        boundsList.compactMap { bounds in
+            guard !bounds.isEmpty else {
+                return nil
+            }
+            let rendered = PDFAnnotation(bounds: bounds, forType: subtype, withProperties: nil)
+            rendered.color = annotation.compatibilityAnnotation().color.nsColor.withAlphaComponent(
+                subtype == .underline ? 1 : 0.45
+            )
+            page.addAnnotation(rendered)
+            return rendered
+        }
+    }
+
+    private static func renderNote(
+        _ annotation: SynchronizedLibraryAnnotation,
+        page: PDFPage
+    ) -> [PDFAnnotation] {
+        guard let bounds = annotation.rects.first.map(rectangle), !bounds.isEmpty else {
+            return []
+        }
+        let rendered = PDFAnnotation(bounds: bounds, forType: .text, withProperties: nil)
+        rendered.contents = annotation.comment
+        rendered.color = annotation.compatibilityAnnotation().color.nsColor
+        page.addAnnotation(rendered)
+        return [rendered]
+    }
+
+    private static func fallbackBounds(
+        for text: String,
+        on page: PDFPage,
+        in document: PDFDocument
+    ) -> [CGRect] {
+        guard !text.isEmpty else {
+            return []
+        }
+        let matches = document.findString(text, withOptions: [.caseInsensitive])
+        guard let match = matches.first(where: { $0.pages.contains(page) }) else {
+            return []
+        }
+        return match.selectionsByLine().flatMap { selection in
+            selection.pages.compactMap { linePage in
+                guard linePage == page else {
+                    return nil
+                }
+                return selection.bounds(for: linePage)
+            }
+        }
+    }
+
+    private static func rectangle(_ rect: ZoteroAnnotationRect) -> CGRect {
+        CGRect(
+            x: rect.minX,
+            y: rect.minY,
+            width: rect.maxX - rect.minX,
+            height: rect.maxY - rect.minY
+        )
+    }
+}

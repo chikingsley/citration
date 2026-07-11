@@ -161,6 +161,7 @@ public enum ReaderLocation: Hashable, Codable, Sendable {
 
 public enum AnnotationKind: String, Codable, CaseIterable, Sendable {
     case highlight
+    case ink
     case note
     case underline
 }

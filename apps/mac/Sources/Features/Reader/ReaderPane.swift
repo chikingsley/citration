@@ -159,8 +159,7 @@ struct ReaderPane: View {
             return
         }
         reader.addHighlight(
-            text: selection.text,
-            pageNumber: selection.pageNumber,
+            selection: selection,
             color: color,
             kind: kind
         )

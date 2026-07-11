@@ -27,62 +27,40 @@ struct ItemAnnotationsInspectorSection: View {
     private var annotationEditor: some View {
         @Bindable var reader = model.reader
 
-        TextField("Add a note", text: $reader.noteDraft, axis: .vertical)
-            .lineLimit(2 ... 5)
-        Button("Add Note", systemImage: "note.text.badge.plus") {
-            model.reader.addNote()
+        if model.reader.activeAttachment?.documentFormat == .pdf {
+            TextField("Add a note", text: $reader.noteDraft, axis: .vertical)
+                .lineLimit(2 ... 5)
+            Button("Add Note", systemImage: "note.text.badge.plus") {
+                model.reader.addNote()
+            }
+            .disabled(model.reader.noteDraft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+        } else {
+            Text("Creating annotations is currently available for PDFs. EPUB annotations remain open.")
+                .foregroundStyle(.secondary)
         }
-        .disabled(model.reader.noteDraft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
 
         if model.reader.annotations.isEmpty {
             Text("No annotations for this attachment yet.")
                 .foregroundStyle(.secondary)
         } else {
             ForEach(model.reader.annotations) { annotation in
-                annotationRow(annotation)
+                AnnotationEditorRow(
+                    annotation: annotation,
+                    onSave: { kind, color, comment, tags in
+                        model.reader.updateAnnotation(
+                            annotation,
+                            kind: kind,
+                            color: color,
+                            comment: comment,
+                            tags: tags
+                        )
+                    },
+                    onRemove: {
+                        model.reader.removeAnnotation(annotation)
+                    }
+                )
+                .id(annotation)
             }
         }
-    }
-
-    private func annotationRow(_ annotation: LibraryAnnotation) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack {
-                if annotation.kind != .note {
-                    Circle()
-                        .fill(Color(nsColor: annotation.color.nsColor))
-                        .frame(width: 8, height: 8)
-                }
-                Text(annotationDetail(for: annotation))
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                Spacer()
-                Button {
-                    model.reader.removeAnnotation(annotation)
-                } label: {
-                    Image(systemName: "trash")
-                }
-                .buttonStyle(.borderless)
-                .help("Remove annotation")
-            }
-            Text(annotationBody(for: annotation))
-                .textSelection(.enabled)
-                .italic(annotation.kind != .note)
-        }
-        .padding(.vertical, 4)
-    }
-
-    private func annotationDetail(for annotation: LibraryAnnotation) -> String {
-        let date = annotation.updatedAt.formatted(date: .abbreviated, time: .omitted)
-        if let location = annotation.location, annotation.kind != .note {
-            return "\(location.displayLabel) · \(date)"
-        }
-        return date
-    }
-
-    private func annotationBody(for annotation: LibraryAnnotation) -> String {
-        if annotation.kind == .note {
-            return annotation.note
-        }
-        return annotation.selectedText ?? annotation.note
     }
 }

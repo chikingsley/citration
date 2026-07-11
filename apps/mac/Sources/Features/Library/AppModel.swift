@@ -17,7 +17,7 @@ final class AppModel {
         citationFormatter: any CitationFormattingEngine,
         storageConnectors: [StorageConnector],
         attachmentStore: any LibraryAttachmentStoring,
-        annotationStore: any LibraryAnnotationStoring,
+        annotationStore: any SynchronizedLibraryAnnotationStoring,
         collectionStore: any LibraryCollectionStoring,
         noteStore: any SynchronizedLibraryNoteStoring,
         relationshipStore: any LibraryRelationshipStoring,
@@ -113,7 +113,7 @@ final class AppModel {
     let database: CitrationDatabase
     let connectionManager: ZoteroConnectionManager
     let store: any SynchronizedLibraryItemStoring
-    let annotationStore: any LibraryAnnotationStoring
+    let annotationStore: any SynchronizedLibraryAnnotationStoring
     let readerProgressStore: any LibraryReaderProgressStoring
 
     // MARK: Observation
