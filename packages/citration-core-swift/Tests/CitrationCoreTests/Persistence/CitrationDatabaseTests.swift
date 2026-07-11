@@ -277,6 +277,7 @@ struct CitrationDatabaseTests {
         "legacy_records",
         "reader_state",
         "synchronization_failures",
+        "zotero_connection_profile",
         "zotero_objects",
     ]
 

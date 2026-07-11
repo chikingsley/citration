@@ -17,6 +17,8 @@ public actor CitrationLibraryStore:
     public init(
         database: CitrationDatabase,
         attachmentsDirectory: URL,
+        libraryIdentity: ZoteroLibraryIdentity = .init(type: "local", remoteID: 0),
+        libraryName: String = "Local Library",
         initialItems: [BCItem] = [],
         fileManager: FileManager = .default
     ) throws {
@@ -24,8 +26,8 @@ public actor CitrationLibraryStore:
         self.attachmentsDirectory = attachmentsDirectory
         self.fileManager = fileManager
         libraryID = try database.upsertLibrary(
-            identity: ZoteroLibraryIdentity(type: "local", remoteID: 0),
-            name: "Local Library"
+            identity: libraryIdentity,
+            name: libraryName
         )
         try fileManager.createDirectory(at: attachmentsDirectory, withIntermediateDirectories: true)
         for item in initialItems {

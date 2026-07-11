@@ -26,6 +26,68 @@ struct ZoteroSyncTests {
         #expect(connection.apiKey == "fixture-key")
     }
 
+    @Test("Connection profile and scoped credential persist separately in real files")
+    func connectionProfileAndCredentialPersistence() async throws {
+        let root = FileManager.default.temporaryDirectory
+            .appending(path: "citration-connection-test-\(UUID().uuidString)", directoryHint: .isDirectory)
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let database = try CitrationDatabase(at: root.appending(path: "library.sqlite"))
+        let credentialURL = root.appending(path: "private/zotero-device-api-key")
+        let credentialStore = FileZoteroCredentialStore(fileURL: credentialURL)
+        let profile = try ZoteroConnectionProfile(
+            serverURL: #require(URL(string: "https://sync.example.test/")),
+            userID: 42,
+            username: "fixture-user",
+            displayName: "Fixture Library",
+            canWrite: true,
+            canAccessFiles: true
+        )
+
+        try database.saveZoteroConnectionProfile(profile)
+        try await credentialStore.saveCredential(" fixture-device-key\n")
+
+        #expect(try database.loadZoteroConnectionProfile() == profile)
+        #expect(try await credentialStore.loadCredential() == "fixture-device-key")
+        let attributes = try FileManager.default.attributesOfItem(atPath: credentialURL.path)
+        let permissions = try #require(attributes[.posixPermissions] as? NSNumber)
+        #expect(permissions.intValue & 0o777 == 0o600)
+        let columns = try await database.databaseQueue.read { sqlDatabase in
+            try Row.fetchAll(sqlDatabase, sql: "PRAGMA table_info(zotero_connection_profile)")
+                .map { row -> String in row["name"] }
+        }
+        #expect(!columns.contains(where: { $0.localizedCaseInsensitiveContains("key") }))
+        #expect(!columns.contains(where: { $0.localizedCaseInsensitiveContains("credential") }))
+
+        let manager = ZoteroConnectionManager(database: database, credentialStore: credentialStore)
+        #expect(try await manager.configuration() == .connected(profile))
+        let activeConnection = try await manager.activeConnection()
+        #expect(activeConnection?.serverURL == profile.serverURL)
+        #expect(activeConnection?.apiKey == "fixture-device-key")
+
+        try await manager.useLocalOnly()
+        #expect(try await manager.configuration() == .localOnly)
+        #expect(try await manager.activeConnection() == nil)
+        #expect(!FileManager.default.fileExists(atPath: credentialURL.path))
+    }
+
+    @Test("Credential store rejects a group-readable device key file")
+    func credentialPermissionsAreEnforced() async throws {
+        let root = FileManager.default.temporaryDirectory
+            .appending(path: "citration-credential-test-\(UUID().uuidString)", directoryHint: .isDirectory)
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let credentialURL = root.appending(path: "zotero-device-api-key")
+        let store = FileZoteroCredentialStore(fileURL: credentialURL)
+
+        try await store.saveCredential("fixture-device-key")
+        try FileManager.default.setAttributes([.posixPermissions: 0o640], ofItemAtPath: credentialURL.path)
+
+        await #expect(throws: ZoteroCredentialStoreError.insecurePermissions) {
+            try await store.loadCredential()
+        }
+    }
+
     @Test("Deleted response tolerates omitted empty object kinds")
     func deletedResponseDefaultsMissingKinds() throws {
         let deletions = try JSONDecoder().decode(

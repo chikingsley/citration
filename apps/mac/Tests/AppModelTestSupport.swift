@@ -28,6 +28,12 @@ func makeAppModel(
     }
     return AppModel(
         database: database,
+        connectionManager: ZoteroConnectionManager(
+            database: database,
+            credentialStore: FileZoteroCredentialStore(
+                fileURL: makeTempDirectory().appending(path: "zotero-device-api-key")
+            )
+        ),
         store: persistence,
         metadataRegistry: MetadataProviderRegistry(providers: providers),
         citationFormatter: StubCitationFormatter(),

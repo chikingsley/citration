@@ -3,29 +3,7 @@ import Foundation
 
 extension AppModel {
     static func bootstrap() -> AppModel {
-        let database: CitrationDatabase
-        do {
-            database = try CitrationDatabase(at: CitrationCorePaths.defaultDatabaseURL())
-        } catch {
-            fatalError("Failed to initialize Citration database: \(error)")
-        }
-
-        let store: CitrationLibraryStore
-        do {
-            let applicationDirectory = try CitrationCorePaths.applicationSupportDirectory()
-            let migrator = LegacyLibraryMigrator(
-                database: database,
-                sources: LegacyLibrarySources(applicationDirectory: applicationDirectory),
-                backupDirectory: applicationDirectory.appending(path: "Legacy Backups", directoryHint: .isDirectory)
-            )
-            _ = try migrator.migrateSynchronously()
-            store = try CitrationLibraryStore(
-                database: database,
-                attachmentsDirectory: applicationDirectory.appending(path: "attachments", directoryHint: .isDirectory)
-            )
-        } catch {
-            fatalError("Failed to migrate and initialize the GRDB library: \(error)")
-        }
+        let (database, store) = makePersistence()
 
         let providers: [any MetadataProvider] = [
             ArXivMetadataProvider(),
@@ -42,10 +20,14 @@ extension AppModel {
         let storageConnectors = [
             StorageConnector(name: "Local Files", type: .local, bucket: "local", isDefault: true)
         ]
-        let sessionStore = KeychainAuthSessionStore()
+        let connectionManager = ZoteroConnectionManager(
+            database: database,
+            credentialStore: FileZoteroCredentialStore()
+        )
 
         return AppModel(
             database: database,
+            connectionManager: connectionManager,
             store: store,
             metadataRegistry: metadataRegistry,
             citationFormatter: citationFormatter,
@@ -56,10 +38,32 @@ extension AppModel {
             noteStore: store,
             relationshipStore: store,
             readerProgressStore: store,
-            sessionStore: sessionStore,
             pdfDOIExtractor: pdfDOIExtractor,
             relatedWorkDiscoveryProvider: relatedWorkDiscoveryProvider,
             openAlexAPIKeyStore: openAlexAPIKeyStore
         )
+    }
+
+    private static func makePersistence() -> (CitrationDatabase, CitrationLibraryStore) {
+        do {
+            let database = try CitrationDatabase(at: CitrationCorePaths.defaultDatabaseURL())
+            let applicationDirectory = try CitrationCorePaths.applicationSupportDirectory()
+            let migrator = LegacyLibraryMigrator(
+                database: database,
+                sources: LegacyLibrarySources(applicationDirectory: applicationDirectory),
+                backupDirectory: applicationDirectory.appending(path: "Legacy Backups", directoryHint: .isDirectory)
+            )
+            _ = try migrator.migrateSynchronously()
+            let connectionProfile = try database.loadZoteroConnectionProfile()
+            let store = try CitrationLibraryStore(
+                database: database,
+                attachmentsDirectory: applicationDirectory.appending(path: "attachments", directoryHint: .isDirectory),
+                libraryIdentity: connectionProfile?.libraryIdentity ?? .init(type: "local", remoteID: 0),
+                libraryName: connectionProfile?.displayName ?? "Local Library"
+            )
+            return (database, store)
+        } catch {
+            fatalError("Failed to migrate and initialize the GRDB library: \(error)")
+        }
     }
 }

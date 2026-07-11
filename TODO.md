@@ -37,8 +37,8 @@ Done when the existing local library opens from the final database, the verified
 
 ## 4. Implement Complete Zotero Synchronization
 
-- [ ] Remove custom account, Sign in with Apple, workspace, RevenueCat, and custom Citration API assumptions from the core/app boundary.
-- [ ] Add a compatible server connection profile using a server URL and scoped API/device key, while preserving local-only operation.
+- [x] Remove custom account, Sign in with Apple, workspace, RevenueCat, and custom Citration API assumptions from the core/app boundary.
+- [x] Add a compatible server connection profile using a server URL and scoped API/device key, while preserving local-only operation.
 - [x] Implement API key capability checks, pagination, retry/backoff, library/object versions, incremental `since` pulls, batch downloads, settings, full text, groups, and `/deleted` processing.
 - [ ] Implement local dirty tracking, version-zero creates, safe writes with version preconditions, deletion logs, pristine-base merges, explicit same-field conflicts, and failed-object retry queues.
 - [ ] Implement attachment metadata sync, lazy verified downloads, uploads, multipart uploads, registration, resumability, cache state, and cleanup.

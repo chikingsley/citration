@@ -28,6 +28,8 @@ All notable completed changes to Citration are tracked here. Entries are newest 
 - Added the production Zotero API v3 transport and read-only full-library sync engine with capability verification, paginated version discovery, bounded object/full-text downloads, retry/backoff handling, incremental pulls, settings, searches, groups, and deletion processing.
 - Added a credential-safe read-only sync CLI and verified the live self-hosted library into a fresh integrity-clean database at version 1291; a second incremental pull returned no changes.
 - Corrected the acceptance inventory to distinguish 128 bibliographic top-level items from 21 top-level attachments, matching the authoritative `/items/top` total of 149.
+- Removed the abandoned Citration account, Sign in with Apple, SaaS environment, workspace service, session, and Keychain stack from CitrationCore and the Mac app boundary.
+- Added a singleton Zotero connection profile backed by GRDB, a separate permission-checked 0600 device-key file, explicit local-only mode, remote-library store binding, and credential-safe configure/disconnect commands. Live acceptance verified the production key capabilities, absence of secret database columns, credential permissions, cached-library retention, and credential removal.
 
 ### Changed
 

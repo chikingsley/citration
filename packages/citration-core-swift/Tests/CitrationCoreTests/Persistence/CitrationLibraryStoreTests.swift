@@ -79,6 +79,29 @@ struct CitrationLibraryStoreTests {
         #expect(await store.listItems().map(\.id) == [fixture.items[1].id])
         #expect(try fixture.database.integrityCheck() == "ok")
     }
+
+    @Test("A store can bind to a synchronized remote library instead of the local-only library")
+    func remoteLibraryBinding() async throws {
+        let fixture = try StoreFixture()
+        defer { fixture.remove() }
+        let identity = ZoteroLibraryIdentity(type: "user", remoteID: 42)
+        let libraryID = try fixture.database.upsertLibrary(identity: identity, name: "Remote Fixture")
+        let capturedItems = try fixture.capturedItems()
+        let item = try #require(capturedItems.first { $0.itemType == "book" })
+        try fixture.database.storeRemoteCollections(fixture.capturedCollections(), libraryID: libraryID)
+        try fixture.database.storeRemoteItems([item], libraryID: libraryID)
+        try fixture.database.ensureAppIdentities(collections: [], items: [item], libraryID: libraryID)
+
+        let store = try CitrationLibraryStore(
+            database: fixture.database,
+            attachmentsDirectory: fixture.root.appending(path: "remote-attachments", directoryHint: .isDirectory),
+            libraryIdentity: identity,
+            libraryName: "Remote Fixture"
+        )
+
+        #expect(await store.listItems().count == 1)
+        #expect(await store.listItems().first?.title == item.data["title"]?.stringValue)
+    }
 }
 
 // MARK: - StoreFixture
@@ -127,6 +150,21 @@ private struct StoreFixture {
             database: database,
             attachmentsDirectory: root.appending(path: "attachments", directoryHint: .isDirectory)
         )
+    }
+
+    func capturedItems() throws -> [ZoteroRawObject] {
+        try capturedObjects(filename: "items.json")
+    }
+
+    func capturedCollections() throws -> [ZoteroRawObject] {
+        try capturedObjects(filename: "collections.json")
+    }
+
+    func capturedObjects(filename: String) throws -> [ZoteroRawObject] {
+        let fixtureURL = try #require(
+            Bundle.module.resourceURL?.appending(path: "Fixtures/Zotero/\(filename)")
+        )
+        return try JSONDecoder().decode([ZoteroRawObject].self, from: Data(contentsOf: fixtureURL))
     }
 
     func remove() {

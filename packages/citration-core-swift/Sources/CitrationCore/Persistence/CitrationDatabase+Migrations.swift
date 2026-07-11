@@ -329,6 +329,22 @@ extension CitrationDatabase {
             ) WITHOUT ROWID;
             """)
         }
+        migrator.registerMigration("v6_create_zotero_connection_profile") { database in
+            try database.execute(sql: """
+            CREATE TABLE zotero_connection_profile (
+                id INTEGER PRIMARY KEY CHECK (id = 1),
+                server_url TEXT NOT NULL,
+                user_id INTEGER NOT NULL CHECK (user_id >= 0),
+                username TEXT NOT NULL,
+                display_name TEXT NOT NULL,
+                can_write INTEGER NOT NULL CHECK (can_write IN (0, 1)),
+                can_access_files INTEGER NOT NULL CHECK (can_access_files IN (0, 1)),
+                library_id INTEGER NOT NULL REFERENCES libraries(id) ON DELETE CASCADE,
+                created_at REAL NOT NULL,
+                updated_at REAL NOT NULL
+            );
+            """)
+        }
         return migrator
     }
 }

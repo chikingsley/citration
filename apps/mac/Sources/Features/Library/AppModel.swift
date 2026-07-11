@@ -9,6 +9,7 @@ final class AppModel {
 
     init(
         database: CitrationDatabase,
+        connectionManager: ZoteroConnectionManager,
         store: any BCItemStore,
         metadataRegistry: MetadataProviderRegistry,
         citationFormatter: any CitationFormattingEngine,
@@ -19,17 +20,16 @@ final class AppModel {
         noteStore: any LibraryNoteStoring,
         relationshipStore: any LibraryRelationshipStoring,
         readerProgressStore: any LibraryReaderProgressStoring,
-        sessionStore: AuthSessionStore = InMemoryAuthSessionStore(),
         pdfDOIExtractor: any PDFDOIExtracting = NullPDFDOIExtractor(),
         relatedWorkDiscoveryProvider: any RelatedWorkDiscoveryProvider = NoopRelatedWorkDiscoveryProvider(),
         ocrService: any OCRServicing = MistralOCRService(),
         openAlexAPIKeyStore: any APIKeyStore = InMemoryAPIKeyStore()
     ) {
         self.database = database
+        self.connectionManager = connectionManager
         self.store = store
         citation = CitationModel(formatter: citationFormatter)
         self.storageConnectors = storageConnectors
-        self.sessionStore = sessionStore
         collections = CollectionsModel(store: collectionStore)
         notes = NotesModel(store: noteStore)
         relationships = RelationshipsModel(store: relationshipStore)
@@ -57,7 +57,6 @@ final class AppModel {
         importer.bind(context: self, collections: collections, reader: reader)
 
         Task {
-            await setupAuthServices()
             await settings.refreshKeyStatus()
             await collections.refresh()
             await refreshItems()
@@ -74,11 +73,6 @@ final class AppModel {
     var selectedItemID: UUID?
     var storageConnectors: [StorageConnector]
 
-    // Auth state
-    var isSignedIn: Bool = false
-    var currentUser: User?
-    private(set) var authService: AuthService?
-    private(set) var workspaceService: WorkspaceService?
     let collections: CollectionsModel
     let notes: NotesModel
     let tags: TagsModel = .init()
@@ -89,6 +83,7 @@ final class AppModel {
     let insights: InsightsModel
     let settings: OpenAlexSettingsModel
     let database: CitrationDatabase
+    let connectionManager: ZoteroConnectionManager
     let store: any BCItemStore
 
     var selectedItem: BCItem? {
@@ -96,24 +91,6 @@ final class AppModel {
             return nil
         }
         return items.first { $0.id == selectedItemID }
-    }
-
-    func signInWithApple(identityToken: String) async throws {
-        guard let authService else {
-            return
-        }
-        _ = try await authService.signInWithApple(identityToken: identityToken)
-        isSignedIn = true
-        currentUser = try? await authService.currentUser()
-    }
-
-    func signOut() async {
-        guard let authService else {
-            return
-        }
-        try? await authService.signOut()
-        isSignedIn = false
-        currentUser = nil
     }
 
     func refreshItems() async {
@@ -209,31 +186,6 @@ final class AppModel {
             await refreshItems()
             selectedItemID = selectedID
             statusMessage = status
-        }
-    }
-
-    // MARK: Private
-
-    private let sessionStore: AuthSessionStore
-
-    // MARK: - Auth
-
-    private func setupAuthServices() async {
-        guard let environment = try? SaaSEnvironment(rootDomain: "citration.app") else {
-            return
-        }
-
-        let apiClient = APIClient(environment: environment, sessionStore: sessionStore)
-        let authService = AuthService(apiClient: apiClient, sessionStore: sessionStore, environment: environment)
-        let workspaceService = WorkspaceService(apiClient: apiClient)
-
-        self.authService = authService
-        self.workspaceService = workspaceService
-
-        // Check for existing session
-        isSignedIn = await authService.hasValidSession()
-        if isSignedIn {
-            currentUser = try? await authService.currentUser()
         }
     }
 }
