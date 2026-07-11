@@ -29,6 +29,30 @@ The annotation set contains 61 ink annotations, 8 highlights, 8 underlines, and 
 
 Creator roles present in the library are author, editor, and contributor. Citration’s current `Creator` model does not retain the role and therefore cannot yet round-trip these records losslessly.
 
+## Captured Protocol Fixtures
+
+The repeatable safety net lives in `packages/citration-core-swift/Tests/CitrationCoreTests/Fixtures/Zotero`. It was captured through read-only Zotero API v3 requests against the acceptance library at version 1291. The fixture set includes the four live bibliographic item types, all live creator roles, parent and collection relationships, notes, PDF/EPUB/HTML attachments, all four live annotation types, settings, deletion state, and a complete full-text response.
+
+The capture command fetches private responses into memory and writes only sanitized JSON. It replaces titles, creator names, identifiers, URLs, tags, notes, annotation text and comments, filenames, library names, keys, and other arbitrary strings with deterministic fixtures. It retains JSON field names, numbers, booleans, nulls, item and creator types, MIME types, link modes, annotation colors, sort indexes, and exact annotation-position JSON. Zotero keys are remapped consistently so parent, collection, and deletion relationships remain testable. A final leak check rejects any replaced source string that survives as a fixture value.
+
+To refresh the fixtures, provide a read-only device/API key through the process environment. Do not add the key to this repository or pass it as a command-line argument.
+
+```sh
+export ZOTERO_API_KEY="<read-only key>"
+cd tools/citration-cli
+swift run citration capture-zotero-fixtures \
+  --server https://zotero.peacockery.studio \
+  --user-id 1
+```
+
+After a refresh, inspect `manifest.json`, run the CitrationCore tests, and review the structural diff before committing. A changed library version alone is not a reason to replace fixtures; refresh when the live contract gains a relevant object shape or a deliberate compatibility case.
+
+## Test Evidence Audit
+
+The existing suite contains several useful controlled doubles, but they are not product proof. `InMemoryItemStore` tests characterize ordering and update semantics only. App-model tests use that store plus stub metadata, OCR, PDF-extraction, citation, and HTTP collaborators to test orchestration deterministically. The authentication tests’ in-memory key/session stores test protocol behavior without exercising secure persistence. Those tests may remain while their behavior is still relevant, but they cannot establish database durability, migration safety, Zotero compatibility, attachment transfer, or live synchronization.
+
+The legacy SwiftData tests use a real temporary on-disk store, and the JSON-backed note, collection, relationship, attachment, annotation, and reader-progress tests use real temporary files. They characterize data that step 3 must migrate, not the final architecture. Step 2 replaces persistence claims with captured Zotero fixtures in real temporary GRDB databases. Step 4 adds production transport plus read-only and disposable-write live gates. Step 6 uses real document files and the live annotation/attachment corpus. A test double remains acceptable for a small pure unit boundary, but its result will continue to be labeled unit evidence only.
+
 ## Fields Present In The Live Library
 
 The baseline includes the following non-empty Zotero fields and structures:

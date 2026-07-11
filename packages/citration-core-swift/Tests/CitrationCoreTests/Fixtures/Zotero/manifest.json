@@ -1,0 +1,20 @@
+{
+  "apiVersion" : 3,
+  "capturedOn" : "2026-07-10",
+  "fixtureFiles" : [
+    "collections.json",
+    "deleted.json",
+    "fulltext.json",
+    "items.json",
+    "settings.json"
+  ],
+  "libraryVersion" : 1291,
+  "provenance" : "Read-only capture from https://zotero.peacockery.studio",
+  "sanitizerVersion" : 1,
+  "selection" : [
+    "Richest live object for each required item, attachment, and annotation type",
+    "Related parent objects required to preserve parent-child structure",
+    "Complete collection hierarchy plus one complete full-text response"
+  ],
+  "serverSoftware" : "Zotero Self-Host Server"
+}

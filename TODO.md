@@ -4,11 +4,11 @@ This is the only active task ledger. `AGENTS.md` defines the execution and evide
 
 ## 1. Capture The Real Contract And Safety Net
 
-- [ ] Capture sanitized fixtures from the live self-hosted library for each present top-level item type: book, preprint, journal article, and conference paper.
-- [ ] Capture representative collection, note, PDF attachment, EPUB attachment, HTML snapshot, full-text, setting, deletion, highlight, underline, annotation note, and ink objects.
-- [ ] Capture edge cases for creator roles, uncommon live metadata fields, parent/child relationships, tags, collection membership, and unknown fields.
+- [x] Capture sanitized fixtures from the live self-hosted library for each present top-level item type: book, preprint, journal article, and conference paper.
+- [x] Capture representative collection, note, PDF attachment, EPUB attachment, HTML snapshot, full-text, setting, deletion, highlight, underline, annotation note, and ink objects.
+- [x] Capture edge cases for creator roles, uncommon live metadata fields, parent/child relationships, tags, collection membership, and unknown fields.
 - [ ] Add round-trip tests proving every fixture decodes, persists, reloads, and re-encodes without losing compatibility data.
-- [ ] Record fixture provenance, sanitization rules, server/schema version, and a reproducible refresh procedure without storing credentials or private content.
+- [x] Record fixture provenance, sanitization rules, server/schema version, and a reproducible refresh procedure without storing credentials or private content.
 - [ ] Audit the existing test suite and replace mock/in-memory product claims with real fixtures, real temporary databases, real files, and explicit live acceptance gates.
 
 Done when the real library contract—not `BCItem` or an invented schema—determines the implementation and the safety net can detect dropped fields or altered object structure.

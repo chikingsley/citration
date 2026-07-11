@@ -64,6 +64,9 @@ struct CitrationCLI {
         case "openalex-smoke":
             try await openAlexSmoke(arguments: Array(arguments.dropFirst()))
 
+        case "capture-zotero-fixtures":
+            try await captureZoteroFixtures(arguments: Array(arguments.dropFirst()))
+
         default:
             throw NSError(
                 domain: "CitrationCLI",
@@ -142,6 +145,7 @@ struct CitrationCLI {
           cd tools/citration-cli && swift run citration openalex-key import-env
           cd tools/citration-cli && swift run citration openalex-key clear
           cd tools/citration-cli && swift run citration openalex-smoke <doi>
+          cd tools/citration-cli && swift run citration capture-zotero-fixtures [--server <url>] [--user-id <id>]
         """)
     }
 

@@ -1,0 +1,173 @@
+[
+  {
+    "data" : {
+      "key" : "A0000029",
+      "name" : "Sanitized Library",
+      "parentCollection" : false,
+      "relations" : {
+
+      },
+      "version" : 1058
+    },
+    "key" : "A0000029",
+    "meta" : {
+      "numCollections" : 0,
+      "numItems" : 5
+    },
+    "version" : 1058
+  },
+  {
+    "data" : {
+      "key" : "A0000014",
+      "name" : "Sanitized Library",
+      "parentCollection" : false,
+      "relations" : {
+
+      },
+      "version" : 1057
+    },
+    "key" : "A0000014",
+    "meta" : {
+      "numCollections" : 0,
+      "numItems" : 28
+    },
+    "version" : 1057
+  },
+  {
+    "data" : {
+      "key" : "A0000030",
+      "name" : "Sanitized Library",
+      "parentCollection" : false,
+      "relations" : {
+
+      },
+      "version" : 1061
+    },
+    "key" : "A0000030",
+    "meta" : {
+      "numCollections" : 0,
+      "numItems" : 9
+    },
+    "version" : 1061
+  },
+  {
+    "data" : {
+      "key" : "A0000011",
+      "name" : "Sanitized Library",
+      "parentCollection" : false,
+      "relations" : {
+
+      },
+      "version" : 1056
+    },
+    "key" : "A0000011",
+    "meta" : {
+      "numCollections" : 0,
+      "numItems" : 55
+    },
+    "version" : 1056
+  },
+  {
+    "data" : {
+      "key" : "A0000023",
+      "name" : "Sanitized Library",
+      "parentCollection" : false,
+      "relations" : {
+
+      },
+      "version" : 1062
+    },
+    "key" : "A0000023",
+    "meta" : {
+      "numCollections" : 0,
+      "numItems" : 13
+    },
+    "version" : 1062
+  },
+  {
+    "data" : {
+      "key" : "A0000031",
+      "name" : "Sanitized Library",
+      "parentCollection" : false,
+      "relations" : {
+
+      },
+      "version" : 1063
+    },
+    "key" : "A0000031",
+    "meta" : {
+      "numCollections" : 0,
+      "numItems" : 49
+    },
+    "version" : 1063
+  },
+  {
+    "data" : {
+      "key" : "A0000032",
+      "name" : "Sanitized Library",
+      "parentCollection" : false,
+      "relations" : {
+
+      },
+      "version" : 1060
+    },
+    "key" : "A0000032",
+    "meta" : {
+      "numCollections" : 0,
+      "numItems" : 11
+    },
+    "version" : 1060
+  },
+  {
+    "data" : {
+      "key" : "A0000019",
+      "name" : "Sanitized Library",
+      "parentCollection" : false,
+      "relations" : {
+
+      },
+      "version" : 1055
+    },
+    "key" : "A0000019",
+    "meta" : {
+      "numCollections" : 0,
+      "numItems" : 16
+    },
+    "version" : 1055
+  },
+  {
+    "data" : {
+      "deleted" : true,
+      "key" : "A0000033",
+      "name" : "Sanitized Library",
+      "parentCollection" : false,
+      "relations" : {
+
+      },
+      "version" : 1059
+    },
+    "key" : "A0000033",
+    "meta" : {
+      "numCollections" : 0,
+      "numItems" : 12
+    },
+    "version" : 1059
+  },
+  {
+    "data" : {
+      "key" : "A0000017",
+      "name" : "Sanitized Library",
+      "parentCollection" : false,
+      "relations" : {
+
+      },
+      "version" : 1054
+    },
+    "key" : "A0000017",
+    "meta" : {
+      "numCollections" : 0,
+      "numItems" : 55
+    },
+    "version" : 1054
+  }
+]

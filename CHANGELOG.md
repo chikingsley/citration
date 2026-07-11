@@ -9,6 +9,9 @@ All notable completed changes to Citration are tracked here. Entries are newest 
 - Added a privacy-conscious inventory of the live Zotero Self-Host library as the synchronization acceptance baseline.
 - Added explicit lossless compatibility requirements for items, creators, notes, attachments, annotations, full text, settings, and deletions.
 - Added a root agent execution baseline covering architecture invariants, ordered work, evidence layers, real-test requirements, build cadence, UI boundaries, and commit discipline.
+- Added sanitized API v3 fixtures captured read-only from the live version-1291 library, including all current item, creator, attachment, annotation, collection, setting, deletion, and full-text shapes.
+- Added a lossless JSON boundary and structural round-trip tests so unknown Zotero fields survive decoding and re-encoding.
+- Added a Swift fixture-capture command with deterministic relationship-preserving sanitization and a private-string leak check.
 
 ### Changed
 

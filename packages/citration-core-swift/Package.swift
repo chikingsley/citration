@@ -11,6 +11,10 @@ let package = Package(
     ],
     targets: [
         .target(name: "CitrationCore"),
-        .testTarget(name: "CitrationCoreTests", dependencies: ["CitrationCore"]),
+        .testTarget(
+            name: "CitrationCoreTests",
+            dependencies: ["CitrationCore"],
+            resources: [.copy("Fixtures")]
+        ),
     ]
 )

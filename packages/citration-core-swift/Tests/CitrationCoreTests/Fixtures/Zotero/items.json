@@ -1,0 +1,1971 @@
+[
+  {
+    "data" : {
+      "dateAdded" : "2024-01-01T12:00:00Z",
+      "dateModified" : "2024-01-02T12:00:00Z",
+      "itemType" : "note",
+      "key" : "A0000001",
+      "note" : "fixture-note-1",
+      "parentItem" : "A0000002",
+      "relations" : {
+
+      },
+      "tags" : [
+
+      ],
+      "version" : 305
+    },
+    "key" : "A0000001",
+    "library" : {
+      "id" : 1,
+      "links" : {
+        "alternate" : {
+          "href" : "https://example.invalid/fixture/2",
+          "type" : "text/html"
+        }
+      },
+      "name" : "Sanitized Library",
+      "type" : "user"
+    },
+    "links" : {
+      "alternate" : {
+        "href" : "https://example.invalid/fixture/3",
+        "type" : "text/html"
+      },
+      "self" : {
+        "href" : "https://example.invalid/fixture/4",
+        "type" : "application/json"
+      }
+    },
+    "meta" : {
+      "numChildren" : 0
+    },
+    "version" : 305
+  },
+  {
+    "data" : {
+      "annotationColor" : "#ffd400",
+      "annotationComment" : "",
+      "annotationPageLabel" : "1",
+      "annotationPosition" : "{\"paths\":[[379.298,332.726,378.005,332.726,377.653,332.596,377.457,332.473,377.277,332.302,377.128,332.102,376.956,331.825,376.807,331.472,376.485,330.547,376.282,329.399,376.211,328.098,376.211,326.172,376.235,325.648,376.36,325.201,376.509,324.8,376.681,324.447,376.909,324.123,377.104,323.97,377.481,323.847,377.849,323.847,378.201,323.947,378.476,324.4,378.624,324.671,378.773,325.001,378.899,325.324,379.275,326.496,379.494,327.374,379.596,328.174,379.62,328.551,379.62,330,379.471,330.5,379.298,330.771,379.118,330.901,379.071,330.671,379.071,329.446,379.095,329.075,379.173,328.722,379.369,327.974,379.471,327.674,379.596,327.374,379.698,327.097,379.941,326.649,380.09,326.449,380.34,326.249],[384.101,327.45,384.078,327.15,383.929,326.797,383.804,326.549,383.553,325.972,383.404,325.695,383.302,325.448,383.004,324.871,382.902,325.271,382.902,326.473,382.934,326.973,383.028,327.421,383.404,328.651,383.678,329.399,383.804,329.676,383.952,329.947,384.25,330.4,384.626,330.771,384.822,330.871,385.049,330.948,385.269,331.001,385.519,331.048,385.864,331.172],[389.978,329.776,389.727,329.923,389.476,330.047,389.249,330.147,388.975,330.2,388.63,330.223,388.309,329.9,388.011,329.275,387.807,328.551,387.737,328.174,387.682,327.35,387.682,326.072,387.737,325.672,387.862,325.324,388.011,325.024,388.129,324.7,388.285,324.5,388.583,324.27,388.857,324.247,389.1,324.247,389.304,324.624,389.453,325.224,389.602,325.949,389.649,326.349,389.946,327.974,390.025,328.322,390.126,328.999,390.15,329.299,390.197,329.546,390.22,329.823,390.299,330.076,390.471,329.676,390.722,326.749,390.824,320.596,390.745,320.049,390.62,319.548,390.471,319.148,390.15,318.471,389.899,318.247,389.649,318.323,389.649,318.571,389.625,318.895,389.625,319.748,389.602,320.296,389.453,320.95],[393.057,331.101,393.057,329.947,393.112,329.175,393.261,327.951,393.331,327.55,393.386,327.097,393.456,326.225,393.511,325.896,393.66,326.096,393.731,326.396,393.785,326.749,393.88,327.15,393.958,327.574,394.083,328.074,394.154,328.551,394.357,329.546,394.483,330.023,394.577,330.5,394.702,331.024,394.953,331.749,395.078,332.049,395.172,332.302,395.423,332.596,395.721,332.302,395.799,331.925,395.901,330.971,395.972,329.399,395.972,326.172,395.995,326.549,396.05,326.85,396.097,327.197,396.175,327.574,396.324,328.475,396.622,329.776,396.747,330.147,397.045,330.824,397.17,331.048,397.39,331.301,397.617,331.325,397.836,331.201,398.04,330.671,398.236,330.023,398.361,329.676,398.44,329.346,398.534,329.046,398.635,328.799,398.761,328.551,399.035,328.174,399.333,327.974,399.607,327.921,399.858,327.821],[401.049,331.401,401.049,329.399,401.127,328.575,401.299,328.822,401.37,329.699,401.37,334.051,401.401,334.422,401.472,334.651,401.644,334.899,401.918,334.875,402.02,334.622,402.122,334.322,402.373,332.997,402.522,331.572,402.569,330.624,402.647,330.1,402.718,328.875,402.765,328.575,402.796,328.298,402.843,328.051,403.07,328.151,403.164,328.451,403.517,329.776,404.034,331.501,404.214,332.025,404.582,332.973,404.958,333.727,405.084,333.927,405.335,334.074,405.632,333.827,405.726,333.55,405.805,333.227,405.852,332.85,405.93,332.473,405.953,332.102,406.032,331.301,406.032,329.099,405.953,328.751],[411.775,331.148,411.556,331.225,411.352,331.325,411.775,331.372,412.128,331.372,412.551,331.401,413.123,331.601],[421.686,332.873,421.686,332.526,421.632,331.825,421.585,331.448,421.506,330.2,421.506,329.323,421.632,329.699,421.71,330,421.882,330.771,422.682,333.727,422.776,334.222,422.901,334.675,423.003,335.123,423.152,335.599,423.402,336.277,423.528,336.524,423.778,336.777,424.021,336.824,424.225,336.477,424.319,336.147,424.546,335.022,424.593,334.622,424.742,333.827,424.797,333.45,424.899,333.026,424.969,332.673,425.016,332.349,425.095,332.049,425.142,331.772,425.22,331.472,425.322,331.172,425.518,331.048,425.643,331.425,425.792,332.025,425.917,332.396,426.011,332.773,426.137,333.15,426.662,334.275,427.061,334.922,427.257,335.123,427.461,335.299,427.884,335.399,428.103,335.399,428.48,335.176,428.675,334.852,428.824,334.475,429.153,333.574,429.279,333.126,429.671,331.172,429.827,330.824],[431.269,335.276,431.269,334.822,431.394,333.274,431.394,332.926,431.418,332.626,431.418,332.349,431.441,332.125,431.441,331.802,431.441,332.797,431.316,333.297],[430.822,337.148,430.619,338.073,430.548,338.549,430.517,338.873,430.517,339.427,430.72,339.574,431.042,339.574,431.52,339.403,431.817,339.203,432.037,338.95,432.209,338.573,432.483,337.825,432.562,337.525,432.789,336.877,432.883,336.5,433.032,336.076,433.236,335.223,433.306,334.799,433.408,334.351,433.58,332.85,433.635,331.872,433.635,331.448,433.659,331.001,433.659,330.4,433.659,330.724,433.706,331.071,434.231,333.527,434.301,334.027,434.403,334.498,434.575,335.452,434.677,335.823,434.873,336.377,435.1,336.648,435.375,336.701,435.476,336.477,435.57,335.8,435.649,335.376,435.672,334.922,435.719,334.475,435.751,333.998,435.845,333.126,435.993,332.273,436.174,331.625,436.37,331.272],[438.657,335.976,438.532,335.676,438.438,335.476,438.336,335.099,438.313,334.852,438.313,333.227,438.36,332.85,438.438,332.549,438.634,332.726,438.634,334.074,437.866,338.173,437.388,340.398,437.365,340.628,437.639,340.451,437.764,340.198,438.14,339.574],[441.071,335.499,441.071,334.622,441.047,334.351,441,334.027,440.953,333.55,440.953,332.873,441.047,333.174,441.071,333.427,441.149,333.727,441.196,334.051,441.423,335.199,441.525,335.623,441.596,336.047,441.823,336.901,442.066,337.548,442.246,337.802,442.442,338.025,442.716,338.302,442.99,338.449,443.288,338.526,443.586,338.549,443.86,338.549,444.134,338.473,444.385,338.249,444.581,337.972,444.73,337.625,444.933,336.877,444.98,336.477,445.059,336.076,445.153,334.822,445.153,333.927,445.027,334.375,445.027,334.722,445.059,335.123,445.129,335.552,445.458,336.977,445.78,337.902,445.928,338.273,446.101,338.602,446.399,339.074,446.547,339.25,446.822,339.303,446.971,338.85,447.049,338.526,447.096,338.173,447.174,337.772,447.198,337.378,447.3,336.547,447.472,335.452,447.543,335.123,447.723,334.752],[448.843,338.349,448.569,337.725,448.538,337.501,448.514,337.225,448.514,336.648,448.569,336.324,448.741,336.023,449.164,335.452,449.384,335.252,449.611,335.075,450.081,334.852,450.308,334.799,450.559,334.775,450.982,334.775,451.178,334.875,451.382,335.075,451.578,335.299,451.773,335.576,452.079,336.124,452.197,336.424,452.275,336.701,452.4,337.024,452.447,337.278,452.573,337.625],[453.348,337.378,453.348,335.423,453.568,335.476,453.67,335.723,453.795,335.976,453.92,336.277,455.362,339.103,455.581,339.45,456.004,340.075,456.357,340.498,456.553,340.675,456.827,340.699,457.078,340.298,457.203,339.927,457.305,339.427,457.454,338.326,457.626,336.2,457.626,334.222,457.775,334.675,457.901,334.952,458.496,336.547,458.817,337.478,459.193,338.373,459.421,338.85,459.64,339.203,459.844,339.497,460.063,339.751,460.267,339.898,460.486,339.998,460.737,340.027,461.113,339.927,461.285,339.651,461.458,339.303,461.732,338.449,461.881,337.077,462.03,335.022,462.085,334.651]],\"width\":0.6,\"pageIndex\":31}",
+      "annotationSortIndex" : "00031|001294|00459",
+      "annotationType" : "ink",
+      "dateAdded" : "2024-01-03T12:00:00Z",
+      "dateModified" : "2024-01-04T12:00:00Z",
+      "itemType" : "annotation",
+      "key" : "A0000003",
+      "parentItem" : "A0000004",
+      "relations" : {
+
+      },
+      "tags" : [
+
+      ],
+      "version" : 1103
+    },
+    "key" : "A0000003",
+    "library" : {
+      "id" : 1,
+      "links" : {
+        "alternate" : {
+          "href" : "https://example.invalid/fixture/5",
+          "type" : "text/html"
+        }
+      },
+      "name" : "Sanitized Library",
+      "type" : "user"
+    },
+    "links" : {
+      "alternate" : {
+        "href" : "https://example.invalid/fixture/6",
+        "type" : "text/html"
+      },
+      "self" : {
+        "href" : "https://example.invalid/fixture/7",
+        "type" : "application/json"
+      }
+    },
+    "meta" : {
+      "numChildren" : 0
+    },
+    "version" : 1103
+  },
+  {
+    "data" : {
+      "accessDate" : "2024-01-05T12:00:00Z",
+      "charset" : "utf-8",
+      "contentType" : "text/html",
+      "dateAdded" : "2024-01-06T12:00:00Z",
+      "dateModified" : "2024-01-07T12:00:00Z",
+      "filename" : "fixture-document.html",
+      "itemType" : "attachment",
+      "key" : "A0000005",
+      "linkMode" : "imported_url",
+      "md5" : "00000000000000000000000000000000",
+      "mtime" : 1742211815420,
+      "note" : "",
+      "parentItem" : "A0000006",
+      "relations" : {
+
+      },
+      "tags" : [
+
+      ],
+      "title" : "fixture-title-8",
+      "url" : "https://example.invalid/fixture/9",
+      "version" : 515
+    },
+    "key" : "A0000005",
+    "library" : {
+      "id" : 1,
+      "links" : {
+        "alternate" : {
+          "href" : "https://example.invalid/fixture/10",
+          "type" : "text/html"
+        }
+      },
+      "name" : "Sanitized Library",
+      "type" : "user"
+    },
+    "links" : {
+      "alternate" : {
+        "href" : "https://example.invalid/fixture/11",
+        "type" : "text/html"
+      },
+      "self" : {
+        "href" : "https://example.invalid/fixture/12",
+        "type" : "application/json"
+      }
+    },
+    "meta" : {
+      "numChildren" : 0
+    },
+    "version" : 515
+  },
+  {
+    "data" : {
+      "annotationColor" : "#5fb236",
+      "annotationComment" : "fixture-annotationcomment-13",
+      "annotationPageLabel" : "1",
+      "annotationPosition" : "{\"pageIndex\":18,\"rects\":[[259.98,474.89,317.304,485.69]]}",
+      "annotationSortIndex" : "00018|002008|00356",
+      "annotationText" : "fixture-annotationtext-14",
+      "annotationType" : "underline",
+      "dateAdded" : "2024-01-08T12:00:00Z",
+      "dateModified" : "2024-01-09T12:00:00Z",
+      "itemType" : "annotation",
+      "key" : "A0000007",
+      "parentItem" : "A0000008",
+      "relations" : {
+
+      },
+      "tags" : [
+
+      ],
+      "version" : 864
+    },
+    "key" : "A0000007",
+    "library" : {
+      "id" : 1,
+      "links" : {
+        "alternate" : {
+          "href" : "https://example.invalid/fixture/15",
+          "type" : "text/html"
+        }
+      },
+      "name" : "Sanitized Library",
+      "type" : "user"
+    },
+    "links" : {
+      "alternate" : {
+        "href" : "https://example.invalid/fixture/16",
+        "type" : "text/html"
+      },
+      "self" : {
+        "href" : "https://example.invalid/fixture/17",
+        "type" : "application/json"
+      }
+    },
+    "meta" : {
+      "numChildren" : 0
+    },
+    "version" : 864
+  },
+  {
+    "data" : {
+      "accessDate" : "",
+      "charset" : "",
+      "contentType" : "application/epub+zip",
+      "dateAdded" : "2024-01-10T12:00:00Z",
+      "dateModified" : "2024-01-11T12:00:00Z",
+      "filename" : "fixture-document.epub",
+      "itemType" : "attachment",
+      "key" : "A0000009",
+      "linkMode" : "imported_file",
+      "md5" : "00000000000000000000000000000000",
+      "mtime" : 1777722550000,
+      "note" : "",
+      "parentItem" : "A0000010",
+      "relations" : {
+
+      },
+      "tags" : [
+
+      ],
+      "title" : "fixture-title-18",
+      "url" : "",
+      "version" : 569
+    },
+    "key" : "A0000009",
+    "library" : {
+      "id" : 1,
+      "links" : {
+        "alternate" : {
+          "href" : "https://example.invalid/fixture/19",
+          "type" : "text/html"
+        }
+      },
+      "name" : "Sanitized Library",
+      "type" : "user"
+    },
+    "links" : {
+      "alternate" : {
+        "href" : "https://example.invalid/fixture/20",
+        "type" : "text/html"
+      },
+      "self" : {
+        "href" : "https://example.invalid/fixture/21",
+        "type" : "application/json"
+      }
+    },
+    "meta" : {
+      "numChildren" : 0
+    },
+    "version" : 569
+  },
+  {
+    "data" : {
+      "accessDate" : "",
+      "charset" : "",
+      "collections" : [
+        "A0000011"
+      ],
+      "contentType" : "application/pdf",
+      "dateAdded" : "2024-01-12T12:00:00Z",
+      "dateModified" : "2024-01-13T12:00:00Z",
+      "filename" : "fixture-document.pdf",
+      "itemType" : "attachment",
+      "key" : "A0000012",
+      "linkMode" : "imported_file",
+      "md5" : "00000000000000000000000000000000",
+      "mtime" : 1777719336000,
+      "note" : "",
+      "relations" : {
+
+      },
+      "tags" : [
+
+      ],
+      "title" : "fixture-title-22",
+      "url" : "",
+      "version" : 580
+    },
+    "key" : "A0000012",
+    "library" : {
+      "id" : 1,
+      "links" : {
+        "alternate" : {
+          "href" : "https://example.invalid/fixture/23",
+          "type" : "text/html"
+        }
+      },
+      "name" : "Sanitized Library",
+      "type" : "user"
+    },
+    "links" : {
+      "alternate" : {
+        "href" : "https://example.invalid/fixture/24",
+        "type" : "text/html"
+      },
+      "self" : {
+        "href" : "https://example.invalid/fixture/25",
+        "type" : "application/json"
+      }
+    },
+    "meta" : {
+      "numChildren" : 0
+    },
+    "version" : 580
+  },
+  {
+    "data" : {
+      "annotationColor" : "#ffd400",
+      "annotationComment" : "fixture-annotationcomment-26",
+      "annotationPageLabel" : "1",
+      "annotationPosition" : "{\"pageIndex\":35,\"rects\":[[407.567,484.864,515.048,494.827],[134.047,472.909,515.063,482.872],[134.087,460.954,515.122,470.917],[134.097,448.998,515.152,458.961],[134.097,437.043,515.11,447.006],[134.087,425.088,515.062,435.051],[134.087,413.133,347.887,423.096]]}",
+      "annotationSortIndex" : "00035|000575|00297",
+      "annotationText" : "fixture-annotationtext-27",
+      "annotationType" : "highlight",
+      "dateAdded" : "2024-01-14T12:00:00Z",
+      "dateModified" : "2024-01-15T12:00:00Z",
+      "itemType" : "annotation",
+      "key" : "A0000013",
+      "parentItem" : "A0000004",
+      "relations" : {
+
+      },
+      "tags" : [
+
+      ],
+      "version" : 458
+    },
+    "key" : "A0000013",
+    "library" : {
+      "id" : 1,
+      "links" : {
+        "alternate" : {
+          "href" : "https://example.invalid/fixture/28",
+          "type" : "text/html"
+        }
+      },
+      "name" : "Sanitized Library",
+      "type" : "user"
+    },
+    "links" : {
+      "alternate" : {
+        "href" : "https://example.invalid/fixture/29",
+        "type" : "text/html"
+      },
+      "self" : {
+        "href" : "https://example.invalid/fixture/30",
+        "type" : "application/json"
+      }
+    },
+    "meta" : {
+      "numChildren" : 0
+    },
+    "version" : 458
+  },
+  {
+    "data" : {
+      "abstractNote" : "fixture-abstractnote-32",
+      "accessDate" : "2024-01-16T12:00:00Z",
+      "archive" : "",
+      "archiveLocation" : "",
+      "callNumber" : "",
+      "citationKey" : "",
+      "collections" : [
+        "A0000014"
+      ],
+      "creators" : [
+        {
+          "creatorType" : "author",
+          "firstName" : "fixture-firstname-33",
+          "lastName" : "fixture-lastname-34"
+        },
+        {
+          "creatorType" : "author",
+          "firstName" : "fixture-firstname-35",
+          "lastName" : "fixture-lastname-36"
+        },
+        {
+          "creatorType" : "author",
+          "firstName" : "fixture-firstname-37",
+          "lastName" : "fixture-lastname-38"
+        },
+        {
+          "creatorType" : "author",
+          "firstName" : "fixture-firstname-39",
+          "lastName" : "fixture-lastname-40"
+        },
+        {
+          "creatorType" : "author",
+          "firstName" : "fixture-firstname-41",
+          "lastName" : "fixture-lastname-42"
+        },
+        {
+          "creatorType" : "author",
+          "firstName" : "fixture-firstname-43",
+          "lastName" : "fixture-lastname-44"
+        },
+        {
+          "creatorType" : "author",
+          "firstName" : "fixture-firstname-45",
+          "lastName" : "fixture-lastname-46"
+        }
+      ],
+      "date" : "2024-01-17T12:00:00Z",
+      "dateAdded" : "2024-01-18T12:00:00Z",
+      "dateModified" : "2024-01-19T12:00:00Z",
+      "DOI" : "10.0000/fixture.31",
+      "extra" : "fixture-extra-47",
+      "ISSN" : "0000-0000",
+      "issue" : "",
+      "itemType" : "journalArticle",
+      "journalAbbreviation" : "fixture-journalabbreviation-48",
+      "key" : "A0000015",
+      "language" : "fixture-language-49",
+      "libraryCatalog" : "fixture-librarycatalog-50",
+      "pages" : "fixture-pages-51",
+      "partNumber" : "",
+      "partTitle" : "",
+      "place" : "",
+      "PMCID" : "",
+      "PMID" : "",
+      "publicationTitle" : "fixture-publicationtitle-52",
+      "publisher" : "",
+      "relations" : {
+
+      },
+      "rights" : "",
+      "section" : "",
+      "series" : "",
+      "seriesText" : "",
+      "seriesTitle" : "",
+      "shortTitle" : "fixture-shorttitle-53",
+      "tags" : [
+        {
+          "tag" : "Fixture Tag 54",
+          "type" : 1
+        },
+        {
+          "tag" : "Fixture Tag 55",
+          "type" : 1
+        }
+      ],
+      "title" : "fixture-title-56",
+      "url" : "https://example.invalid/fixture/57",
+      "version" : 172,
+      "volume" : "fixture-volume-58"
+    },
+    "key" : "A0000015",
+    "library" : {
+      "id" : 1,
+      "links" : {
+        "alternate" : {
+          "href" : "https://example.invalid/fixture/59",
+          "type" : "text/html"
+        }
+      },
+      "name" : "Sanitized Library",
+      "type" : "user"
+    },
+    "links" : {
+      "alternate" : {
+        "href" : "https://example.invalid/fixture/60",
+        "type" : "text/html"
+      },
+      "attachment" : {
+        "attachmentSize" : 7685229,
+        "attachmentType" : "fixture-attachmenttype-61",
+        "href" : "https://example.invalid/fixture/62",
+        "type" : "application/json"
+      },
+      "self" : {
+        "href" : "https://example.invalid/fixture/63",
+        "type" : "application/json"
+      }
+    },
+    "meta" : {
+      "creatorSummary" : "fixture-creatorsummary-64",
+      "numChildren" : 2,
+      "parsedDate" : "fixture-parseddate-65"
+    },
+    "version" : 172
+  },
+  {
+    "data" : {
+      "abstractNote" : "fixture-abstractnote-67",
+      "accessDate" : "2024-01-20T12:00:00Z",
+      "archive" : "",
+      "archiveID" : "fixture-archiveid-68",
+      "archiveLocation" : "",
+      "callNumber" : "",
+      "citationKey" : "",
+      "collections" : [
+
+      ],
+      "creators" : [
+        {
+          "creatorType" : "author",
+          "firstName" : "fixture-firstname-69",
+          "lastName" : "fixture-lastname-70"
+        },
+        {
+          "creatorType" : "author",
+          "firstName" : "fixture-firstname-71",
+          "lastName" : "fixture-lastname-72"
+        },
+        {
+          "creatorType" : "author",
+          "firstName" : "fixture-firstname-73",
+          "lastName" : "fixture-lastname-74"
+        },
+        {
+          "creatorType" : "author",
+          "firstName" : "fixture-firstname-75",
+          "lastName" : "fixture-lastname-76"
+        },
+        {
+          "creatorType" : "author",
+          "firstName" : "fixture-firstname-77",
+          "lastName" : "fixture-lastname-78"
+        },
+        {
+          "creatorType" : "author",
+          "firstName" : "fixture-firstname-79",
+          "lastName" : "fixture-lastname-80"
+        },
+        {
+          "creatorType" : "author",
+          "firstName" : "fixture-firstname-81",
+          "lastName" : "fixture-lastname-82"
+        },
+        {
+          "creatorType" : "author",
+          "firstName" : "fixture-firstname-83",
+          "lastName" : "fixture-lastname-84"
+        },
+        {
+          "creatorType" : "author",
+          "firstName" : "fixture-firstname-85",
+          "lastName" : "fixture-lastname-86"
+        },
+        {
+          "creatorType" : "author",
+          "firstName" : "fixture-firstname-87",
+          "lastName" : "fixture-lastname-88"
+        },
+        {
+          "creatorType" : "author",
+          "firstName" : "fixture-firstname-89",
+          "lastName" : "fixture-lastname-90"
+        },
+        {
+          "creatorType" : "author",
+          "firstName" : "fixture-firstname-91",
+          "lastName" : "fixture-lastname-92"
+        },
+        {
+          "creatorType" : "author",
+          "firstName" : "fixture-firstname-93",
+          "lastName" : "fixture-lastname-94"
+        },
+        {
+          "creatorType" : "author",
+          "firstName" : "fixture-firstname-95",
+          "lastName" : "fixture-lastname-96"
+        },
+        {
+          "creatorType" : "author",
+          "firstName" : "fixture-firstname-97",
+          "lastName" : "fixture-lastname-98"
+        },
+        {
+          "creatorType" : "author",
+          "firstName" : "fixture-firstname-99",
+          "lastName" : "fixture-lastname-100"
+        },
+        {
+          "creatorType" : "author",
+          "firstName" : "fixture-firstname-101",
+          "lastName" : "fixture-lastname-102"
+        },
+        {
+          "creatorType" : "author",
+          "firstName" : "fixture-firstname-103",
+          "lastName" : "fixture-lastname-104"
+        },
+        {
+          "creatorType" : "author",
+          "firstName" : "fixture-firstname-105",
+          "lastName" : "fixture-lastname-106"
+        },
+        {
+          "creatorType" : "author",
+          "firstName" : "fixture-firstname-107",
+          "lastName" : "fixture-lastname-108"
+        },
+        {
+          "creatorType" : "author",
+          "firstName" : "fixture-firstname-109",
+          "lastName" : "fixture-lastname-110"
+        },
+        {
+          "creatorType" : "author",
+          "firstName" : "fixture-firstname-111",
+          "lastName" : "fixture-lastname-112"
+        },
+        {
+          "creatorType" : "author",
+          "firstName" : "fixture-firstname-113",
+          "lastName" : "fixture-lastname-114"
+        },
+        {
+          "creatorType" : "author",
+          "firstName" : "fixture-firstname-115",
+          "lastName" : "fixture-lastname-116"
+        },
+        {
+          "creatorType" : "author",
+          "firstName" : "fixture-firstname-117",
+          "lastName" : "fixture-lastname-118"
+        }
+      ],
+      "date" : "2024-01-21T12:00:00Z",
+      "dateAdded" : "2024-01-22T12:00:00Z",
+      "dateModified" : "2024-01-23T12:00:00Z",
+      "DOI" : "10.0000/fixture.66",
+      "extra" : "fixture-extra-119",
+      "genre" : "",
+      "itemType" : "preprint",
+      "key" : "A0000016",
+      "language" : "",
+      "libraryCatalog" : "fixture-librarycatalog-120",
+      "place" : "",
+      "relations" : {
+
+      },
+      "repository" : "fixture-repository-121",
+      "rights" : "",
+      "series" : "",
+      "seriesNumber" : "",
+      "shortTitle" : "fixture-shorttitle-122",
+      "tags" : [
+        {
+          "tag" : "Fixture Tag 123",
+          "type" : 1
+        },
+        {
+          "tag" : "Fixture Tag 124",
+          "type" : 1
+        },
+        {
+          "tag" : "Fixture Tag 125",
+          "type" : 1
+        }
+      ],
+      "title" : "fixture-title-126",
+      "url" : "https://example.invalid/fixture/127",
+      "version" : 263
+    },
+    "key" : "A0000016",
+    "library" : {
+      "id" : 1,
+      "links" : {
+        "alternate" : {
+          "href" : "https://example.invalid/fixture/128",
+          "type" : "text/html"
+        }
+      },
+      "name" : "Sanitized Library",
+      "type" : "user"
+    },
+    "links" : {
+      "alternate" : {
+        "href" : "https://example.invalid/fixture/129",
+        "type" : "text/html"
+      },
+      "attachment" : {
+        "attachmentSize" : 3882064,
+        "attachmentType" : "fixture-attachmenttype-130",
+        "href" : "https://example.invalid/fixture/131",
+        "type" : "application/json"
+      },
+      "self" : {
+        "href" : "https://example.invalid/fixture/132",
+        "type" : "application/json"
+      }
+    },
+    "meta" : {
+      "creatorSummary" : "fixture-creatorsummary-133",
+      "numChildren" : 3,
+      "parsedDate" : "fixture-parseddate-134"
+    },
+    "version" : 263
+  },
+  {
+    "data" : {
+      "abstractNote" : "fixture-abstractnote-136",
+      "accessDate" : "2024-01-24T12:00:00Z",
+      "archive" : "",
+      "archiveID" : "fixture-archiveid-137",
+      "archiveLocation" : "",
+      "callNumber" : "",
+      "citationKey" : "",
+      "collections" : [
+
+      ],
+      "creators" : [
+        {
+          "creatorType" : "author",
+          "firstName" : "fixture-firstname-138",
+          "lastName" : "fixture-lastname-139"
+        },
+        {
+          "creatorType" : "author",
+          "firstName" : "fixture-firstname-140",
+          "lastName" : "fixture-lastname-141"
+        },
+        {
+          "creatorType" : "author",
+          "firstName" : "fixture-firstname-142",
+          "lastName" : "fixture-lastname-143"
+        },
+        {
+          "creatorType" : "author",
+          "firstName" : "fixture-firstname-144",
+          "lastName" : "fixture-lastname-145"
+        },
+        {
+          "creatorType" : "author",
+          "firstName" : "fixture-firstname-146",
+          "lastName" : "fixture-lastname-147"
+        }
+      ],
+      "date" : "2024-01-25T12:00:00Z",
+      "dateAdded" : "2024-01-26T12:00:00Z",
+      "dateModified" : "2024-01-27T12:00:00Z",
+      "DOI" : "10.0000/fixture.135",
+      "extra" : "fixture-extra-148",
+      "genre" : "",
+      "itemType" : "preprint",
+      "key" : "A0000006",
+      "language" : "",
+      "libraryCatalog" : "fixture-librarycatalog-149",
+      "place" : "",
+      "relations" : {
+
+      },
+      "repository" : "fixture-repository-150",
+      "rights" : "",
+      "series" : "",
+      "seriesNumber" : "",
+      "shortTitle" : "fixture-shorttitle-151",
+      "tags" : [
+        {
+          "tag" : "Fixture Tag 152",
+          "type" : 1
+        },
+        {
+          "tag" : "Fixture Tag 153",
+          "type" : 1
+        },
+        {
+          "tag" : "Fixture Tag 154",
+          "type" : 1
+        }
+      ],
+      "title" : "fixture-title-155",
+      "url" : "https://example.invalid/fixture/156",
+      "version" : 259
+    },
+    "key" : "A0000006",
+    "library" : {
+      "id" : 1,
+      "links" : {
+        "alternate" : {
+          "href" : "https://example.invalid/fixture/157",
+          "type" : "text/html"
+        }
+      },
+      "name" : "Sanitized Library",
+      "type" : "user"
+    },
+    "links" : {
+      "alternate" : {
+        "href" : "https://example.invalid/fixture/158",
+        "type" : "text/html"
+      },
+      "attachment" : {
+        "attachmentSize" : 687342,
+        "attachmentType" : "fixture-attachmenttype-159",
+        "href" : "https://example.invalid/fixture/160",
+        "type" : "application/json"
+      },
+      "self" : {
+        "href" : "https://example.invalid/fixture/161",
+        "type" : "application/json"
+      }
+    },
+    "meta" : {
+      "creatorSummary" : "fixture-creatorsummary-162",
+      "numChildren" : 2,
+      "parsedDate" : "fixture-parseddate-163"
+    },
+    "version" : 259
+  },
+  {
+    "data" : {
+      "abstractNote" : "",
+      "accessDate" : "",
+      "archive" : "",
+      "archiveLocation" : "",
+      "callNumber" : "fixture-callnumber-164",
+      "citationKey" : "",
+      "collections" : [
+        "A0000017"
+      ],
+      "creators" : [
+        {
+          "creatorType" : "author",
+          "firstName" : "fixture-firstname-165",
+          "lastName" : "fixture-lastname-166"
+        },
+        {
+          "creatorType" : "author",
+          "firstName" : "fixture-firstname-167",
+          "lastName" : "fixture-lastname-168"
+        },
+        {
+          "creatorType" : "contributor",
+          "name" : "Sanitized Library"
+        }
+      ],
+      "date" : "2024-01-28T12:00:00Z",
+      "dateAdded" : "2024-01-01T12:00:00Z",
+      "dateModified" : "2024-01-02T12:00:00Z",
+      "DOI" : "",
+      "edition" : "",
+      "extra" : "",
+      "format" : "",
+      "ISBN" : "9780000000002",
+      "ISSN" : "",
+      "itemType" : "book",
+      "key" : "A0000018",
+      "language" : "fixture-language-169",
+      "libraryCatalog" : "fixture-librarycatalog-170",
+      "numberOfVolumes" : "",
+      "numPages" : "fixture-numpages-171",
+      "originalDate" : "",
+      "originalPlace" : "",
+      "originalPublisher" : "",
+      "place" : "fixture-place-172",
+      "publisher" : "fixture-publisher-173",
+      "relations" : {
+
+      },
+      "rights" : "",
+      "series" : "fixture-series-174",
+      "seriesNumber" : "fixture-seriesnumber-175",
+      "shortTitle" : "fixture-shorttitle-176",
+      "tags" : [
+        {
+          "tag" : "Fixture Tag 177",
+          "type" : 1
+        },
+        {
+          "tag" : "Fixture Tag 178",
+          "type" : 1
+        },
+        {
+          "tag" : "Fixture Tag 179",
+          "type" : 1
+        }
+      ],
+      "title" : "fixture-title-180",
+      "url" : "",
+      "version" : 62,
+      "volume" : ""
+    },
+    "key" : "A0000018",
+    "library" : {
+      "id" : 1,
+      "links" : {
+        "alternate" : {
+          "href" : "https://example.invalid/fixture/181",
+          "type" : "text/html"
+        }
+      },
+      "name" : "Sanitized Library",
+      "type" : "user"
+    },
+    "links" : {
+      "alternate" : {
+        "href" : "https://example.invalid/fixture/182",
+        "type" : "text/html"
+      },
+      "attachment" : {
+        "attachmentSize" : 66016159,
+        "attachmentType" : "fixture-attachmenttype-183",
+        "href" : "https://example.invalid/fixture/184",
+        "type" : "application/json"
+      },
+      "self" : {
+        "href" : "https://example.invalid/fixture/185",
+        "type" : "application/json"
+      }
+    },
+    "meta" : {
+      "creatorSummary" : "fixture-creatorsummary-186",
+      "numChildren" : 1,
+      "parsedDate" : "fixture-parseddate-187"
+    },
+    "version" : 62
+  },
+  {
+    "data" : {
+      "abstractNote" : "fixture-abstractnote-189",
+      "accessDate" : "2024-01-03T12:00:00Z",
+      "archive" : "",
+      "archiveID" : "fixture-archiveid-190",
+      "archiveLocation" : "",
+      "callNumber" : "",
+      "citationKey" : "",
+      "collections" : [
+        "A0000019"
+      ],
+      "creators" : [
+        {
+          "creatorType" : "author",
+          "firstName" : "fixture-firstname-191",
+          "lastName" : "fixture-lastname-192"
+        },
+        {
+          "creatorType" : "author",
+          "firstName" : "fixture-firstname-193",
+          "lastName" : "fixture-lastname-194"
+        },
+        {
+          "creatorType" : "author",
+          "firstName" : "fixture-firstname-195",
+          "lastName" : "fixture-lastname-196"
+        },
+        {
+          "creatorType" : "author",
+          "firstName" : "fixture-firstname-197",
+          "lastName" : "fixture-lastname-198"
+        },
+        {
+          "creatorType" : "author",
+          "firstName" : "fixture-firstname-199",
+          "lastName" : "fixture-lastname-200"
+        },
+        {
+          "creatorType" : "author",
+          "firstName" : "fixture-firstname-201",
+          "lastName" : "fixture-lastname-202"
+        },
+        {
+          "creatorType" : "author",
+          "firstName" : "fixture-firstname-203",
+          "lastName" : "fixture-lastname-204"
+        },
+        {
+          "creatorType" : "author",
+          "firstName" : "fixture-firstname-205",
+          "lastName" : "fixture-lastname-206"
+        },
+        {
+          "creatorType" : "author",
+          "firstName" : "fixture-firstname-207",
+          "lastName" : "fixture-lastname-208"
+        }
+      ],
+      "date" : "2024-01-04T12:00:00Z",
+      "dateAdded" : "2024-01-05T12:00:00Z",
+      "dateModified" : "2024-01-06T12:00:00Z",
+      "DOI" : "10.0000/fixture.188",
+      "extra" : "fixture-extra-209",
+      "genre" : "",
+      "itemType" : "preprint",
+      "key" : "A0000002",
+      "language" : "fixture-language-210",
+      "libraryCatalog" : "fixture-librarycatalog-211",
+      "place" : "",
+      "relations" : {
+
+      },
+      "repository" : "fixture-repository-212",
+      "rights" : "",
+      "series" : "",
+      "seriesNumber" : "",
+      "shortTitle" : "",
+      "tags" : [
+        {
+          "tag" : "Fixture Tag 213",
+          "type" : 1
+        },
+        {
+          "tag" : "Fixture Tag 214",
+          "type" : 1
+        },
+        {
+          "tag" : "Fixture Tag 215",
+          "type" : 1
+        }
+      ],
+      "title" : "fixture-title-216",
+      "url" : "https://example.invalid/fixture/217",
+      "version" : 112
+    },
+    "key" : "A0000002",
+    "library" : {
+      "id" : 1,
+      "links" : {
+        "alternate" : {
+          "href" : "https://example.invalid/fixture/218",
+          "type" : "text/html"
+        }
+      },
+      "name" : "Sanitized Library",
+      "type" : "user"
+    },
+    "links" : {
+      "alternate" : {
+        "href" : "https://example.invalid/fixture/219",
+        "type" : "text/html"
+      },
+      "attachment" : {
+        "attachmentSize" : 1101337,
+        "attachmentType" : "fixture-attachmenttype-220",
+        "href" : "https://example.invalid/fixture/221",
+        "type" : "application/json"
+      },
+      "self" : {
+        "href" : "https://example.invalid/fixture/222",
+        "type" : "application/json"
+      }
+    },
+    "meta" : {
+      "creatorSummary" : "fixture-creatorsummary-223",
+      "numChildren" : 2,
+      "parsedDate" : "fixture-parseddate-224"
+    },
+    "version" : 112
+  },
+  {
+    "data" : {
+      "abstractNote" : "fixture-abstractnote-226",
+      "accessDate" : "2024-01-07T12:00:00Z",
+      "archive" : "",
+      "archiveID" : "fixture-archiveid-227",
+      "archiveLocation" : "",
+      "callNumber" : "",
+      "citationKey" : "",
+      "collections" : [
+
+      ],
+      "creators" : [
+        {
+          "creatorType" : "author",
+          "firstName" : "fixture-firstname-228",
+          "lastName" : "fixture-lastname-229"
+        },
+        {
+          "creatorType" : "author",
+          "firstName" : "fixture-firstname-230",
+          "lastName" : "fixture-lastname-231"
+        },
+        {
+          "creatorType" : "author",
+          "firstName" : "fixture-firstname-232",
+          "lastName" : "fixture-lastname-233"
+        },
+        {
+          "creatorType" : "author",
+          "firstName" : "fixture-firstname-234",
+          "lastName" : "fixture-lastname-235"
+        },
+        {
+          "creatorType" : "author",
+          "firstName" : "fixture-firstname-236",
+          "lastName" : "fixture-lastname-237"
+        },
+        {
+          "creatorType" : "author",
+          "firstName" : "fixture-firstname-238",
+          "lastName" : "fixture-lastname-239"
+        },
+        {
+          "creatorType" : "author",
+          "firstName" : "fixture-firstname-240",
+          "lastName" : "fixture-lastname-241"
+        },
+        {
+          "creatorType" : "author",
+          "firstName" : "fixture-firstname-242",
+          "lastName" : "fixture-lastname-243"
+        },
+        {
+          "creatorType" : "author",
+          "firstName" : "fixture-firstname-244",
+          "lastName" : "fixture-lastname-245"
+        }
+      ],
+      "date" : "2024-01-08T12:00:00Z",
+      "dateAdded" : "2024-01-09T12:00:00Z",
+      "dateModified" : "2024-01-10T12:00:00Z",
+      "DOI" : "10.0000/fixture.225",
+      "extra" : "fixture-extra-246",
+      "genre" : "",
+      "itemType" : "preprint",
+      "key" : "A0000020",
+      "language" : "",
+      "libraryCatalog" : "fixture-librarycatalog-247",
+      "place" : "",
+      "relations" : {
+
+      },
+      "repository" : "fixture-repository-248",
+      "rights" : "",
+      "series" : "",
+      "seriesNumber" : "",
+      "shortTitle" : "fixture-shorttitle-249",
+      "tags" : [
+        {
+          "tag" : "Fixture Tag 250",
+          "type" : 1
+        }
+      ],
+      "title" : "fixture-title-251",
+      "url" : "https://example.invalid/fixture/252",
+      "version" : 247
+    },
+    "key" : "A0000020",
+    "library" : {
+      "id" : 1,
+      "links" : {
+        "alternate" : {
+          "href" : "https://example.invalid/fixture/253",
+          "type" : "text/html"
+        }
+      },
+      "name" : "Sanitized Library",
+      "type" : "user"
+    },
+    "links" : {
+      "alternate" : {
+        "href" : "https://example.invalid/fixture/254",
+        "type" : "text/html"
+      },
+      "attachment" : {
+        "attachmentSize" : 1266803,
+        "attachmentType" : "fixture-attachmenttype-255",
+        "href" : "https://example.invalid/fixture/256",
+        "type" : "application/json"
+      },
+      "self" : {
+        "href" : "https://example.invalid/fixture/257",
+        "type" : "application/json"
+      }
+    },
+    "meta" : {
+      "creatorSummary" : "fixture-creatorsummary-258",
+      "numChildren" : 3,
+      "parsedDate" : "fixture-parseddate-259"
+    },
+    "version" : 247
+  },
+  {
+    "data" : {
+      "annotationColor" : "#ffd400",
+      "annotationComment" : "fixture-annotationcomment-260",
+      "annotationPageLabel" : "1",
+      "annotationPosition" : "{\"pageIndex\":0,\"rects\":[[532.702,731.082,554.702,753.082]]}",
+      "annotationSortIndex" : "00000|000141|00088",
+      "annotationType" : "note",
+      "dateAdded" : "2024-01-11T12:00:00Z",
+      "dateModified" : "2024-01-12T12:00:00Z",
+      "itemType" : "annotation",
+      "key" : "A0000021",
+      "parentItem" : "A0000022",
+      "relations" : {
+
+      },
+      "tags" : [
+
+      ],
+      "version" : 1127
+    },
+    "key" : "A0000021",
+    "library" : {
+      "id" : 1,
+      "links" : {
+        "alternate" : {
+          "href" : "https://example.invalid/fixture/261",
+          "type" : "text/html"
+        }
+      },
+      "name" : "Sanitized Library",
+      "type" : "user"
+    },
+    "links" : {
+      "alternate" : {
+        "href" : "https://example.invalid/fixture/262",
+        "type" : "text/html"
+      },
+      "self" : {
+        "href" : "https://example.invalid/fixture/263",
+        "type" : "application/json"
+      }
+    },
+    "meta" : {
+      "numChildren" : 0
+    },
+    "version" : 1127
+  },
+  {
+    "data" : {
+      "abstractNote" : "",
+      "accessDate" : "",
+      "archive" : "",
+      "archiveLocation" : "",
+      "callNumber" : "",
+      "citationKey" : "",
+      "collections" : [
+        "A0000023"
+      ],
+      "creators" : [
+        {
+          "creatorType" : "author",
+          "firstName" : "fixture-firstname-264",
+          "lastName" : "fixture-lastname-265"
+        }
+      ],
+      "date" : "2024-01-13T12:00:00Z",
+      "dateAdded" : "2024-01-14T12:00:00Z",
+      "dateModified" : "2024-01-15T12:00:00Z",
+      "DOI" : "",
+      "edition" : "",
+      "extra" : "",
+      "format" : "",
+      "ISBN" : "9780000000002",
+      "ISSN" : "",
+      "itemType" : "book",
+      "key" : "A0000024",
+      "language" : "fixture-language-266",
+      "libraryCatalog" : "fixture-librarycatalog-267",
+      "numberOfVolumes" : "",
+      "numPages" : "fixture-numpages-268",
+      "originalDate" : "",
+      "originalPlace" : "",
+      "originalPublisher" : "",
+      "place" : "fixture-place-269",
+      "publisher" : "fixture-publisher-270",
+      "relations" : {
+
+      },
+      "rights" : "",
+      "series" : "",
+      "seriesNumber" : "",
+      "shortTitle" : "",
+      "tags" : [
+
+      ],
+      "title" : "fixture-title-271",
+      "url" : "",
+      "version" : 237,
+      "volume" : ""
+    },
+    "key" : "A0000024",
+    "library" : {
+      "id" : 1,
+      "links" : {
+        "alternate" : {
+          "href" : "https://example.invalid/fixture/272",
+          "type" : "text/html"
+        }
+      },
+      "name" : "Sanitized Library",
+      "type" : "user"
+    },
+    "links" : {
+      "alternate" : {
+        "href" : "https://example.invalid/fixture/273",
+        "type" : "text/html"
+      },
+      "attachment" : {
+        "attachmentSize" : 22340747,
+        "attachmentType" : "fixture-attachmenttype-274",
+        "href" : "https://example.invalid/fixture/275",
+        "type" : "application/json"
+      },
+      "self" : {
+        "href" : "https://example.invalid/fixture/276",
+        "type" : "application/json"
+      }
+    },
+    "meta" : {
+      "creatorSummary" : "fixture-creatorsummary-277",
+      "numChildren" : 2,
+      "parsedDate" : "fixture-parseddate-278"
+    },
+    "version" : 237
+  },
+  {
+    "data" : {
+      "accessDate" : "",
+      "charset" : "",
+      "contentType" : "application/pdf",
+      "dateAdded" : "2024-01-16T12:00:00Z",
+      "dateModified" : "2024-01-17T12:00:00Z",
+      "filename" : "fixture-document.pdf",
+      "itemType" : "attachment",
+      "key" : "A0000004",
+      "linkMode" : "imported_file",
+      "md5" : "00000000000000000000000000000000",
+      "mtime" : 1742878626151,
+      "note" : "",
+      "parentItem" : "A0000024",
+      "relations" : {
+
+      },
+      "tags" : [
+
+      ],
+      "title" : "fixture-title-279",
+      "url" : "",
+      "version" : 489
+    },
+    "key" : "A0000004",
+    "library" : {
+      "id" : 1,
+      "links" : {
+        "alternate" : {
+          "href" : "https://example.invalid/fixture/280",
+          "type" : "text/html"
+        }
+      },
+      "name" : "Sanitized Library",
+      "type" : "user"
+    },
+    "links" : {
+      "alternate" : {
+        "href" : "https://example.invalid/fixture/281",
+        "type" : "text/html"
+      },
+      "self" : {
+        "href" : "https://example.invalid/fixture/282",
+        "type" : "application/json"
+      }
+    },
+    "meta" : {
+      "numChildren" : 27
+    },
+    "version" : 489
+  },
+  {
+    "data" : {
+      "abstractNote" : "",
+      "accessDate" : "",
+      "archive" : "",
+      "archiveLocation" : "",
+      "callNumber" : "",
+      "citationKey" : "",
+      "collections" : [
+        "A0000017"
+      ],
+      "creators" : [
+        {
+          "creatorType" : "author",
+          "firstName" : "fixture-firstname-283",
+          "lastName" : "fixture-lastname-284"
+        }
+      ],
+      "date" : "2024-01-18T12:00:00Z",
+      "dateAdded" : "2024-01-19T12:00:00Z",
+      "dateModified" : "2024-01-20T12:00:00Z",
+      "DOI" : "",
+      "edition" : "",
+      "extra" : "",
+      "format" : "",
+      "ISBN" : "9780000000002",
+      "ISSN" : "",
+      "itemType" : "book",
+      "key" : "A0000025",
+      "language" : "fixture-language-285",
+      "libraryCatalog" : "fixture-librarycatalog-286",
+      "numberOfVolumes" : "",
+      "numPages" : "fixture-numpages-287",
+      "originalDate" : "",
+      "originalPlace" : "",
+      "originalPublisher" : "",
+      "place" : "fixture-place-288",
+      "publisher" : "fixture-publisher-289",
+      "relations" : {
+
+      },
+      "rights" : "",
+      "series" : "fixture-series-290",
+      "seriesNumber" : "fixture-seriesnumber-291",
+      "shortTitle" : "fixture-shorttitle-292",
+      "tags" : [
+
+      ],
+      "title" : "fixture-title-293",
+      "url" : "",
+      "version" : 95,
+      "volume" : ""
+    },
+    "key" : "A0000025",
+    "library" : {
+      "id" : 1,
+      "links" : {
+        "alternate" : {
+          "href" : "https://example.invalid/fixture/294",
+          "type" : "text/html"
+        }
+      },
+      "name" : "Sanitized Library",
+      "type" : "user"
+    },
+    "links" : {
+      "alternate" : {
+        "href" : "https://example.invalid/fixture/295",
+        "type" : "text/html"
+      },
+      "attachment" : {
+        "attachmentSize" : 4490674,
+        "attachmentType" : "fixture-attachmenttype-296",
+        "href" : "https://example.invalid/fixture/297",
+        "type" : "application/json"
+      },
+      "self" : {
+        "href" : "https://example.invalid/fixture/298",
+        "type" : "application/json"
+      }
+    },
+    "meta" : {
+      "creatorSummary" : "fixture-creatorsummary-299",
+      "numChildren" : 1,
+      "parsedDate" : "fixture-parseddate-300"
+    },
+    "version" : 95
+  },
+  {
+    "data" : {
+      "accessDate" : "2024-01-21T12:00:00Z",
+      "charset" : "",
+      "contentType" : "application/pdf",
+      "dateAdded" : "2024-01-22T12:00:00Z",
+      "dateModified" : "2024-01-23T12:00:00Z",
+      "filename" : "fixture-document.pdf",
+      "itemType" : "attachment",
+      "key" : "A0000022",
+      "linkMode" : "imported_url",
+      "md5" : "00000000000000000000000000000000",
+      "mtime" : 1742264898799,
+      "note" : "",
+      "parentItem" : "A0000020",
+      "relations" : {
+
+      },
+      "tags" : [
+
+      ],
+      "title" : "fixture-title-301",
+      "url" : "https://example.invalid/fixture/302",
+      "version" : 499
+    },
+    "key" : "A0000022",
+    "library" : {
+      "id" : 1,
+      "links" : {
+        "alternate" : {
+          "href" : "https://example.invalid/fixture/303",
+          "type" : "text/html"
+        }
+      },
+      "name" : "Sanitized Library",
+      "type" : "user"
+    },
+    "links" : {
+      "alternate" : {
+        "href" : "https://example.invalid/fixture/304",
+        "type" : "text/html"
+      },
+      "self" : {
+        "href" : "https://example.invalid/fixture/305",
+        "type" : "application/json"
+      }
+    },
+    "meta" : {
+      "numChildren" : 1
+    },
+    "version" : 499
+  },
+  {
+    "data" : {
+      "abstractNote" : "",
+      "accessDate" : "",
+      "archive" : "",
+      "archiveLocation" : "",
+      "callNumber" : "",
+      "citationKey" : "",
+      "collections" : [
+
+      ],
+      "creators" : [
+        {
+          "creatorType" : "author",
+          "firstName" : "fixture-firstname-306",
+          "lastName" : "fixture-lastname-307"
+        }
+      ],
+      "date" : "2024-01-24T12:00:00Z",
+      "dateAdded" : "2024-01-25T12:00:00Z",
+      "dateModified" : "2024-01-26T12:00:00Z",
+      "DOI" : "",
+      "edition" : "",
+      "extra" : "fixture-extra-308",
+      "format" : "",
+      "ISBN" : "",
+      "ISSN" : "",
+      "itemType" : "book",
+      "key" : "A0000010",
+      "language" : "fixture-language-309",
+      "libraryCatalog" : "",
+      "numberOfVolumes" : "",
+      "numPages" : "",
+      "originalDate" : "",
+      "originalPlace" : "",
+      "originalPublisher" : "",
+      "place" : "",
+      "publisher" : "",
+      "relations" : {
+
+      },
+      "rights" : "",
+      "series" : "",
+      "seriesNumber" : "",
+      "shortTitle" : "",
+      "tags" : [
+
+      ],
+      "title" : "fixture-title-310",
+      "url" : "",
+      "version" : 97,
+      "volume" : ""
+    },
+    "key" : "A0000010",
+    "library" : {
+      "id" : 1,
+      "links" : {
+        "alternate" : {
+          "href" : "https://example.invalid/fixture/311",
+          "type" : "text/html"
+        }
+      },
+      "name" : "Sanitized Library",
+      "type" : "user"
+    },
+    "links" : {
+      "alternate" : {
+        "href" : "https://example.invalid/fixture/312",
+        "type" : "text/html"
+      },
+      "attachment" : {
+        "attachmentSize" : 3667525,
+        "attachmentType" : "fixture-attachmenttype-313",
+        "href" : "https://example.invalid/fixture/314",
+        "type" : "application/json"
+      },
+      "self" : {
+        "href" : "https://example.invalid/fixture/315",
+        "type" : "application/json"
+      }
+    },
+    "meta" : {
+      "creatorSummary" : "fixture-creatorsummary-316",
+      "numChildren" : 1
+    },
+    "version" : 97
+  },
+  {
+    "data" : {
+      "abstractNote" : "fixture-abstractnote-318",
+      "accessDate" : "2024-01-27T12:00:00Z",
+      "archive" : "",
+      "archiveLocation" : "",
+      "callNumber" : "",
+      "citationKey" : "",
+      "collections" : [
+
+      ],
+      "conferenceName" : "fixture-conferencename-319",
+      "creators" : [
+        {
+          "creatorType" : "author",
+          "firstName" : "fixture-firstname-320",
+          "lastName" : "fixture-lastname-321"
+        },
+        {
+          "creatorType" : "author",
+          "firstName" : "fixture-firstname-322",
+          "lastName" : "fixture-lastname-323"
+        },
+        {
+          "creatorType" : "author",
+          "firstName" : "fixture-firstname-324",
+          "lastName" : "fixture-lastname-325"
+        },
+        {
+          "creatorType" : "author",
+          "firstName" : "fixture-firstname-326",
+          "lastName" : "fixture-lastname-327"
+        }
+      ],
+      "date" : "2024-01-28T12:00:00Z",
+      "dateAdded" : "2024-01-01T12:00:00Z",
+      "dateModified" : "2024-01-02T12:00:00Z",
+      "DOI" : "10.0000/fixture.317",
+      "eventPlace" : "",
+      "extra" : "",
+      "ISBN" : "",
+      "ISSN" : "",
+      "issue" : "",
+      "itemType" : "conferencePaper",
+      "key" : "A0000026",
+      "language" : "fixture-language-328",
+      "libraryCatalog" : "fixture-librarycatalog-329",
+      "numberOfVolumes" : "",
+      "pages" : "fixture-pages-330",
+      "place" : "fixture-place-331",
+      "proceedingsTitle" : "fixture-proceedingstitle-332",
+      "publisher" : "fixture-publisher-333",
+      "relations" : {
+
+      },
+      "rights" : "",
+      "series" : "",
+      "seriesNumber" : "",
+      "shortTitle" : "",
+      "tags" : [
+
+      ],
+      "title" : "fixture-title-334",
+      "url" : "https://example.invalid/fixture/335",
+      "version" : 189,
+      "volume" : ""
+    },
+    "key" : "A0000026",
+    "library" : {
+      "id" : 1,
+      "links" : {
+        "alternate" : {
+          "href" : "https://example.invalid/fixture/336",
+          "type" : "text/html"
+        }
+      },
+      "name" : "Sanitized Library",
+      "type" : "user"
+    },
+    "links" : {
+      "alternate" : {
+        "href" : "https://example.invalid/fixture/337",
+        "type" : "text/html"
+      },
+      "attachment" : {
+        "attachmentSize" : 269501,
+        "attachmentType" : "fixture-attachmenttype-338",
+        "href" : "https://example.invalid/fixture/339",
+        "type" : "application/json"
+      },
+      "self" : {
+        "href" : "https://example.invalid/fixture/340",
+        "type" : "application/json"
+      }
+    },
+    "meta" : {
+      "creatorSummary" : "fixture-creatorsummary-341",
+      "numChildren" : 1,
+      "parsedDate" : "fixture-parseddate-342"
+    },
+    "version" : 189
+  },
+  {
+    "data" : {
+      "abstractNote" : "",
+      "accessDate" : "",
+      "archive" : "",
+      "archiveLocation" : "",
+      "callNumber" : "fixture-callnumber-343",
+      "citationKey" : "",
+      "collections" : [
+        "A0000023"
+      ],
+      "creators" : [
+        {
+          "creatorType" : "editor",
+          "firstName" : "fixture-firstname-344",
+          "lastName" : "fixture-lastname-345"
+        },
+        {
+          "creatorType" : "editor",
+          "firstName" : "fixture-firstname-346",
+          "lastName" : "fixture-lastname-347"
+        },
+        {
+          "creatorType" : "editor",
+          "firstName" : "fixture-firstname-348",
+          "lastName" : "fixture-lastname-349"
+        }
+      ],
+      "date" : "2024-01-03T12:00:00Z",
+      "dateAdded" : "2024-01-04T12:00:00Z",
+      "dateModified" : "2024-01-05T12:00:00Z",
+      "DOI" : "",
+      "edition" : "fixture-edition-350",
+      "extra" : "",
+      "format" : "",
+      "ISBN" : "9780000000002",
+      "ISSN" : "",
+      "itemType" : "book",
+      "key" : "A0000027",
+      "language" : "fixture-language-351",
+      "libraryCatalog" : "fixture-librarycatalog-352",
+      "numberOfVolumes" : "",
+      "numPages" : "fixture-numpages-353",
+      "originalDate" : "",
+      "originalPlace" : "",
+      "originalPublisher" : "",
+      "place" : "fixture-place-354",
+      "publisher" : "fixture-publisher-355",
+      "relations" : {
+
+      },
+      "rights" : "",
+      "series" : "",
+      "seriesNumber" : "",
+      "shortTitle" : "",
+      "tags" : [
+        {
+          "tag" : "Fixture Tag 356",
+          "type" : 1
+        },
+        {
+          "tag" : "Fixture Tag 357",
+          "type" : 1
+        },
+        {
+          "tag" : "Fixture Tag 358",
+          "type" : 1
+        }
+      ],
+      "title" : "fixture-title-359",
+      "url" : "",
+      "version" : 236,
+      "volume" : ""
+    },
+    "key" : "A0000027",
+    "library" : {
+      "id" : 1,
+      "links" : {
+        "alternate" : {
+          "href" : "https://example.invalid/fixture/360",
+          "type" : "text/html"
+        }
+      },
+      "name" : "Sanitized Library",
+      "type" : "user"
+    },
+    "links" : {
+      "alternate" : {
+        "href" : "https://example.invalid/fixture/361",
+        "type" : "text/html"
+      },
+      "attachment" : {
+        "attachmentSize" : 48393398,
+        "attachmentType" : "fixture-attachmenttype-362",
+        "href" : "https://example.invalid/fixture/363",
+        "type" : "application/json"
+      },
+      "self" : {
+        "href" : "https://example.invalid/fixture/364",
+        "type" : "application/json"
+      }
+    },
+    "meta" : {
+      "creatorSummary" : "fixture-creatorsummary-365",
+      "numChildren" : 2,
+      "parsedDate" : "fixture-parseddate-366"
+    },
+    "version" : 236
+  },
+  {
+    "data" : {
+      "abstractNote" : "",
+      "accessDate" : "",
+      "archive" : "",
+      "archiveLocation" : "",
+      "callNumber" : "",
+      "citationKey" : "",
+      "collections" : [
+        "A0000011"
+      ],
+      "creators" : [
+        {
+          "creatorType" : "author",
+          "firstName" : "fixture-firstname-367",
+          "lastName" : "fixture-lastname-368"
+        },
+        {
+          "creatorType" : "author",
+          "firstName" : "fixture-firstname-369",
+          "lastName" : "fixture-lastname-370"
+        },
+        {
+          "creatorType" : "author",
+          "firstName" : "fixture-firstname-371",
+          "lastName" : "fixture-lastname-372"
+        },
+        {
+          "creatorType" : "author",
+          "firstName" : "fixture-firstname-373",
+          "lastName" : "fixture-lastname-374"
+        },
+        {
+          "creatorType" : "author",
+          "firstName" : "fixture-firstname-375",
+          "lastName" : "fixture-lastname-376"
+        },
+        {
+          "creatorType" : "author",
+          "firstName" : "fixture-firstname-377",
+          "lastName" : "fixture-lastname-378"
+        },
+        {
+          "creatorType" : "author",
+          "firstName" : "fixture-firstname-379",
+          "lastName" : "fixture-lastname-380"
+        },
+        {
+          "creatorType" : "author",
+          "firstName" : "fixture-firstname-381",
+          "lastName" : "fixture-lastname-382"
+        },
+        {
+          "creatorType" : "author",
+          "firstName" : "fixture-firstname-383",
+          "lastName" : "fixture-lastname-384"
+        },
+        {
+          "creatorType" : "author",
+          "firstName" : "fixture-firstname-385",
+          "lastName" : "fixture-lastname-386"
+        }
+      ],
+      "date" : "2024-01-06T12:00:00Z",
+      "dateAdded" : "2024-01-07T12:00:00Z",
+      "dateModified" : "2024-01-08T12:00:00Z",
+      "DOI" : "",
+      "edition" : "",
+      "extra" : "",
+      "format" : "",
+      "ISBN" : "9780000000002",
+      "ISSN" : "",
+      "itemType" : "book",
+      "key" : "A0000028",
+      "language" : "fixture-language-387",
+      "libraryCatalog" : "fixture-librarycatalog-388",
+      "numberOfVolumes" : "",
+      "numPages" : "fixture-numpages-389",
+      "originalDate" : "",
+      "originalPlace" : "",
+      "originalPublisher" : "",
+      "place" : "fixture-place-390",
+      "publisher" : "fixture-publisher-391",
+      "relations" : {
+
+      },
+      "rights" : "",
+      "series" : "fixture-series-392",
+      "seriesNumber" : "fixture-seriesnumber-393",
+      "shortTitle" : "fixture-shorttitle-394",
+      "tags" : [
+
+      ],
+      "title" : "fixture-title-395",
+      "url" : "",
+      "version" : 150,
+      "volume" : ""
+    },
+    "key" : "A0000028",
+    "library" : {
+      "id" : 1,
+      "links" : {
+        "alternate" : {
+          "href" : "https://example.invalid/fixture/396",
+          "type" : "text/html"
+        }
+      },
+      "name" : "Sanitized Library",
+      "type" : "user"
+    },
+    "links" : {
+      "alternate" : {
+        "href" : "https://example.invalid/fixture/397",
+        "type" : "text/html"
+      },
+      "attachment" : {
+        "attachmentSize" : 12230964,
+        "attachmentType" : "fixture-attachmenttype-398",
+        "href" : "https://example.invalid/fixture/399",
+        "type" : "application/json"
+      },
+      "self" : {
+        "href" : "https://example.invalid/fixture/400",
+        "type" : "application/json"
+      }
+    },
+    "meta" : {
+      "creatorSummary" : "fixture-creatorsummary-401",
+      "numChildren" : 1,
+      "parsedDate" : "fixture-parseddate-402"
+    },
+    "version" : 150
+  },
+  {
+    "data" : {
+      "accessDate" : "",
+      "charset" : "",
+      "contentType" : "application/pdf",
+      "dateAdded" : "2024-01-09T12:00:00Z",
+      "dateModified" : "2024-01-10T12:00:00Z",
+      "filename" : "fixture-document.pdf",
+      "itemType" : "attachment",
+      "key" : "A0000008",
+      "linkMode" : "imported_file",
+      "md5" : "00000000000000000000000000000000",
+      "mtime" : 1777719579000,
+      "note" : "",
+      "parentItem" : "A0000025",
+      "relations" : {
+
+      },
+      "tags" : [
+
+      ],
+      "title" : "fixture-title-403",
+      "url" : "",
+      "version" : 567
+    },
+    "key" : "A0000008",
+    "library" : {
+      "id" : 1,
+      "links" : {
+        "alternate" : {
+          "href" : "https://example.invalid/fixture/404",
+          "type" : "text/html"
+        }
+      },
+      "name" : "Sanitized Library",
+      "type" : "user"
+    },
+    "links" : {
+      "alternate" : {
+        "href" : "https://example.invalid/fixture/405",
+        "type" : "text/html"
+      },
+      "self" : {
+        "href" : "https://example.invalid/fixture/406",
+        "type" : "application/json"
+      }
+    },
+    "meta" : {
+      "numChildren" : 8
+    },
+    "version" : 567
+  }
+]
