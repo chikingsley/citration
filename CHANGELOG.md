@@ -37,6 +37,8 @@ All notable completed changes to Citration are tracked here. Entries are newest 
 - Passed a self-cleaning live attachment drill covering a stock form upload, direct single upload, 65 MiB multipart upload with retryable parts, three independently verified downloads, remote cleanup, and database integrity.
 - Added cancelable Zotero streaming subscriptions with same-origin self-host routing, official Zotero stream routing, explicit user-library topics, server-directed reconnect timing, and an initial plus notification-triggered pull through the one authoritative sync engine.
 - Passed a self-cleaning live streaming drill proving that remote creation and deletion notifications trigger ordinary incremental pulls rather than carrying trusted object data.
+- Added a disposable Zotero Desktop peer-acceptance command that creates a temporary profile and scoped device key, drives ordinary Desktop synchronization, retains failed-run evidence without retaining the secret, and removes successful-run profiles, records, and credentials.
+- Passed the live Citration-to-Desktop-to-Citration drill: Desktop downloaded a Citration-created item, uploaded its edit, Citration received the edit through streaming-triggered authoritative synchronization, and Desktop observed Citration's deletion. The run exposed and drove a deployed Zotero Self-Host fix for Desktop's normal 100-key D1 reconciliation request, then passed with SQLite integrity `ok`, remote item `404`, zero temporary device keys, zero Zotero processes, and zero harness directories.
 
 ### Changed
 

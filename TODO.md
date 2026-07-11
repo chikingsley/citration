@@ -44,7 +44,7 @@ Done when the existing local library opens from the final database, the verified
 - [x] Implement attachment metadata sync, lazy verified downloads, uploads, multipart uploads, registration, resumability, cache state, and cleanup.
 - [x] Use streaming notifications only to trigger authoritative incremental pulls.
 - [x] Run a read-only live sync into a fresh database and reproduce the acceptance baseline without exposing private content in logs.
-- [ ] Run disposable bidirectional writes, verify them in Zotero Desktop, verify Desktop changes return to CitrationCore, and clean up every test object.
+- [x] Run disposable bidirectional writes, verify them in Zotero Desktop, verify Desktop changes return to CitrationCore, and clean up every test object.
 
 Done when the final database and sync engine converge with Zotero Self-Host and Zotero Desktop through real read/write acceptance, including interruption, conflict, attachment, and cleanup evidence.
 
