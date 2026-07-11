@@ -20,16 +20,16 @@ struct LegacyLibraryMigratorTests {
             backupDirectory: fixture.backupDirectory
         )
 
-        let report = try migrator.migrateSynchronously()
+        let report = try migrator.migrate()
         let libraryID = try database.upsertLibrary(
             identity: ZoteroLibraryIdentity(type: "local", remoteID: 0)
         )
-        try await verifyBackup(report, fixture: fixture)
+        try verifyBackup(report, fixture: fixture)
         let inspection = try verifyCounts(database, libraryID: libraryID)
         try verifyPrimaryItem(database, libraryID: libraryID, fixture: fixture)
         try verifyRelatedRecords(database, libraryID: libraryID, fixture: fixture)
         try await verifyFinalStore(database, fixture: fixture)
-        try await verifyIdempotence(
+        try verifyIdempotence(
             migrator,
             database: database,
             libraryID: libraryID,
@@ -51,7 +51,7 @@ struct LegacyLibraryMigratorTests {
         )
 
         do {
-            _ = try await migrator.migrate()
+            _ = try migrator.migrate()
             Issue.record("Expected invalid on-disk JSON to fail migration")
         } catch {
             #expect(error is DecodingError)
@@ -71,12 +71,40 @@ struct LegacyLibraryMigratorTests {
             to: fixture.legacyDirectory.appending(path: "notes.json"),
             options: .atomic
         )
-        let report = try await migrator.migrate()
+        let report = try migrator.migrate()
         #expect(report.noteCount == 1)
         #expect(
             try database.inspectLegacyMigration(name: LegacyLibraryMigrator.migrationName, libraryID: libraryID).status
                 == "completed"
         )
+        #expect(try database.integrityCheck() == "ok")
+    }
+
+    @Test("A completed one-time migration never reinterprets final attachment files")
+    func completedMigrationIgnoresFinalAttachmentChanges() async throws {
+        let fixture = try await LegacyFixture.makePopulated()
+        defer { fixture.remove() }
+        let database = try CitrationDatabase(at: fixture.finalDatabaseURL)
+        let migrator = LegacyLibraryMigrator(
+            database: database,
+            sources: LegacyLibrarySources(applicationDirectory: fixture.legacyDirectory),
+            backupDirectory: fixture.backupDirectory
+        )
+        let originalReport = try migrator.migrate()
+        let libraryID = try database.upsertLibrary(identity: .init(type: "local", remoteID: 0))
+        let originalObjectCount = try database.objectCount(libraryID: libraryID)
+
+        let finalAttachmentDirectory = fixture.legacyDirectory
+            .appending(path: "attachments", directoryHint: .isDirectory)
+            .appending(path: "\(UUID().uuidString)--final-item", directoryHint: .isDirectory)
+        try FileManager.default.createDirectory(at: finalAttachmentDirectory, withIntermediateDirectories: true)
+        try Data("%PDF-1.7\nfinal cache file\n%%EOF\n".utf8).write(
+            to: finalAttachmentDirectory.appending(path: "final-cache.pdf")
+        )
+
+        let repeatedReport = try migrator.migrate()
+        #expect(repeatedReport == originalReport)
+        #expect(try database.objectCount(libraryID: libraryID) == originalObjectCount)
         #expect(try database.integrityCheck() == "ok")
     }
 
@@ -89,7 +117,7 @@ struct LegacyLibraryMigratorTests {
     private func verifyBackup(
         _ report: LegacyLibraryMigrationReport,
         fixture: LegacyFixture
-    ) async throws {
+    ) throws {
         #expect(report.itemCount == fixture.items.count)
         #expect(report.collectionCount == 1)
         #expect(report.membershipCount == 1)
@@ -104,8 +132,11 @@ struct LegacyLibraryMigratorTests {
             try Data(contentsOf: report.backupURL.appending(path: fixture.attachmentRelativePath))
                 == fixture.attachmentData
         )
-        let backupStore = try SwiftDataItemStore(storeURL: report.backupURL.appending(path: "items.store"))
-        #expect(try await backupStore.exportItems() == fixture.items)
+        #expect(
+            try SwiftDataItemStore.exportItemsSynchronously(
+                storeURL: report.backupURL.appending(path: "items.store")
+            ) == fixture.items
+        )
     }
 
     private func verifyCounts(_ database: CitrationDatabase, libraryID: Int64) throws -> LegacyMigrationInspection {
@@ -205,8 +236,8 @@ struct LegacyLibraryMigratorTests {
         libraryID: Int64,
         report: LegacyLibraryMigrationReport,
         inspection: LegacyMigrationInspection
-    ) async throws {
-        let repeatedReport = try await migrator.migrate()
+    ) throws {
+        let repeatedReport = try migrator.migrate()
         #expect(repeatedReport == report)
         #expect(
             try database.inspectLegacyMigration(name: LegacyLibraryMigrator.migrationName, libraryID: libraryID)

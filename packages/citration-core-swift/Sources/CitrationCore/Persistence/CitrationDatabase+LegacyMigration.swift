@@ -3,8 +3,7 @@ import GRDB
 
 extension CitrationDatabase {
     func completedLegacyMigrationReport(
-        name: String,
-        fingerprint: String
+        name: String
     ) throws -> LegacyLibraryMigrationReport? {
         try databaseQueue.read { database in
             guard
@@ -12,9 +11,9 @@ extension CitrationDatabase {
                     database,
                     sql: """
                     SELECT report_json FROM legacy_migration_runs
-                    WHERE migration_name = ? AND source_fingerprint = ? AND status = 'completed'
+                    WHERE migration_name = ? AND status = 'completed'
                     """,
-                    arguments: [name, fingerprint]
+                    arguments: [name]
                 )
             else {
                 return nil

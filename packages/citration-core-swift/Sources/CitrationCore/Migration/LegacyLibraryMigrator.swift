@@ -19,32 +19,22 @@ public struct LegacyLibraryMigrator: Sendable {
 
     public static let migrationName = "legacy-citration-library-v1"
 
-    public func migrateSynchronously() throws -> LegacyLibraryMigrationReport {
-        let result = LegacyMigrationResultBox()
-        let semaphore = DispatchSemaphore(value: 0)
-        Task.detached {
-            do {
-                try await result.store(.success(migrate()))
-            } catch {
-                result.store(.failure(error))
-            }
-            semaphore.signal()
-        }
-        semaphore.wait()
-        return try result.load().get()
+    public func migrate() throws -> LegacyLibraryMigrationReport {
+        try performMigration()
     }
 
-    public func migrate() async throws -> LegacyLibraryMigrationReport {
-        let fingerprint = try sources.fingerprint()
-        let backupURL = try sources.backup(to: backupDirectory)
-        if
-            let completed = try database.completedLegacyMigrationReport(
-                name: Self.migrationName,
-                fingerprint: fingerprint
-            )
-        {
+    // MARK: Private
+
+    private let database: CitrationDatabase
+    private let sources: LegacyLibrarySources
+    private let backupDirectory: URL
+
+    private func performMigration() throws -> LegacyLibraryMigrationReport {
+        if let completed = try database.completedLegacyMigrationReport(name: Self.migrationName) {
             return completed
         }
+        let fingerprint = try sources.fingerprint()
+        let backupURL = try sources.backup(to: backupDirectory)
 
         let libraryID = try database.upsertLibrary(
             identity: ZoteroLibraryIdentity(type: "local", remoteID: 0),
@@ -57,7 +47,7 @@ public struct LegacyLibraryMigrator: Sendable {
         )
 
         do {
-            let snapshot = try await sources.load()
+            let snapshot = try sources.load()
             let projection = try LegacyZoteroConversion.project(snapshot)
             try database.resetLegacyImport(libraryID: libraryID)
             try database.storeLocalCollections(projection.collections, libraryID: libraryID)
@@ -96,12 +86,6 @@ public struct LegacyLibraryMigrator: Sendable {
         }
     }
 
-    // MARK: Private
-
-    private let database: CitrationDatabase
-    private let sources: LegacyLibrarySources
-    private let backupDirectory: URL
-
     private func verify(
         report: LegacyLibraryMigrationReport,
         projection: LegacyMigrationProjection,
@@ -128,27 +112,4 @@ public struct LegacyLibraryMigrator: Sendable {
             throw LegacyLibraryMigrationError.verificationFailed(expected: expected, actual: actual)
         }
     }
-}
-
-// MARK: - LegacyMigrationResultBox
-
-private final class LegacyMigrationResultBox: @unchecked Sendable {
-    // MARK: Internal
-
-    func store(_ value: Result<LegacyLibraryMigrationReport, any Error>) {
-        lock.lock()
-        result = value
-        lock.unlock()
-    }
-
-    func load() -> Result<LegacyLibraryMigrationReport, any Error> {
-        lock.lock()
-        defer { lock.unlock() }
-        return result ?? .failure(CancellationError())
-    }
-
-    // MARK: Private
-
-    private let lock: NSLock = .init()
-    private var result: Result<LegacyLibraryMigrationReport, any Error>?
 }

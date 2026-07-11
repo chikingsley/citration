@@ -8,42 +8,38 @@ extension CitrationDatabase {
         key: String,
         database: Database
     ) throws {
+        let fieldStatement = try database.cachedStatement(sql: """
+        INSERT INTO item_fields (
+            library_id, item_key, field_name, value_kind, field_value,
+            text_value, integer_value, number_value, boolean_value
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """)
         for (fieldName, value) in object.data.sorted(by: { $0.key < $1.key }) {
-            try database.execute(
-                sql: """
-                INSERT INTO item_fields (
-                    library_id, item_key, field_name, value_kind, field_value,
-                    text_value, integer_value, number_value, boolean_value
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """,
-                arguments: [
-                    libraryID,
-                    key,
-                    fieldName,
-                    value.kind,
-                    ZoteroJSON.encode(value),
-                    value.stringValue,
-                    value.integerValue,
-                    value.numberValue,
-                    value.boolValue,
-                ]
-            )
+            try fieldStatement.execute(arguments: [
+                libraryID,
+                key,
+                fieldName,
+                value.kind,
+                ZoteroJSON.encode(value),
+                value.stringValue,
+                value.integerValue,
+                value.numberValue,
+                value.boolValue,
+            ])
         }
 
         let identifierFields = ["DOI", "ISBN", "ISSN", "PMID", "PMCID", "url"]
+        let identifierStatement = try database.cachedStatement(sql: """
+        INSERT INTO item_identifiers (
+            library_id, item_key, position, identifier_type, identifier_value
+        ) VALUES (?, ?, ?, ?, ?)
+        """)
         var position = 0
         for fieldName in identifierFields {
             guard let value = object.data[fieldName]?.stringValue, !value.isEmpty else {
                 continue
             }
-            try database.execute(
-                sql: """
-                INSERT INTO item_identifiers (
-                    library_id, item_key, position, identifier_type, identifier_value
-                ) VALUES (?, ?, ?, ?, ?)
-                """,
-                arguments: [libraryID, key, position, fieldName, value]
-            )
+            try identifierStatement.execute(arguments: [libraryID, key, position, fieldName, value])
             position += 1
         }
     }

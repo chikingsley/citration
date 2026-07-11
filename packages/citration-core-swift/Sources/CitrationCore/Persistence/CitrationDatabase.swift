@@ -293,7 +293,7 @@ public final class CitrationDatabase: @unchecked Sendable {
     ) throws {
         let currentData = try ZoteroJSON.encode(object.current)
         let pristineData = try ZoteroJSON.encode(object.pristine)
-        try database.execute(
+        try database.cachedStatement(
             sql: """
             INSERT INTO zotero_objects (
                 library_id, object_kind, object_key, object_version, object_type,
@@ -308,19 +308,18 @@ public final class CitrationDatabase: @unchecked Sendable {
                 is_deleted = excluded.is_deleted,
                 failure_message = excluded.failure_message,
                 updated_at = excluded.updated_at
-            """,
-            arguments: [
-                libraryID,
-                object.kind.rawValue,
-                object.key,
-                object.version,
-                object.objectType,
-                currentData,
-                pristineData,
-                object.syncState.rawValue,
-                object.isDeleted,
-                object.failureMessage,
-            ]
-        )
+            """
+        ).execute(arguments: [
+            libraryID,
+            object.kind.rawValue,
+            object.key,
+            object.version,
+            object.objectType,
+            currentData,
+            pristineData,
+            object.syncState.rawValue,
+            object.isDeleted,
+            object.failureMessage,
+        ])
     }
 }

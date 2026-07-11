@@ -68,6 +68,13 @@ public extension CitrationDatabase {
         libraryID: Int64
     ) throws {
         try databaseQueue.write { database in
+            let statement = try database.cachedStatement(sql: """
+            INSERT INTO app_object_identity (
+                library_id, object_kind, object_key, app_uuid, created_at, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?)
+            ON CONFLICT (library_id, object_kind, object_key) DO UPDATE SET
+                updated_at = excluded.updated_at
+            """)
             for (kind, objects) in [(ZoteroObjectKind.collection, collections), (.item, items)] {
                 for object in objects {
                     guard let key = object.key else {
@@ -75,23 +82,14 @@ public extension CitrationDatabase {
                     }
                     let createdAt = Self.remoteDate("dateAdded", object: object) ?? .now
                     let updatedAt = Self.remoteDate("dateModified", object: object) ?? createdAt
-                    try database.execute(
-                        sql: """
-                        INSERT INTO app_object_identity (
-                            library_id, object_kind, object_key, app_uuid, created_at, updated_at
-                        ) VALUES (?, ?, ?, ?, ?, ?)
-                        ON CONFLICT (library_id, object_kind, object_key) DO UPDATE SET
-                            updated_at = excluded.updated_at
-                        """,
-                        arguments: [
-                            libraryID,
-                            kind.rawValue,
-                            key,
-                            UUID().uuidString,
-                            createdAt.timeIntervalSince1970,
-                            updatedAt.timeIntervalSince1970,
-                        ]
-                    )
+                    try statement.execute(arguments: [
+                        libraryID,
+                        kind.rawValue,
+                        key,
+                        UUID().uuidString,
+                        createdAt.timeIntervalSince1970,
+                        updatedAt.timeIntervalSince1970,
+                    ])
                 }
             }
         }

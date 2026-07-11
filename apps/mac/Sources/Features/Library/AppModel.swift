@@ -89,6 +89,7 @@ final class AppModel {
     var statusMessage: String = "Ready"
     var items: [SynchronizedLibraryItem] = []
     var selectedItemIdentity: SynchronizedLibraryItemIdentity?
+    var selectedLibraryItemDetail: SynchronizedLibraryItem?
     var storageConnectors: [StorageConnector]
     var selectedWorkspaceTab: WorkspaceTab = .library
     var documentSessions: [DocumentSession] = []
@@ -151,12 +152,16 @@ final class AppModel {
             selectedItemIdentity = newValue.flatMap { appUUID in
                 items.first { $0.identity.appUUID == appUUID }?.identity
             }
+            refreshSelectedLibraryItemDetail()
         }
     }
 
     var selectedLibraryItem: SynchronizedLibraryItem? {
         guard let selectedItemIdentity else {
             return nil
+        }
+        if selectedLibraryItemDetail?.identity == selectedItemIdentity {
+            return selectedLibraryItemDetail
         }
         return items.first { $0.identity == selectedItemIdentity }
     }
@@ -173,6 +178,7 @@ final class AppModel {
         if !hasValidSelection {
             selectedItemIdentity = items.first?.identity
         }
+        refreshSelectedLibraryItemDetail()
         Task {
             await citation.renderPreviewForSelection()
         }
@@ -188,7 +194,7 @@ final class AppModel {
             let item = BCItem(title: "Untitled Item")
             await store.upsert(item)
             await refreshItems()
-            selectedItemIdentity = items.first { $0.identity.appUUID == item.id }?.identity
+            selectItem(identity: items.first { $0.identity.appUUID == item.id }?.identity)
             statusMessage = "Added: \(item.title)"
         }
     }
@@ -244,6 +250,7 @@ final class AppModel {
         }
         libraryReader.clearIfSelectionChanged(to: identity?.appUUID)
         selectedItemIdentity = identity
+        refreshSelectedLibraryItemDetail()
         Task {
             await citation.renderPreviewForSelection()
             await importer.refreshSelectedItemAttachments()
@@ -286,7 +293,7 @@ final class AppModel {
             await store.upsert(item)
             statusMessage = status
             await refreshItems()
-            selectedItemIdentity = items.first { $0.identity.appUUID == selectedID }?.identity
+            selectItem(identity: items.first { $0.identity.appUUID == selectedID }?.identity)
         }
     }
 
@@ -296,8 +303,33 @@ final class AppModel {
     ) async throws -> SynchronizedLibraryItem {
         let updated = try await store.updateItemFields(identity: identity, updates: updates)
         await refreshItems()
-        selectedItemIdentity = identity
+        selectItem(identity: identity)
         statusMessage = "Updated item"
-        return items.first { $0.identity == identity } ?? updated
+        return selectedLibraryItem ?? updated
+    }
+
+    // MARK: Private
+
+    private func refreshSelectedLibraryItemDetail() {
+        guard
+            let identity = selectedItemIdentity,
+            let summary = items.first(where: { $0.identity == identity }),
+            let projected = try? database.fetchProjectedItem(
+                libraryID: identity.libraryID,
+                key: identity.objectKey
+            )
+        else {
+            selectedLibraryItemDetail = nil
+            return
+        }
+        selectedLibraryItemDetail = SynchronizedLibraryItem(
+            identity: summary.identity,
+            bibliographic: summary.bibliographic,
+            projected: projected,
+            zoteroItemType: summary.zoteroItemType,
+            zoteroDate: summary.zoteroDate,
+            publicationTitle: summary.publicationTitle,
+            parentItemKey: summary.parentItemKey
+        )
     }
 }

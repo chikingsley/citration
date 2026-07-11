@@ -40,9 +40,9 @@ extension AppModel {
             targetSchema: targetSchema
         )
         await refreshItems()
-        selectedItemIdentity = identity
+        selectItem(identity: identity)
         statusMessage = "Changed item type to \(targetSchema.itemType.localized)"
-        return items.first { $0.identity == identity } ?? converted
+        return selectedLibraryItem ?? converted
     }
 
     func updateCreators(

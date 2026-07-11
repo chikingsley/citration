@@ -156,9 +156,9 @@ public struct LegacyLibrarySources: Sendable {
         return backupDirectory
     }
 
-    public func load(fileManager: FileManager = .default) async throws -> LegacyLibrarySnapshot {
+    public func load(fileManager: FileManager = .default) throws -> LegacyLibrarySnapshot {
         let items: [BCItem] = if fileManager.fileExists(atPath: itemStoreURL.path) {
-            try await SwiftDataItemStore(storeURL: itemStoreURL).exportItems()
+            try SwiftDataItemStore.exportItemsSynchronously(storeURL: itemStoreURL)
         } else {
             []
         }

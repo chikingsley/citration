@@ -57,7 +57,7 @@ extension AppModel {
                 sources: LegacyLibrarySources(applicationDirectory: applicationDirectory),
                 backupDirectory: applicationDirectory.appending(path: "Legacy Backups", directoryHint: .isDirectory)
             )
-            _ = try migrator.migrateSynchronously()
+            _ = try migrator.migrate()
             let connectionProfile = try database.loadZoteroConnectionProfile()
             let attachmentsDirectory = applicationDirectory.appending(path: "attachments", directoryHint: .isDirectory)
             let store = try CitrationLibraryStore(

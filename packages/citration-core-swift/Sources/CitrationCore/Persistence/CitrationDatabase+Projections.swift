@@ -146,7 +146,7 @@ extension CitrationDatabase {
             throw CitrationDatabaseError.missingObjectKey
         }
 
-        try database.execute(
+        try database.cachedStatement(
             sql: """
             INSERT INTO item_projections (
                 library_id, item_key, item_type, title, abstract_note, date_text,
@@ -168,26 +168,25 @@ extension CitrationDatabase {
                 extra = excluded.extra,
                 parent_item_key = excluded.parent_item_key,
                 note_html = excluded.note_html
-            """,
-            arguments: [
-                libraryID,
-                key,
-                itemType,
-                string("title", in: object.data),
-                string("abstractNote", in: object.data),
-                string("date", in: object.data),
-                string("publicationTitle", in: object.data),
-                string("DOI", in: object.data),
-                string("ISBN", in: object.data),
-                string("ISSN", in: object.data),
-                string("url", in: object.data),
-                string("language", in: object.data),
-                string("rights", in: object.data),
-                string("extra", in: object.data),
-                optionalString("parentItem", in: object.data),
-                itemType == "note" ? string("note", in: object.data) : nil,
-            ]
-        )
+            """
+        ).execute(arguments: [
+            libraryID,
+            key,
+            itemType,
+            string("title", in: object.data),
+            string("abstractNote", in: object.data),
+            string("date", in: object.data),
+            string("publicationTitle", in: object.data),
+            string("DOI", in: object.data),
+            string("ISBN", in: object.data),
+            string("ISSN", in: object.data),
+            string("url", in: object.data),
+            string("language", in: object.data),
+            string("rights", in: object.data),
+            string("extra", in: object.data),
+            optionalString("parentItem", in: object.data),
+            itemType == "note" ? string("note", in: object.data) : nil,
+        ])
 
         try clearChildProjections(libraryID: libraryID, key: key, database: database)
         try Self.insertFieldsAndIdentifiers(object: object, libraryID: libraryID, key: key, database: database)
@@ -204,10 +203,9 @@ extension CitrationDatabase {
             "item_fields", "item_identifiers", "item_creators", "item_tags", "collection_items",
             "annotation_projections",
         ] {
-            try database.execute(
-                sql: "DELETE FROM \(table) WHERE library_id = ? AND item_key = ?",
-                arguments: [libraryID, key]
-            )
+            try database.cachedStatement(
+                sql: "DELETE FROM \(table) WHERE library_id = ? AND item_key = ?"
+            ).execute(arguments: [libraryID, key])
         }
     }
 
@@ -218,26 +216,24 @@ extension CitrationDatabase {
         database: Database
     ) throws {
         let creators = object.data["creators"]?.arrayValue ?? []
+        let statement = try database.cachedStatement(sql: """
+        INSERT INTO item_creators (
+            library_id, item_key, position, creator_type,
+            first_name, last_name, literal_name, raw_json
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """)
         for (position, creator) in creators.enumerated() {
             let creatorData = creator.objectValue ?? [:]
-            try database.execute(
-                sql: """
-                INSERT INTO item_creators (
-                    library_id, item_key, position, creator_type,
-                    first_name, last_name, literal_name, raw_json
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                """,
-                arguments: [
-                    libraryID,
-                    key,
-                    position,
-                    string("creatorType", in: creatorData),
-                    optionalString("firstName", in: creatorData),
-                    optionalString("lastName", in: creatorData),
-                    optionalString("name", in: creatorData),
-                    ZoteroJSON.encode(creator),
-                ]
-            )
+            try statement.execute(arguments: [
+                libraryID,
+                key,
+                position,
+                string("creatorType", in: creatorData),
+                optionalString("firstName", in: creatorData),
+                optionalString("lastName", in: creatorData),
+                optionalString("name", in: creatorData),
+                ZoteroJSON.encode(creator),
+            ])
         }
     }
 
@@ -248,22 +244,20 @@ extension CitrationDatabase {
         database: Database
     ) throws {
         let tags = object.data["tags"]?.arrayValue ?? []
+        let statement = try database.cachedStatement(sql: """
+        INSERT INTO item_tags (library_id, item_key, position, tag, tag_type, raw_json)
+        VALUES (?, ?, ?, ?, ?, ?)
+        """)
         for (position, tag) in tags.enumerated() {
             let tagData = tag.objectValue ?? [:]
-            try database.execute(
-                sql: """
-                INSERT INTO item_tags (library_id, item_key, position, tag, tag_type, raw_json)
-                VALUES (?, ?, ?, ?, ?, ?)
-                """,
-                arguments: [
-                    libraryID,
-                    key,
-                    position,
-                    string("tag", in: tagData),
-                    tagData["type"]?.integerValue,
-                    ZoteroJSON.encode(tag),
-                ]
-            )
+            try statement.execute(arguments: [
+                libraryID,
+                key,
+                position,
+                string("tag", in: tagData),
+                tagData["type"]?.integerValue,
+                ZoteroJSON.encode(tag),
+            ])
         }
     }
 
@@ -295,7 +289,7 @@ extension CitrationDatabase {
                 arguments: [libraryID, collectionKey, key, UUID().uuidString]
             )
         }
-        try database.execute(
+        try database.cachedStatement(
             sql: """
             DELETE FROM app_collection_memberships
             WHERE library_id = ? AND item_key = ?
@@ -303,9 +297,8 @@ extension CitrationDatabase {
                   SELECT collection_key FROM collection_items
                   WHERE library_id = ? AND item_key = ?
               )
-            """,
-            arguments: [libraryID, key, libraryID, key]
-        )
+            """
+        ).execute(arguments: [libraryID, key, libraryID, key])
     }
 
     private static func insertAttachment(
@@ -315,10 +308,9 @@ extension CitrationDatabase {
         database: Database
     ) throws {
         guard object.itemType == "attachment" else {
-            try database.execute(
-                sql: "DELETE FROM attachment_projections WHERE library_id = ? AND item_key = ?",
-                arguments: [libraryID, key]
-            )
+            try database.cachedStatement(
+                sql: "DELETE FROM attachment_projections WHERE library_id = ? AND item_key = ?"
+            ).execute(arguments: [libraryID, key])
             return
         }
         try database.execute(
@@ -407,28 +399,26 @@ extension CitrationDatabase {
             optionalString("tag", in: $0.objectValue ?? [:])
         }
 
-        try database.execute(
-            sql: "DELETE FROM library_search WHERE library_id = ? AND object_key = ? AND object_kind = 'item'",
-            arguments: [libraryID, key]
-        )
-        try database.execute(
+        try database.cachedStatement(
+            sql: "DELETE FROM library_search WHERE library_id = ? AND object_key = ? AND object_kind = 'item'"
+        ).execute(arguments: [libraryID, key])
+        try database.cachedStatement(
             sql: """
             INSERT INTO library_search (
                 library_id, object_key, object_kind, title, creators, tags,
                 note_text, annotation_text, fulltext
             ) VALUES (?, ?, 'item', ?, ?, ?, ?, ?, '')
-            """,
-            arguments: [
-                libraryID,
-                key,
-                string("title", in: object.data),
-                creatorNames.joined(separator: " "),
-                tagNames.joined(separator: " "),
-                string("note", in: object.data),
-                [string("annotationText", in: object.data), string("annotationComment", in: object.data)]
-                    .joined(separator: " "),
-            ]
-        )
+            """
+        ).execute(arguments: [
+            libraryID,
+            key,
+            string("title", in: object.data),
+            creatorNames.joined(separator: " "),
+            tagNames.joined(separator: " "),
+            string("note", in: object.data),
+            [string("annotationText", in: object.data), string("annotationComment", in: object.data)]
+                .joined(separator: " "),
+        ])
     }
 
     private static func fetchAttachment(

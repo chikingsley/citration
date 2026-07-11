@@ -55,6 +55,19 @@ public actor SwiftDataItemStore: BCItemStore {
 
     // MARK: Public
 
+    /// Reads the retired SwiftData store without an actor hop during one-time startup migration.
+    public static func exportItemsSynchronously(storeURL: URL) throws -> [BCItem] {
+        let schema = Schema([ItemRecord.self])
+        let configuration = ModelConfiguration(schema: schema, url: storeURL)
+        let container = try ModelContainer(for: schema, configurations: [configuration])
+        let context = ModelContext(container)
+        let records = try context.fetch(FetchDescriptor<ItemRecord>())
+        let decoder = JSONDecoder()
+        return try records
+            .map { try decodeItem(from: $0, decoder: decoder) }
+            .sorted(by: sortItems)
+    }
+
     public func listItems() -> [BCItem] {
         do {
             return try exportItems()
@@ -67,9 +80,10 @@ public actor SwiftDataItemStore: BCItemStore {
     public func exportItems() throws -> [BCItem] {
         let context = ModelContext(container)
         let records = try context.fetch(FetchDescriptor<ItemRecord>())
+        let decoder = JSONDecoder()
         return try records
-            .map(decodeItem)
-            .sorted(by: sortItems)
+            .map { try Self.decodeItem(from: $0, decoder: decoder) }
+            .sorted(by: Self.sortItems)
     }
 
     public func upsert(_ item: BCItem) {
@@ -112,7 +126,32 @@ public actor SwiftDataItemStore: BCItemStore {
 
     private let container: ModelContainer
     private let encoder: JSONEncoder = .init()
-    private let decoder: JSONDecoder = .init()
+
+    private static func decodeItem(from record: ItemRecord, decoder: JSONDecoder) throws -> BCItem {
+        let identifiers = try decoder.decode([Identifier].self, from: record.identifiersData)
+        let creators = try decoder.decode([Creator].self, from: record.creatorsData)
+        let tags = try record.tagsData.map { try decoder.decode([String].self, from: $0) } ?? []
+        let itemType = ItemType(rawValue: record.itemTypeRawValue) ?? .unknown
+
+        return BCItem(
+            id: record.id,
+            title: record.title,
+            identifiers: identifiers,
+            itemType: itemType,
+            creators: creators,
+            publicationYear: record.publicationYear,
+            tags: tags,
+            createdAt: record.createdAt,
+            updatedAt: record.updatedAt
+        )
+    }
+
+    private static func sortItems(lhs: BCItem, rhs: BCItem) -> Bool {
+        if lhs.updatedAt == rhs.updatedAt {
+            return lhs.title.localizedCaseInsensitiveCompare(rhs.title) == .orderedAscending
+        }
+        return lhs.updatedAt > rhs.updatedAt
+    }
 
     private func fetchItemRecord(id: UUID, in context: ModelContext) throws -> ItemRecord? {
         let descriptor = FetchDescriptor<ItemRecord>(predicate: #Predicate { record in
@@ -133,31 +172,5 @@ public actor SwiftDataItemStore: BCItemStore {
             createdAt: item.createdAt,
             updatedAt: .now
         )
-    }
-
-    private func decodeItem(from record: ItemRecord) throws -> BCItem {
-        let identifiers = try decoder.decode([Identifier].self, from: record.identifiersData)
-        let creators = try decoder.decode([Creator].self, from: record.creatorsData)
-        let tags = try record.tagsData.map { try decoder.decode([String].self, from: $0) } ?? []
-        let itemType = ItemType(rawValue: record.itemTypeRawValue) ?? .unknown
-
-        return BCItem(
-            id: record.id,
-            title: record.title,
-            identifiers: identifiers,
-            itemType: itemType,
-            creators: creators,
-            publicationYear: record.publicationYear,
-            tags: tags,
-            createdAt: record.createdAt,
-            updatedAt: record.updatedAt
-        )
-    }
-
-    private func sortItems(lhs: BCItem, rhs: BCItem) -> Bool {
-        if lhs.updatedAt == rhs.updatedAt {
-            return lhs.title.localizedCaseInsensitiveCompare(rhs.title) == .orderedAscending
-        }
-        return lhs.updatedAt > rhs.updatedAt
     }
 }
