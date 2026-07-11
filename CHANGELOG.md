@@ -66,6 +66,7 @@ All notable completed changes to Citration are tracked here. Entries are newest 
 
 ### Changed
 
+- Accepted the complete Mac-client rebuild through steps 1–7 of the canonical plan. `TODO.md` now contains only the deliberately deferred native iPhone/iPad and optional server-extension work in steps 8 and 9.
 - Made `TODO.md` the only active execution board.
 - Reframed Citration as a free native Apple client of Zotero Self-Host Server instead of a product with its own account and custom synchronization backend.
 - Selected one GRDB/SQLite database as the durable local persistence and synchronization foundation.
