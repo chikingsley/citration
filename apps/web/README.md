@@ -1,7 +1,3 @@
-# Citration Web
+# Unused Web Placeholder
 
-Placeholder for the future web client and web reader.
-
-This app will share Citration object and API contracts through
-`packages/citration-contracts`; it will not import `packages/citration-core-swift`
-directly.
+Web is not a current Citration product surface. This placeholder is scheduled for removal. A future web client should be introduced only for a concrete use case and should consume the same compatible server contract without creating a second canonical library.

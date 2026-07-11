@@ -1,4 +1,4 @@
-set shell := ["zsh", "-cu"]
+set shell := ["zsh", "-fcu"]
 
 generate:
     xcodegen generate
@@ -21,11 +21,11 @@ cli-build:
 
 app-build:
     xcodegen generate
-    xcodebuild build -project Citration.xcodeproj -scheme Citration -destination 'platform=macOS,arch=arm64'
+    xcodebuild build -quiet -project Citration.xcodeproj -scheme Citration -destination 'platform=macOS,arch=arm64'
 
 app-test:
     xcodegen generate
-    xcodebuild test -project Citration.xcodeproj -scheme Citration -destination 'platform=macOS,arch=arm64'
+    xcodebuild test -quiet -project Citration.xcodeproj -scheme Citration -destination 'platform=macOS,arch=arm64'
 
 api-check:
     cd services/citration-api && pnpm run check

@@ -12,7 +12,7 @@ struct StorageTests {
     @Test("LocalObjectStore builds deterministic object key")
     func localStoreBuildsDeterministicObjectKey() async throws {
         let connector = StorageConnector(name: "local", type: .local, bucket: "ignored")
-        let store = LocalObjectStore(
+        let store: any AttachmentObjectStore = LocalObjectStore(
             connector: connector,
             baseDirectory: URL(fileURLWithPath: "/tmp/citration")
         )
@@ -34,7 +34,7 @@ struct StorageTests {
     @Test("LocalObjectStore rejects negative content length")
     func localStoreRejectsNegativeContentLength() async throws {
         let connector = StorageConnector(name: "local", type: .local, bucket: "ignored")
-        let store = LocalObjectStore(
+        let store: any AttachmentObjectStore = LocalObjectStore(
             connector: connector,
             baseDirectory: URL(fileURLWithPath: "/tmp/citration")
         )
@@ -54,7 +54,7 @@ struct StorageTests {
     @Test("LocalObjectStore rejects filename path separators")
     func localStoreRejectsFilenamePathSeparators() async throws {
         let connector = StorageConnector(name: "local", type: .local, bucket: "ignored")
-        let store = LocalObjectStore(
+        let store: any AttachmentObjectStore = LocalObjectStore(
             connector: connector,
             baseDirectory: URL(fileURLWithPath: "/tmp/citration")
         )
@@ -74,7 +74,7 @@ struct StorageTests {
     @Test("LocalObjectStore validates multipart completion input")
     func localStoreValidatesMultipartCompletionInput() async throws {
         let connector = StorageConnector(name: "local", type: .local, bucket: "ignored")
-        let store = LocalObjectStore(
+        let store: any AttachmentObjectStore = LocalObjectStore(
             connector: connector,
             baseDirectory: URL(fileURLWithPath: "/tmp/citration")
         )
@@ -119,7 +119,7 @@ struct StorageTests {
 
     @Test("S3CompatibleObjectStore throws unsupportedOperation for presignUpload")
     func s3CompatibleStorePresignUploadThrows() async {
-        let store = S3CompatibleObjectStore(
+        let store: any AttachmentObjectStore = S3CompatibleObjectStore(
             connector: StorageConnector(name: "r2", type: .r2, bucket: "papers")
         )
 
@@ -137,7 +137,7 @@ struct StorageTests {
 
     @Test("S3CompatibleObjectStore throws unsupportedOperation for presignDownload")
     func s3CompatibleStorePresignDownloadThrows() async {
-        let store = S3CompatibleObjectStore(
+        let store: any AttachmentObjectStore = S3CompatibleObjectStore(
             connector: StorageConnector(name: "r2", type: .r2, bucket: "papers")
         )
 
@@ -148,7 +148,7 @@ struct StorageTests {
 
     @Test("S3CompatibleObjectStore throws unsupportedOperation for completeMultipart")
     func s3CompatibleStoreCompleteMultipartThrows() async {
-        let store = S3CompatibleObjectStore(
+        let store: any AttachmentObjectStore = S3CompatibleObjectStore(
             connector: StorageConnector(name: "r2", type: .r2, bucket: "papers")
         )
 
@@ -165,7 +165,7 @@ struct StorageTests {
 
     @Test("S3CompatibleObjectStore throws unsupportedOperation for deleteObject")
     func s3CompatibleStoreDeleteThrows() async {
-        let store = S3CompatibleObjectStore(
+        let store: any AttachmentObjectStore = S3CompatibleObjectStore(
             connector: StorageConnector(name: "r2", type: .r2, bucket: "papers")
         )
 
@@ -177,7 +177,7 @@ struct StorageTests {
     @Test("LocalObjectStore rejects object key traversal on download")
     func localStoreRejectsTraversalOnDownload() async throws {
         let connector = StorageConnector(name: "local", type: .local, bucket: "ignored")
-        let store = LocalObjectStore(
+        let store: any AttachmentObjectStore = LocalObjectStore(
             connector: connector,
             baseDirectory: URL(fileURLWithPath: "/tmp/citration")
         )

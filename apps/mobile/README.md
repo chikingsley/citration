@@ -1,7 +1,5 @@
-# Citration Mobile
+# Future Native iPhone And iPad App
 
-Placeholder for the future Expo/React Native mobile client.
+This placeholder predates the current native-Apple direction. The shipped mobile application will be a SwiftUI iPhone/iPad target that shares the GRDB database, Zotero sync engine, domain models, attachment cache, and reader models from `packages/citration-core-swift`.
 
-This app will share Citration object and API contracts through
-`packages/citration-contracts`; it will not import `packages/citration-core-swift`
-directly.
+The folder should be renamed or replaced when that native target is created. Expo and React Native are not part of the current product architecture.

@@ -11,41 +11,39 @@ struct LibraryDetailView: View {
     let onSelectionChange: (Set<UUID>) -> Void
 
     var body: some View {
-        Group {
-            if let attachment = model.reader.activeAttachment {
-                ReaderPane(
-                    attachment: attachment,
-                    item: model.selectedItem,
-                    reader: model.reader
-                )
-            } else if filteredItems.isEmpty {
-                ContentUnavailableView(
-                    "No Items",
-                    systemImage: "tray",
-                    description: Text("Your library is empty. Add items to get started.")
-                )
-            } else {
-                Table(filteredItems, selection: $selectedItemIDs) {
-                    TableColumn("Title") { item in
-                        Label(item.title.bcCollapsedWhitespace(), systemImage: "doc.text")
-                    }
-                    TableColumn("Creator") { item in
-                        Text(authorSummary(for: item))
-                    }
-                    .width(min: 80, ideal: 160, max: 300)
-                    TableColumn("Year") { item in
-                        Text(item.publicationYear.map(String.init) ?? "")
-                    }
-                    .width(min: 40, ideal: 60, max: 80)
-                    TableColumn("Tags") { item in
-                        Text(item.tags.joined(separator: ", "))
-                            .lineLimit(1)
-                    }
-                    .width(min: 80, ideal: 140, max: 240)
+        if let attachment = model.reader.activeAttachment {
+            ReaderPane(
+                attachment: attachment,
+                item: model.selectedItem,
+                reader: model.reader
+            )
+        } else if filteredItems.isEmpty {
+            ContentUnavailableView(
+                "No Items",
+                systemImage: "tray",
+                description: Text("Your library is empty. Add items to get started.")
+            )
+        } else {
+            Table(filteredItems, selection: $selectedItemIDs) {
+                TableColumn("Title") { item in
+                    Label(item.title.bcCollapsedWhitespace(), systemImage: "doc.text")
                 }
-                .onChange(of: selectedItemIDs) { _, selection in
-                    onSelectionChange(selection)
+                TableColumn("Creator") { item in
+                    Text(authorSummary(for: item))
                 }
+                .width(min: 80, ideal: 160, max: 300)
+                TableColumn("Year") { item in
+                    Text(item.publicationYear.map(String.init) ?? "")
+                }
+                .width(min: 40, ideal: 60, max: 80)
+                TableColumn("Tags") { item in
+                    Text(item.tags.joined(separator: ", "))
+                        .lineLimit(1)
+                }
+                .width(min: 80, ideal: 140, max: 240)
+            }
+            .onChange(of: selectedItemIDs) { _, selection in
+                onSelectionChange(selection)
             }
         }
     }

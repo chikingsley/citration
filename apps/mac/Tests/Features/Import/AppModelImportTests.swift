@@ -41,7 +41,12 @@ struct AppModelImportTests {
         await model.refreshItems()
 
         model.importer.importAttachments(urls: [sourceFile], mode: .createNewItemPerFile)
-        try await waitUntil(timeout: 3.0) { model.items.count == 1 && model.items.first?.doi == doi }
+        try await waitUntil(timeout: 3.0) {
+            !model.importer.isImporting
+                && model.items.count == 1
+                && model.items.first?.doi == doi
+                && model.statusMessage.contains("detected 1 DOI")
+        }
 
         let imported = try #require(model.items.first)
         #expect(imported.title == "Real Metadata Title")

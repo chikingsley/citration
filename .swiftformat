@@ -29,7 +29,9 @@
 --enable markTypes
 --enable wrapEnumCases
 --enable wrapSwitchCases
---enable wrapConditionalBodies
+--enable wrapIfStatementBodies
+--enable wrapGuardStatementBodies
+--enable wrapIfExpressionBodies
 --enable blankLineAfterSwitchCase
 --enable blockComments
 --enable propertyTypes

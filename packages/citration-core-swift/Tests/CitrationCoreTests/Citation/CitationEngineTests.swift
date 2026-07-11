@@ -6,7 +6,7 @@ import Testing
 struct CitationEngineTests {
     @Test("renders cluster with style prefix")
     func stubFormatterRendersClusterWithStylePrefix() async throws {
-        let formatter = StubCitationFormatter()
+        let formatter: any CitationFormattingEngine = StubCitationFormatter()
         let style = CitationStyle(id: "apa", title: "APA")
         let cluster = CitationCluster(items: [CitationItem(itemID: UUID())])
 
@@ -22,7 +22,7 @@ struct CitationEngineTests {
 
     @Test("renders bibliography with correct entry count")
     func stubFormatterRendersBibliographyEntryCount() async throws {
-        let formatter = StubCitationFormatter()
+        let formatter: any CitationFormattingEngine = StubCitationFormatter()
         let style = CitationStyle(id: "chicago-author-date", title: "Chicago Author-Date")
         let items = [BCItem(title: "A"), BCItem(title: "B"), BCItem(title: "C")]
 
@@ -38,7 +38,7 @@ struct CitationEngineTests {
 
     @Test("throws for empty cluster")
     func stubFormatterThrowsForEmptyCluster() async throws {
-        let formatter = StubCitationFormatter()
+        let formatter: any CitationFormattingEngine = StubCitationFormatter()
         let style = CitationStyle(id: "apa", title: "APA")
         let cluster = CitationCluster(items: [])
 
@@ -54,7 +54,7 @@ struct CitationEngineTests {
 
     @Test("includes locator, prefix, suffix, and suppress-author in output")
     func stubFormatterIncludesAllFields() async throws {
-        let formatter = StubCitationFormatter()
+        let formatter: any CitationFormattingEngine = StubCitationFormatter()
         let style = CitationStyle(id: "apa", title: "APA")
         let itemID = try #require(UUID(uuidString: "AAAAAAAA-BBBB-CCCC-DDDD-EEEEEEEEEEEE"))
         let cluster = CitationCluster(
@@ -84,7 +84,7 @@ struct CitationEngineTests {
 
     @Test("empty bibliography returns no entries")
     func emptyBibliography() async throws {
-        let formatter = StubCitationFormatter()
+        let formatter: any CitationFormattingEngine = StubCitationFormatter()
         let style = CitationStyle(id: "apa", title: "APA")
 
         let bibliography = try await formatter.formatBibliography(

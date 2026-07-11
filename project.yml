@@ -6,6 +6,7 @@ options:
 settings:
   base:
     SWIFT_VERSION: "6.0"
+    SWIFT_TREAT_WARNINGS_AS_ERRORS: YES
     MACOSX_DEPLOYMENT_TARGET: "14.0"
     PRODUCT_BUNDLE_IDENTIFIER: com.citration.app
     CODE_SIGN_STYLE: Automatic
@@ -22,6 +23,17 @@ targets:
     platform: macOS
     info:
       path: apps/mac/Config/Citration-Info.plist
+      properties:
+        UTImportedTypeDeclarations:
+          - UTTypeConformsTo:
+              - public.data
+              - public.archive
+            UTTypeDescription: EPUB Publication
+            UTTypeIdentifier: org.idpf.epub-container
+            UTTypeTagSpecification:
+              public.filename-extension:
+                - epub
+              public.mime-type: application/epub+zip
     sources:
       - path: apps/mac/Sources
       - path: apps/mac/Resources

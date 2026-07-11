@@ -1,77 +1,52 @@
 # Citration
 
-Citration is a Swift-native macOS app for reading, annotating, and organizing
-research documents.
+Citration is a free, native Apple research library and document reader. It connects to a Zotero API v3-compatible server, keeps a complete offline library on the device, and syncs ordinary Zotero objects without creating a separate Citration account or a second library backend.
 
-## Layout
+The first supported backend is [Zotero Self-Host Server](https://github.com/chikingsley/zotero-selfhost). Citration’s product work is the native reading, annotation, metadata, search, and library experience built on top of that compatible sync contract.
 
+## Current State
+
+The macOS app already imports documents, resolves metadata, reads PDFs and basic EPUBs, stores PDF highlights and underlines, keeps notes, tags, collections, relationships, and reader progress, renders CSL citations, performs OCR, and discovers related works.
+
+Those features currently use a mixture of SwiftData and JSON files and are not connected to the Zotero-compatible server. The next milestone replaces that fragmented persistence with one SQLite database and proves a lossless, read-only synchronization of the existing self-hosted library before enabling writes.
+
+See [`AGENTS.md`](AGENTS.md) for the execution baseline, [`TODO.md`](TODO.md) for the canonical ordered plan, [`docs/product-direction.md`](docs/product-direction.md) for the settled product and architecture decisions, and [`docs/zotero-reference-notes.md`](docs/zotero-reference-notes.md) for the live-library coverage audit and protocol requirements. Completed work belongs in [`CHANGELOG.md`](CHANGELOG.md).
+
+## Repository
+
+```text
+apps/mac/                              current native macOS app
+packages/citration-core-swift/         shared Apple-native domain, database, sync, and reader logic
+tools/citration-cli/                   development and migration utilities
+services/citration-api/                obsolete custom-sync scaffold scheduled for removal
+apps/mobile/                           placeholder scheduled to become the native iPhone/iPad app
+apps/web/                              unused placeholder scheduled for removal
+packages/citration-contracts/          unused custom-contract placeholder scheduled for removal
 ```
-project.yml                         XcodeGen source of truth for the app project
-apps/mac/Sources/                   macOS app target
-apps/mac/Tests/                     macOS app tests
-apps/mac/Resources/                 bundled app resources
-apps/mac/Config/                    app Info.plist and build config
-packages/citration-core-swift/      shared Apple-native Swift core package
-packages/citration-contracts/       shared API contract package placeholder
-services/citration-api/             Cloudflare Worker package for the sync API
-tools/citration-cli/                repo tooling + OpenAlex utilities
-docs/                               product direction, standards, and task list
-```
 
-`Citration.xcodeproj` is generated from `project.yml`, not committed.
+`project.yml` is the XcodeGen source of truth. `Citration.xcodeproj` is generated and is not committed.
 
-## Setup
+## Development
+
+Install the development tools, generate the project, and open it:
 
 ```bash
 brew install swiftlint swiftformat xcodegen lefthook
-lefthook install                     # git hooks: swiftformat + swiftlint on commit
-xcodegen generate                    # generate Citration.xcodeproj
-open Citration.xcodeproj             # select the Citration scheme and run
+lefthook install
+xcodegen generate
+open Citration.xcodeproj
 ```
 
-## Commands
+Run the current repository checks with:
 
 ```bash
 just check
-just open
-cd packages/citration-core-swift && swift test --parallel
-cd tools/citration-cli && swift run citration openalex-key status
-cd tools/citration-cli && swift run citration openalex-key import-env
-cd tools/citration-cli && swift run citration openalex-smoke 10.7717/peerj.4375
-cd services/citration-api && pnpm run check
 ```
 
-Formatting is owned by SwiftFormat (`.swiftformat`); SwiftLint (`.swiftlint.yml`)
-enforces semantic and safety rules only. Both run on every commit via lefthook.
+SwiftFormat owns formatting. SwiftLint enforces semantic and safety rules. Lefthook runs both before commits.
 
-Citation previews and bibliographies are rendered by citeproc-js (the CSL
-processor Zotero uses, vendored at `apps/mac/Resources/CSL/` with APA/Chicago/MLA
-styles; dual-licensed CPAL/AGPL) running in JavaScriptCore.
+## Product Boundary
 
-Scanned PDFs with no text layer are OCRed through Mistral
-(`mistral-ocr-latest`) when `MISTRAL_API_KEY` is configured (same `.env` +
-local-file pattern as OpenAlex; the key file is
-`~/Library/Application Support/Citration/mistral-api-key`). OCR output is
-cached by content hash under `.../Citration/ocr/`, so re-processing the same
-document never repeats an API call.
+Citration does not implement another Zotero server, billing system, Sign in with Apple account, or proprietary sync protocol. A user supplies a compatible server URL and a scoped API/device key. The same Apple client should work with a personal self-hosted deployment and any future managed deployment that preserves the same protocol.
 
-OpenAlex API keys are user-provided credentials. For local development, copy
-`.env.example` to `.env` (git-ignored), set `OPENALEX_API_KEY`, then run
-`cd tools/citration-cli && swift run citration openalex-key import-env` to store it in a local file
-(`~/Library/Application Support/Citration/openalex-api-key`, mode 0600 —
-deliberately not the Keychain, which re-prompts for every unsigned debug
-rebuild). The app also exposes an OpenAlex key field in the inspector.
-
-Zotero is an external behavior reference only. Notes are kept in
-`docs/zotero-reference-notes.md`; Zotero source is not vendored here.
-
-Product direction and reader/import architecture notes are in
-`docs/product-direction.md`.
-
-Apple app repo layout conventions are in `docs/repo-structure-standard.md`.
-
-The current task list is in `docs/tasks.md`. Sync/API task #14 is planned in
-`services/citration-api/docs/sync-api-prd.md`, with scratch product notes in
-`services/citration-api/docs/sync-product-scratch.md`, reference-manager gap notes in
-`services/citration-api/docs/reference-manager-market-gaps.md`, and the initial
-Cloudflare Worker scaffold in `services/citration-api/`.
+Citration-only features may eventually use explicitly namespaced extension endpoints on Zotero Self-Host, but standard Zotero items, collections, notes, attachments, annotations, full text, settings, versions, and deletions remain canonical Zotero-compatible data.
