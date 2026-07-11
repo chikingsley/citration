@@ -74,6 +74,34 @@ struct SynchronizedObjectStoreTests {
         #expect(annotation.tags == projectedAnnotation?.tags)
     }
 
+    @Test("Synchronized ink retains every exact path point and stroke width")
+    func synchronizedInkRetainsExactPaths() async throws {
+        let fixture = try StoreFixture()
+        defer { fixture.remove() }
+        let (_, items, store) = try fixture.makeRemoteStore()
+        let rawInk = try #require(items.first { $0.data["annotationType"]?.stringValue == "ink" })
+        let inkKey = try #require(rawInk.key)
+        let attachmentKey = try #require(rawInk.data["parentItem"]?.stringValue)
+        let attachment = try #require(items.first { $0.key == attachmentKey })
+        let bibliographicKey = try #require(attachment.data["parentItem"]?.stringValue)
+        let item = try #require(
+            await store.listLibraryItems().first { $0.identity.objectKey == bibliographicKey }
+        )
+
+        let ink = try #require(try await store.listSynchronizedAnnotations(
+            itemID: item.identity.appUUID,
+            attachmentKey: attachmentKey
+        ).first { $0.identity.objectKey == inkKey })
+        let rawPosition = try #require(rawInk.data["annotationPosition"]?.stringValue)
+        let positionData = try #require(rawPosition.data(using: .utf8))
+        let position = try #require(try ZoteroJSON.decode(positionData).objectValue)
+
+        #expect(ink.kind == .ink)
+        #expect(ink.inkPaths.count == position["paths"]?.arrayValue?.count)
+        #expect(ink.inkWidth == position["width"]?.numberValue)
+        #expect(ink.inkPaths.flatMap(\.self).isEmpty == false)
+    }
+
     @Test("Zotero-compatible annotation creation stores exact geometry and ordering")
     func synchronizedAnnotationCreationStoresExactContract() async throws {
         let fixture = try StoreFixture()

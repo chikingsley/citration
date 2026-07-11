@@ -10,7 +10,6 @@ enum ZoteroPDFAnnotationRenderer {
     ) -> [PDFAnnotation] {
         guard
             let kind = annotation.kind,
-            kind != .ink,
             let pageIndex = annotation.pageIndex,
             pageIndex >= 0,
             pageIndex < document.pageCount,
@@ -26,8 +25,52 @@ enum ZoteroPDFAnnotationRenderer {
         case .note:
             return renderNote(annotation, page: page)
         case .ink:
-            return []
+            return renderInk(annotation, page: page)
         }
+    }
+
+    static func inkAnnotation(
+        paths: [[CGPoint]],
+        width: CGFloat,
+        color: NSColor
+    ) -> PDFAnnotation? {
+        let points = paths.flatMap(\.self)
+        guard
+            let minX = points.map(\.x).min(),
+            let minY = points.map(\.y).min(),
+            let maxX = points.map(\.x).max(),
+            let maxY = points.map(\.y).max()
+        else {
+            return nil
+        }
+        let padding = max(width, 1)
+        let bounds = CGRect(
+            x: minX - padding,
+            y: minY - padding,
+            width: max(maxX - minX + padding * 2, padding * 2),
+            height: max(maxY - minY + padding * 2, padding * 2)
+        )
+        let rendered = PDFAnnotation(bounds: bounds, forType: .ink, withProperties: nil)
+        rendered.color = color
+        let border = PDFBorder()
+        border.lineWidth = width
+        rendered.border = border
+        for points in paths where !points.isEmpty {
+            let path = NSBezierPath()
+            path.lineCapStyle = .round
+            path.lineJoinStyle = .round
+            let first = points[0]
+            path.move(to: CGPoint(x: first.x - bounds.minX, y: first.y - bounds.minY))
+            if points.count == 1 {
+                path.line(to: CGPoint(x: first.x - bounds.minX, y: first.y - bounds.minY))
+            } else {
+                for point in points.dropFirst() {
+                    path.line(to: CGPoint(x: point.x - bounds.minX, y: point.y - bounds.minY))
+                }
+            }
+            rendered.add(path)
+        }
+        return rendered
     }
 
     // MARK: Private
@@ -88,6 +131,26 @@ enum ZoteroPDFAnnotationRenderer {
         let rendered = PDFAnnotation(bounds: bounds, forType: .text, withProperties: nil)
         rendered.contents = annotation.comment
         rendered.color = annotation.compatibilityAnnotation().color.nsColor
+        page.addAnnotation(rendered)
+        return [rendered]
+    }
+
+    private static func renderInk(
+        _ annotation: SynchronizedLibraryAnnotation,
+        page: PDFPage
+    ) -> [PDFAnnotation] {
+        let paths = annotation.inkPaths.map { path in
+            path.map { CGPoint(x: $0.x, y: $0.y) }
+        }
+        guard
+            let rendered = inkAnnotation(
+                paths: paths,
+                width: annotation.inkWidth ?? 1,
+                color: annotation.compatibilityAnnotation().color.nsColor
+            )
+        else {
+            return []
+        }
         page.addAnnotation(rendered)
         return [rendered]
     }

@@ -67,6 +67,31 @@ struct ZoteroPDFAnnotationRendererTests {
         #expect(rendered[1].bounds.origin.y == 700)
     }
 
+    @Test("stored Zotero ink paths render with exact points and width")
+    func storedInkPathsRenderExactly() throws {
+        let document = try #require(PDFDocument(url: realDocumentFixture("efl-drama-paper.pdf")))
+        let annotation = synchronizedAnnotation(
+            type: "ink",
+            text: "",
+            comment: "",
+            positionJSON: """
+            {"pageIndex":0,"paths":[[72,100,80,108,92,104],[120,130,121,132]],"width":2}
+            """
+        )
+
+        let rendered = ZoteroPDFAnnotationRenderer.render(annotation, in: document)
+
+        let ink = try #require(rendered.first)
+        #expect(rendered.count == 1)
+        #expect(ink.type == "Ink")
+        #expect(ink.paths?.count == 2)
+        #expect(ink.border?.lineWidth == 2)
+        #expect(ink.bounds.minX == 70)
+        #expect(ink.bounds.minY == 98)
+        #expect(ink.bounds.maxX == 123)
+        #expect(ink.bounds.maxY == 134)
+    }
+
     @Test("a real PDFKit selection produces Zotero position geometry and sort metadata")
     @MainActor
     func realSelectionProducesZoteroMetadata() throws {

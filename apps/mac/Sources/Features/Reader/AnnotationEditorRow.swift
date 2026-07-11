@@ -33,7 +33,7 @@ struct AnnotationEditorRow: View {
                 .font(.caption2.monospaced())
                 .foregroundStyle(.tertiary)
             if annotation.kind == .ink {
-                Text("Ink strokes are preserved exactly. Rendering and editing are tracked separately.")
+                Text(inkDetail)
                     .foregroundStyle(.secondary)
             } else {
                 editableContent
@@ -56,6 +56,11 @@ struct AnnotationEditorRow: View {
             return "\(type) · Page \(annotation.pageLabel) · \(date)"
         }
         return "\(type) · \(date)"
+    }
+
+    private var inkDetail: String {
+        let width = annotation.inkWidth.map { String(format: "%.1f pt", $0) } ?? "unknown width"
+        return "\(annotation.inkPaths.count) ink stroke(s) · \(width)"
     }
 
     private var projectedTags: [ZoteroProjectedTag] {

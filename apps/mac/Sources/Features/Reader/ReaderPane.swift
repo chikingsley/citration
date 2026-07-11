@@ -75,6 +75,23 @@ struct ReaderPane: View {
                     Image(systemName: "highlighter")
                 }
                 .help("Highlight selected text")
+
+                Menu {
+                    ForEach(AnnotationColor.allCases, id: \.self) { color in
+                        Button("Draw in \(color.rawValue.capitalized)") {
+                            reader.beginInk(color: color)
+                        }
+                    }
+                    if reader.isInkMode {
+                        Divider()
+                        Button("Stop Drawing") {
+                            reader.endInk()
+                        }
+                    }
+                } label: {
+                    Image(systemName: reader.isInkMode ? "pencil.tip.crop.circle.badge.plus" : "pencil.tip")
+                }
+                .help(reader.isInkMode ? "Drawing on the PDF" : "Draw on the PDF")
             }
 
             Button {
@@ -118,6 +135,9 @@ struct ReaderPane: View {
                 progress: reader.progress,
                 annotations: reader.annotations,
                 proxy: pdfProxy,
+                isInkMode: reader.isInkMode,
+                inkColor: reader.inkColor,
+                onInkStroke: reader.addInk,
                 onProgressChange: reader.updateProgress
             )
 

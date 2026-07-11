@@ -289,9 +289,6 @@ public extension CitrationLibraryStore {
     }
 
     private func validate(_ draft: SynchronizedLibraryAnnotationDraft) throws {
-        guard draft.kind != .ink else {
-            throw AnnotationEditingError.invalidAnnotationType
-        }
         guard try objectKey(for: draft.id, kind: .item) == nil else {
             throw AnnotationEditingError.duplicateIdentity
         }
@@ -326,6 +323,15 @@ public extension CitrationLibraryStore {
         else {
             throw AnnotationEditingError.invalidPosition
         }
+        if draft.kind == .ink {
+            guard
+                position["pageIndex"]?.integerValue != nil,
+                position["width"]?.numberValue ?? 0 > 0,
+                position["paths"]?.arrayValue?.isEmpty == false
+            else {
+                throw AnnotationEditingError.invalidPosition
+            }
+        }
     }
 
     private func synchronizedAnnotation(
@@ -350,7 +356,7 @@ public extension CitrationLibraryStore {
         modifiedAt: Date
     ) throws -> ZoteroRawObject {
         let date = ISO8601DateFormatter().string(from: modifiedAt)
-        let data: [String: JSONValue] = [
+        var data: [String: JSONValue] = [
             "key": .string(key),
             "version": .integer(0),
             "itemType": .string("annotation"),
@@ -359,13 +365,15 @@ public extension CitrationLibraryStore {
             "annotationColor": .string(draft.color.zoteroHex),
             "annotationPageLabel": .string(draft.pageLabel),
             "annotationSortIndex": .string(draft.sortIndex),
-            "annotationText": .string(draft.text),
             "annotationComment": .string(draft.comment),
             "annotationPosition": .string(draft.positionJSON),
             "tags": .array(tagValues(draft.tags)),
             "dateAdded": .string(date),
             "dateModified": .string(date),
         ]
+        if draft.kind == .highlight || draft.kind == .underline {
+            data["annotationText"] = .string(draft.text)
+        }
         return try ZoteroRawObject(rawValue: .object([
             "key": .string(key),
             "version": .integer(0),

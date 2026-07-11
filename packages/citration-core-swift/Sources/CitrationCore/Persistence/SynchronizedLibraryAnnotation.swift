@@ -20,6 +20,22 @@ public struct ZoteroAnnotationRect: Hashable, Sendable {
     public let maxY: Double
 }
 
+// MARK: - ZoteroAnnotationPoint
+
+public struct ZoteroAnnotationPoint: Hashable, Sendable {
+    // MARK: Lifecycle
+
+    public init(x: Double, y: Double) {
+        self.x = x
+        self.y = y
+    }
+
+    // MARK: Public
+
+    public let x: Double
+    public let y: Double
+}
+
 // MARK: - SynchronizedLibraryAnnotation
 
 public struct SynchronizedLibraryAnnotation: Identifiable, Hashable, Sendable {
@@ -115,6 +131,29 @@ public struct SynchronizedLibraryAnnotation: Identifiable, Hashable, Sendable {
 
     public var nextPageIndex: Int? {
         nextPageRects.isEmpty ? nil : pageIndex.map { $0 + 1 }
+    }
+
+    public var inkPaths: [[ZoteroAnnotationPoint]] {
+        (positionObject?["paths"]?.arrayValue ?? []).compactMap { pathValue in
+            guard let coordinates = pathValue.arrayValue, coordinates.count.isMultiple(of: 2) else {
+                return nil
+            }
+            var points = [ZoteroAnnotationPoint]()
+            for index in stride(from: 0, to: coordinates.count, by: 2) {
+                guard
+                    let x = coordinates[index].numberValue,
+                    let y = coordinates[index + 1].numberValue
+                else {
+                    return nil
+                }
+                points.append(ZoteroAnnotationPoint(x: x, y: y))
+            }
+            return points
+        }
+    }
+
+    public var inkWidth: Double? {
+        positionObject?["width"]?.numberValue
     }
 
     public func compatibilityAnnotation() -> LibraryAnnotation {

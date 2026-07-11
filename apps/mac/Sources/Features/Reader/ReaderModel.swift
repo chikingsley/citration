@@ -18,6 +18,8 @@ final class ReaderModel {
     var progress: ReaderProgress?
     var annotations: [SynchronizedLibraryAnnotation] = []
     var noteDraft: String = ""
+    var isInkMode = false
+    var inkColor: AnnotationColor = .yellow
 
     let progressStore: any LibraryReaderProgressStoring
     let annotationStore: any SynchronizedLibraryAnnotationStoring
@@ -61,6 +63,7 @@ final class ReaderModel {
         progress = nil
         annotations = []
         noteDraft = ""
+        isInkMode = false
     }
 
     /// Clears reader state when the library selection moves to another item.
@@ -232,6 +235,54 @@ final class ReaderModel {
 
     func reportMissingSelection() {
         context?.statusMessage = "Select text to highlight"
+    }
+
+    func beginInk(color: AnnotationColor) {
+        guard activeAttachment?.documentFormat == .pdf else {
+            context?.statusMessage = "Open a PDF to draw"
+            return
+        }
+        inkColor = color
+        isInkMode = true
+        context?.statusMessage = "Drawing with \(color.rawValue) ink"
+    }
+
+    func endInk() {
+        isInkMode = false
+        context?.statusMessage = "Stopped drawing"
+    }
+
+    func addInk(_ stroke: PDFInkStrokeInfo) {
+        guard let activeAttachment, activeAttachment.documentFormat == .pdf else {
+            context?.statusMessage = "Open a PDF to draw"
+            return
+        }
+        let color = inkColor
+        Task {
+            do {
+                let annotationContext = try await annotationStore.annotationContext(
+                    itemID: activeAttachment.itemID,
+                    attachmentKey: activeAttachment.objectKey
+                )
+                _ = try await annotationStore.createSynchronizedAnnotation(
+                    SynchronizedLibraryAnnotationDraft(
+                        parentAttachmentIdentity: annotationContext.parentAttachmentIdentity,
+                        bibliographicItemIdentity: annotationContext.bibliographicItemIdentity,
+                        kind: .ink,
+                        color: color,
+                        pageLabel: stroke.anchor.pageLabel,
+                        sortIndex: stroke.anchor.sortIndex,
+                        text: "",
+                        comment: "",
+                        positionJSON: stroke.anchor.positionJSON
+                    )
+                )
+                await refreshAnnotations()
+                context?.statusMessage = "Added ink stroke"
+            } catch {
+                context?.statusMessage = "Failed to add ink stroke"
+            }
+        }
     }
 
     func updateAnnotation(

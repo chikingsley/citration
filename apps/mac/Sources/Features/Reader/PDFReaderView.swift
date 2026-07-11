@@ -59,9 +59,12 @@ struct PDFReaderView: NSViewRepresentable {
     let progress: ReaderProgress?
     let annotations: [SynchronizedLibraryAnnotation]
     let proxy: PDFViewProxy
+    let isInkMode: Bool
+    let inkColor: AnnotationColor
+    let onInkStroke: (PDFInkStrokeInfo) -> Void
     let onProgressChange: (ReaderProgress) -> Void
 
-    static func dismantleNSView(_ nsView: PDFView, coordinator: Coordinator) {
+    static func dismantleNSView(_ nsView: InkPDFView, coordinator: Coordinator) {
         NotificationCenter.default.removeObserver(
             coordinator,
             name: .PDFViewPageChanged,
@@ -73,10 +76,11 @@ struct PDFReaderView: NSViewRepresentable {
         Coordinator()
     }
 
-    func makeNSView(context: Context) -> PDFView {
-        let pdfView = PDFView()
+    func makeNSView(context: Context) -> InkPDFView {
+        let pdfView = InkPDFView()
         proxy.pdfView = pdfView
         context.coordinator.configure(attachment: attachment, onProgressChange: onProgressChange)
+        configureInk(in: pdfView)
         pdfView.autoScales = true
         pdfView.displayMode = .singlePageContinuous
         pdfView.displayDirection = .vertical
@@ -92,9 +96,10 @@ struct PDFReaderView: NSViewRepresentable {
         return pdfView
     }
 
-    func updateNSView(_ pdfView: PDFView, context: Context) {
+    func updateNSView(_ pdfView: InkPDFView, context: Context) {
         proxy.pdfView = pdfView
         context.coordinator.configure(attachment: attachment, onProgressChange: onProgressChange)
+        configureInk(in: pdfView)
         guard context.coordinator.loadedURL != attachment.localURL else {
             applyProgressIfNeeded(in: pdfView, context: context)
             applyAnnotationsIfNeeded(in: pdfView, context: context)
@@ -104,6 +109,12 @@ struct PDFReaderView: NSViewRepresentable {
     }
 
     // MARK: Private
+
+    private func configureInk(in pdfView: InkPDFView) {
+        pdfView.isInkMode = isInkMode
+        pdfView.inkColor = inkColor.nsColor
+        pdfView.onInkStroke = onInkStroke
+    }
 
     private func loadDocument(in pdfView: PDFView, context: Context) {
         pdfView.document = PDFDocument(url: attachment.localURL)
@@ -147,7 +158,6 @@ struct PDFReaderView: NSViewRepresentable {
     private func applyAnnotationsIfNeeded(in pdfView: PDFView, context: Context) {
         let markings = annotations.filter {
             $0.parentAttachmentIdentity.objectKey == attachment.objectKey
-                && $0.kind != .ink
         }
         let annotationsToken = markings
             .map { "\($0.identity.objectKey)|\($0.version)|\($0.positionJSON)|\($0.color)|\($0.comment)" }
@@ -207,6 +217,37 @@ struct PDFAnnotationAnchor: Sendable {
         return make(page: page, pageIndex: pageIndex, primaryRects: [rect], nextPageRects: [])
     }
 
+    static func ink(
+        page: PDFPage,
+        pageIndex: Int,
+        points: [CGPoint],
+        width: CGFloat
+    ) -> PDFAnnotationAnchor? {
+        guard let firstPoint = points.first, width > 0 else {
+            return nil
+        }
+        let path = points.flatMap { point in
+            [JSONValue.number(point.x), .number(point.y)]
+        }
+        let position = JSONValue.object([
+            "pageIndex": .integer(Int64(pageIndex)),
+            "paths": .array([.array(path)]),
+            "width": .number(width),
+        ])
+        guard
+            let positionData = try? ZoteroJSON.encode(position),
+            let positionJSON = String(data: positionData, encoding: .utf8)
+        else {
+            return nil
+        }
+        return PDFAnnotationAnchor(
+            pageIndex: pageIndex,
+            pageLabel: page.label ?? String(pageIndex + 1),
+            sortIndex: sortIndex(page: page, pageIndex: pageIndex, point: firstPoint),
+            positionJSON: positionJSON
+        )
+    }
+
     // MARK: Fileprivate
 
     fileprivate static func make(
@@ -231,14 +272,14 @@ struct PDFAnnotationAnchor: Sendable {
         else {
             return nil
         }
-        let characterIndex = page.characterIndex(at: CGPoint(x: firstRect.minX + 1, y: firstRect.midY))
-        let offset = characterIndex == NSNotFound ? 0 : max(characterIndex, 0)
-        let pageBounds = page.bounds(for: .cropBox)
-        let top = max(Int(floor(pageBounds.maxY - firstRect.maxY)), 0)
         return PDFAnnotationAnchor(
             pageIndex: pageIndex,
             pageLabel: page.label ?? String(pageIndex + 1),
-            sortIndex: String(format: "%05d|%06d|%05d", pageIndex, offset, top),
+            sortIndex: sortIndex(
+                page: page,
+                pageIndex: pageIndex,
+                point: CGPoint(x: firstRect.minX + 1, y: firstRect.maxY)
+            ),
             positionJSON: positionJSON
         )
     }
@@ -252,6 +293,13 @@ struct PDFAnnotationAnchor: Sendable {
             .number(rect.maxX),
             .number(rect.maxY),
         ])
+    }
+
+    private static func sortIndex(page: PDFPage, pageIndex: Int, point: CGPoint) -> String {
+        let characterIndex = page.characterIndex(at: point)
+        let offset = characterIndex == NSNotFound ? 0 : max(characterIndex, 0)
+        let top = max(Int(floor(page.bounds(for: .cropBox).maxY - point.y)), 0)
+        return String(format: "%05d|%06d|%05d", pageIndex, offset, top)
     }
 }
 
