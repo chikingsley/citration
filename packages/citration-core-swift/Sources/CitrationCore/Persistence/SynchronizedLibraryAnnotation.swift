@@ -112,6 +112,13 @@ public struct SynchronizedLibraryAnnotation: Identifiable, Hashable, Sendable {
         if let cfi = positionObject?["epubCFI"]?.stringValue {
             return .epubCFI(cfi)
         }
+        if
+            positionObject?["type"]?.stringValue == "FragmentSelector",
+            positionObject?["conformsTo"]?.stringValue == Self.epubCFIConformance,
+            let cfi = positionObject?["value"]?.stringValue
+        {
+            return .epubCFI(cfi)
+        }
         if let offset = positionObject?["textOffset"]?.integerValue {
             return .textOffset(Int(offset))
         }
@@ -172,6 +179,8 @@ public struct SynchronizedLibraryAnnotation: Identifiable, Hashable, Sendable {
     }
 
     // MARK: Private
+
+    private static let epubCFIConformance = "http://www.idpf.org/epub/linking/cfi/epub-cfi.html"
 
     private var positionObject: [String: JSONValue]? {
         guard let data = positionJSON.data(using: .utf8) else {

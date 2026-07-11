@@ -1,14 +1,5 @@
 import Foundation
 
-// MARK: - EPUBPublication
-
-struct EPUBPublication: Equatable {
-    var rootDirectory: URL
-    var packageDocumentURL: URL
-    var initialDocumentURL: URL
-    var title: String?
-}
-
 // MARK: - EPUBPackageReaderError
 
 enum EPUBPackageReaderError: Error, LocalizedError {
@@ -93,7 +84,9 @@ struct EPUBPackageReader {
     private let unpackRoot: URL
     private let unzipURL: URL
     private let fileManager: FileManager
+}
 
+private extension EPUBPackageReader {
     private func publication(in rootDirectory: URL) throws -> EPUBPublication {
         let containerURL = rootDirectory
             .appendingPathComponent("META-INF", isDirectory: true)
@@ -121,23 +114,33 @@ struct EPUBPackageReader {
 
         let packageXML = try String(contentsOf: packageDocumentURL, encoding: .utf8)
         let packageDirectory = packageDocumentURL.deletingLastPathComponent()
-        guard
-            let initialHref = initialDocumentHref(in: packageXML),
-            let initialURL = try? resolvedURL(
-                for: initialHref,
-                relativeTo: packageDirectory,
-                rootDirectory: rootDirectory
-            ),
-            fileManager.fileExists(atPath: initialURL.path)
-        else {
+        let manifest = manifest(in: packageXML)
+        let spineNodeIndex = spineNodeIndex(in: packageXML)
+        let readingOrder = try readingOrder(
+            in: packageXML,
+            manifest: manifest,
+            spineNodeIndex: spineNodeIndex,
+            packageDirectory: packageDirectory,
+            rootDirectory: rootDirectory
+        )
+        guard let initialURL = readingOrder.first?.documentURL else {
             throw EPUBPackageReaderError.initialDocumentMissing
         }
+
+        let tableOfContents = try tableOfContents(
+            manifest: manifest,
+            readingOrder: readingOrder,
+            packageDirectory: packageDirectory,
+            rootDirectory: rootDirectory
+        )
 
         return EPUBPublication(
             rootDirectory: rootDirectory,
             packageDocumentURL: packageDocumentURL,
             initialDocumentURL: initialURL,
-            title: publicationTitle(in: packageXML)
+            title: publicationTitle(in: packageXML),
+            readingOrder: readingOrder,
+            tableOfContents: tableOfContents
         )
     }
 
@@ -180,7 +183,7 @@ struct EPUBPackageReader {
         }
     }
 
-    private func initialDocumentHref(in packageXML: String) -> String? {
+    private func manifest(in packageXML: String) -> [String: EPUBManifestItem] {
         let manifestItems = allTags(matching: #"<item\b[^>]*>"#, in: packageXML)
         var manifest = [String: EPUBManifestItem]()
 
@@ -193,10 +196,30 @@ struct EPUBPackageReader {
             else {
                 continue
             }
-            manifest[id] = EPUBManifestItem(href: href, mediaType: attributes["media-type"])
+            let properties = Set(
+                (attributes["properties"] ?? "")
+                    .split(whereSeparator: \.isWhitespace)
+                    .map { $0.lowercased() }
+            )
+            manifest[id] = EPUBManifestItem(
+                href: href,
+                mediaType: attributes["media-type"],
+                properties: properties
+            )
         }
 
-        for itemRef in allTags(matching: #"<itemref\b[^>]*>"#, in: packageXML) {
+        return manifest
+    }
+
+    private func readingOrder(
+        in packageXML: String,
+        manifest: [String: EPUBManifestItem],
+        spineNodeIndex: Int,
+        packageDirectory: URL,
+        rootDirectory: URL
+    ) throws -> [EPUBSpineItem] {
+        var readingOrder = [EPUBSpineItem]()
+        for (spineIndex, itemRef) in allTags(matching: #"<itemref\b[^>]*>"#, in: packageXML).enumerated() {
             let attributes = attributes(in: itemRef)
             guard
                 attributes["linear"]?.lowercased() != "no",
@@ -206,17 +229,120 @@ struct EPUBPackageReader {
             else {
                 continue
             }
-            return item.href
+            let documentURL = try resolvedURL(
+                for: item.href,
+                relativeTo: packageDirectory,
+                rootDirectory: rootDirectory
+            )
+            guard fileManager.fileExists(atPath: documentURL.path) else {
+                continue
+            }
+            readingOrder.append(
+                EPUBSpineItem(
+                    idref: idref,
+                    href: item.href,
+                    documentURL: documentURL,
+                    spineNodeIndex: spineNodeIndex,
+                    spineIndex: spineIndex,
+                    title: documentTitle(at: documentURL) ?? documentURL.deletingPathExtension().lastPathComponent
+                )
+            )
+        }
+        return readingOrder
+    }
+
+    private func tableOfContents(
+        manifest: [String: EPUBManifestItem],
+        readingOrder: [EPUBSpineItem],
+        packageDirectory: URL,
+        rootDirectory: URL
+    ) throws -> [EPUBNavigationItem] {
+        guard
+            let navigation = manifest.values.first(where: { $0.properties.contains("nav") })
+            ?? manifest.values.first(where: \.isNCX)
+        else {
+            return []
+        }
+        let navigationURL = try resolvedURL(
+            for: navigation.href,
+            relativeTo: packageDirectory,
+            rootDirectory: rootDirectory
+        )
+        guard let markup = try? String(contentsOf: navigationURL, encoding: .utf8) else {
+            return []
         }
 
-        return manifest.values.first { $0.isReadableDocument }?.href
+        var items = [EPUBNavigationItem]()
+        for (label, href) in navigationEntries(in: markup, isNCX: navigation.isNCX) {
+            let pieces = href.split(separator: "#", maxSplits: 1, omittingEmptySubsequences: false)
+            guard let hrefPath = pieces.first.map(String.init) else {
+                continue
+            }
+            let destinationURL = try resolvedURL(
+                for: hrefPath,
+                relativeTo: navigationURL.deletingLastPathComponent(),
+                rootDirectory: rootDirectory
+            )
+            guard let readingOrderIndex = readingOrder.firstIndex(where: { $0.documentURL == destinationURL }) else {
+                continue
+            }
+            let fragment = pieces.count == 2 ? String(pieces[1]) : nil
+            items.append(
+                EPUBNavigationItem(
+                    title: label,
+                    readingOrderIndex: readingOrderIndex,
+                    fragment: fragment?.removingPercentEncoding ?? fragment
+                )
+            )
+        }
+        return items
+    }
+
+    private func navigationEntries(in markup: String, isNCX: Bool) -> [(String, String)] {
+        if isNCX {
+            let pattern = #"<text\b[^>]*>(.*?)</text>\s*</navLabel>\s*<content\b[^>]*\bsrc\s*=\s*["']([^"']+)["'][^>]*/?>"#
+            return matches(pattern: pattern, text: markup).compactMap { match in
+                guard match.count == 3, let label = match[1].epubPlainText.bcTrimmedNonEmpty else {
+                    return nil
+                }
+                return (label, match[2].epubDecodedXMLEntities())
+            }
+        }
+        return allTags(matching: #"<a\b[^>]*>.*?</a>"#, in: markup).compactMap { anchor in
+            guard
+                let href = firstAttribute(named: "href", inFirstTagMatching: #"<a\b[^>]*>"#, text: anchor),
+                let label = firstMatch(pattern: #"<a\b[^>]*>(.*?)</a>"#, text: anchor)?
+                    .epubPlainText.bcTrimmedNonEmpty
+            else {
+                return nil
+            }
+            return (label, href)
+        }
     }
 
     private func publicationTitle(in packageXML: String) -> String? {
         firstMatch(
             pattern: #"<(?:[A-Za-z0-9_-]+:)?title\b[^>]*>(.*?)</(?:[A-Za-z0-9_-]+:)?title>"#,
             text: packageXML
-        )?.decodedXMLEntities().bcCollapsedWhitespace().bcTrimmedNonEmpty
+        )?.epubDecodedXMLEntities().bcCollapsedWhitespace().bcTrimmedNonEmpty
+    }
+
+    private func spineNodeIndex(in packageXML: String) -> Int {
+        guard let data = packageXML.data(using: .utf8) else {
+            return 2
+        }
+        let delegate = EPUBSpineIndexParserDelegate()
+        let parser = XMLParser(data: data)
+        parser.delegate = delegate
+        return parser.parse() ? delegate.spineNodeIndex ?? 2 : 2
+    }
+
+    private func documentTitle(at documentURL: URL) -> String? {
+        guard let markup = try? String(contentsOf: documentURL, encoding: .utf8) else {
+            return nil
+        }
+        return firstMatch(pattern: #"<title\b[^>]*>(.*?)</title>"#, text: markup)?
+            .epubPlainText.bcTrimmedNonEmpty
     }
 
     private func resolvedURL(
@@ -257,7 +383,7 @@ struct EPUBPackageReader {
             guard match.count == 3 else {
                 continue
             }
-            values[match[1].lowercased()] = match[2].decodedXMLEntities()
+            values[match[1].lowercased()] = match[2].epubDecodedXMLEntities()
         }
         return values
     }
@@ -331,6 +457,7 @@ struct EPUBPackageReader {
 private struct EPUBManifestItem {
     var href: String
     var mediaType: String?
+    var properties: Set<String>
 
     var isReadableDocument: Bool {
         switch mediaType?.lowercased() {
@@ -341,6 +468,10 @@ private struct EPUBManifestItem {
             false
         }
     }
+
+    var isNCX: Bool {
+        mediaType?.lowercased() == "application/x-dtbncx+xml"
+    }
 }
 
 // MARK: - EPUBProcessResult
@@ -349,21 +480,4 @@ private struct EPUBProcessResult {
     var exitStatus: Int32
     var output: String
     var errorOutput: String
-}
-
-private extension String {
-    func decodedXMLEntities() -> String {
-        var value = self
-        let replacements = [
-            ("&amp;", "&"),
-            ("&lt;", "<"),
-            ("&gt;", ">"),
-            ("&quot;", "\""),
-            ("&#39;", "'"),
-        ]
-        for (entity, replacement) in replacements {
-            value = value.replacingOccurrences(of: entity, with: replacement)
-        }
-        return value
-    }
 }

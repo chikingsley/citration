@@ -134,7 +134,7 @@ Citration’s current `BCItem` stores only a UUID, title, simplified identifiers
 | Notes | Plain local note records | Zotero note HTML, parent relationships, tags, versions, safe rendering and editing |
 | Attachments | Local imported files | Remote key/version, parent, link mode, filename, content type, charset, hashes, timestamps, URL, lazy cache, upload/download |
 | PDF annotations | Simplified highlight/underline/note by page | Exact highlight/underline/note/ink data, position JSON, page label, sort index, comments, text, colors, tags, versions |
-| EPUB reading | Basic first-spine WebKit view | Navigation, durable locations, progress, selection, annotations, search, compatible round trips |
+| EPUB reading | EPUB 2/3 navigation, durable CFI progress, selection, exact synchronized annotations, typography, and full-book search | Maintain Zotero-compatible `FragmentSelector` round trips and broaden the fixture set as new package layouts appear |
 | HTML/text | Recognized but not read in-app | Safe snapshot/text reader or an explicit supported external-open path |
 | Full text | No unified index | Synchronize full-text state and index downloaded content locally with FTS5 |
 | Deletions | Immediate local removal | Local deletion log, remote tombstones, version-safe conflict handling |

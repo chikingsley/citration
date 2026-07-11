@@ -72,19 +72,19 @@ Groups, saved searches, and relations are absent from the current live library. 
 
 Attachment metadata and binary state are separate. Citration synchronizes attachment objects first and downloads bytes lazily into an app-managed cache. Downloads and uploads are hash-verified and resumable where the server contract permits it.
 
-PDF and EPUB files open inside the app. HTML snapshots and plain text require deliberate reader support instead of pretending that “open externally” is complete. Unsupported formats remain downloadable and exportable.
+PDF, EPUB, HTML snapshots, and plain text open through explicit in-app readers. Unsupported formats remain downloadable and exportable instead of being presented as supported.
 
 The canonical source file is not modified when the user annotates. Exporting an annotated PDF creates a new copy. This preserves clean originals and keeps annotations synchronized as structured objects.
 
 ## Annotations And Reading
 
-Zotero-compatible PDF annotations are canonical library objects. Citration must preserve their exact annotation type, color, selected text, comment, page label, position JSON, sort index, parent attachment, tags, key, and version.
+Zotero-compatible annotations are canonical library objects. Citration preserves their exact annotation type, color, selected text, comment, page label, position JSON, sort index, parent attachment, tags, key, and version.
 
-The existing Citration model supports highlight, underline, and note with a simplified page location. It does not support ink and cannot round-trip Zotero’s exact position data. That model must be replaced or expanded before server annotations are writable.
+The synchronized model renders and edits exact PDF highlight, underline, note, and ink objects. New PDF selections and pointer strokes create compatible version-zero objects without modifying the canonical attachment.
 
 The current live library contains more ink annotations than every other annotation type combined. Rendering existing ink is therefore part of baseline compatibility, not a later novelty. The iPad app should create Apple Pencil strokes that round-trip as compatible Zotero ink annotations when the format can be proven with fixtures.
 
-EPUB progress and annotations require stable portable locations. Citration should use the standard Zotero representation when one round-trips safely; otherwise it may use a namespaced optional server extension that never changes standard Zotero objects. No extension should be invented before fixtures prove the standard contract is insufficient.
+EPUB progress and annotations use stable EPUB CFI locations. Synchronized highlights and underlines use Zotero's Web Annotation `FragmentSelector` representation, which the real package, SQLite, visible reader, and cross-restart drills proved sufficient without a server extension.
 
 ## Interface Direction
 

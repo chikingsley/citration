@@ -49,6 +49,11 @@ struct RealDocumentFixtureTests {
         let publication = try EPUBPackageReader()
             .publication(from: Self.fixture("language-learning-theories.epub"))
         #expect(publication.title == "Language Learning Theories")
+        #expect(publication.readingOrder.count == 24)
+        #expect(publication.readingOrder.first?.spineIndex == 1)
+        #expect(publication.readingOrder.first?.cfiBase == "/6/4")
+        #expect(publication.tableOfContents.count > 100)
+        #expect(publication.search("constructivism").isEmpty == false)
     }
 
     // MARK: Private

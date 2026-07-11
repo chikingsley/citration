@@ -69,7 +69,7 @@ Done when the real running Mac app uses the agreed Library/document-tab structur
 - [x] Open cached PDFs, EPUBs, HTML snapshots, and plain text through explicit supported reader behavior.
 - [x] Render and edit compatible highlight, underline, and note annotations with exact position JSON, page labels, sort indexes, comments, text, colors, tags, keys, and versions.
 - [x] Render the 61 existing ink annotations and create compatible ink objects from a real input path before the later iPad client.
-- [ ] Complete EPUB navigation, durable progress, selection, annotation, typography, and search with proven portable locations.
+- [x] Complete EPUB navigation, durable progress, selection, annotation, typography, and search with proven portable locations.
 - [ ] Preserve and expose collections, tags, trash, attachment state, full-text state, settings, and unsupported raw objects without silent loss.
 - [ ] Keep OCR, metadata repair/conflict diagnostics, CSL citation rendering, OpenAlex discovery, and local relationship suggestions operating through the final synchronized objects.
 

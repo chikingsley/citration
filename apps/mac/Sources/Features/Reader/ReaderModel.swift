@@ -20,9 +20,12 @@ final class ReaderModel {
     var noteDraft: String = ""
     var isInkMode = false
     var inkColor: AnnotationColor = .yellow
+    let epubState: EPUBReaderState = .init()
 
     let progressStore: any LibraryReaderProgressStoring
     let annotationStore: any SynchronizedLibraryAnnotationStoring
+
+    @ObservationIgnored weak var context: (any LibraryContext)?
 
     func bind(context: any LibraryContext) {
         self.context = context
@@ -64,6 +67,7 @@ final class ReaderModel {
         annotations = []
         noteDraft = ""
         isInkMode = false
+        epubState.reset()
     }
 
     /// Clears reader state when the library selection moves to another item.
@@ -322,8 +326,4 @@ final class ReaderModel {
             }
         }
     }
-
-    // MARK: Private
-
-    @ObservationIgnored private weak var context: (any LibraryContext)?
 }

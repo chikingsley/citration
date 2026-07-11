@@ -24,6 +24,11 @@ struct EPUBPackageReaderTests {
         #expect(publication.initialDocumentURL.lastPathComponent == "chapter1.xhtml")
         #expect(publication.initialDocumentURL.path.contains("/OEBPS/Text/"))
         #expect(publication.packageDocumentURL.lastPathComponent == "package.opf")
+        #expect(publication.readingOrder.map(\.idref) == ["chapter1", "chapter2"])
+        #expect(publication.readingOrder.map(\.cfiBase) == ["/6/2", "/6/4"])
+        #expect(publication.tableOfContents.map(\.title) == ["Chapter 1", "Chapter 2"])
+        #expect(publication.readingOrderIndex(forCFI: "epubcfi(/6/4!/4/2/1:0)") == 1)
+        #expect(publication.readingOrderIndex(forCFI: "epub-start") == nil)
     }
 
     @Test("rejects unsafe archive entries")
@@ -44,10 +49,56 @@ struct EPUBPackageReaderTests {
             }
         }
     }
+
+    @Test("searches real spine text without altering the publication")
+    func searchesRealSpineText() throws {
+        let tempDirectory = makeTempDirectory()
+        defer { cleanupDirectory(tempDirectory) }
+
+        let epubURL = try makeEPUB(
+            in: tempDirectory,
+            title: "Search Book",
+            firstHref: "Text/chapter1.xhtml"
+        )
+        let publication = try EPUBPackageReader(
+            unpackRoot: tempDirectory.appendingPathComponent("unpacked", isDirectory: true)
+        ).publication(from: epubURL)
+
+        let results = publication.search("Readable text")
+        #expect(results.count == 2)
+        #expect(results.first?.readingOrderIndex == 0)
+        #expect(results.first?.excerpt.contains("Readable text") == true)
+        #expect(publication.search("missing phrase").isEmpty)
+    }
+
+    @Test("CFI base follows the actual OPF spine element index")
+    func cfiBaseUsesActualSpineNodeIndex() throws {
+        let tempDirectory = makeTempDirectory()
+        defer { cleanupDirectory(tempDirectory) }
+
+        let epubURL = try makeEPUB(
+            in: tempDirectory,
+            title: "Alternate Package Layout",
+            firstHref: "Text/chapter1.xhtml",
+            elementBeforeSpine: "<bindings/>"
+        )
+        let publication = try EPUBPackageReader(
+            unpackRoot: tempDirectory.appendingPathComponent("unpacked", isDirectory: true)
+        ).publication(from: epubURL)
+
+        #expect(publication.readingOrder.map(\.cfiBase) == ["/8/2", "/8/4"])
+        #expect(publication.readingOrderIndex(forCFI: "epubcfi(/8/4!/4/2/1:0)") == 1)
+        #expect(publication.readingOrderIndex(forCFI: "epubcfi(/6/4!/4/2/1:0)") == nil)
+    }
 }
 
 private extension EPUBPackageReaderTests {
-    func makeEPUB(in tempDirectory: URL, title: String, firstHref: String) throws -> URL {
+    func makeEPUB(
+        in tempDirectory: URL,
+        title: String,
+        firstHref: String,
+        elementBeforeSpine: String = ""
+    ) throws -> URL {
         let sourceDirectory = tempDirectory.appendingPathComponent("book-source", isDirectory: true)
         let metaDirectory = sourceDirectory.appendingPathComponent("META-INF", isDirectory: true)
         let oebpsDirectory = sourceDirectory.appendingPathComponent("OEBPS", isDirectory: true)
@@ -66,8 +117,17 @@ private extension EPUBPackageReaderTests {
             atomically: true,
             encoding: .utf8
         )
-        try packageXML(title: title, firstHref: firstHref).write(
+        try packageXML(
+            title: title,
+            firstHref: firstHref,
+            elementBeforeSpine: elementBeforeSpine
+        ).write(
             to: oebpsDirectory.appendingPathComponent("package.opf"),
+            atomically: true,
+            encoding: .utf8
+        )
+        try ncxXML.write(
+            to: oebpsDirectory.appendingPathComponent("toc.ncx"),
             atomically: true,
             encoding: .utf8
         )
@@ -118,7 +178,7 @@ private extension EPUBPackageReaderTests {
         """
     }
 
-    func packageXML(title: String, firstHref: String) -> String {
+    func packageXML(title: String, firstHref: String, elementBeforeSpine: String) -> String {
         """
         <?xml version="1.0" encoding="utf-8"?>
         <package xmlns="http://www.idpf.org/2007/opf" unique-identifier="bookid" version="3.0">
@@ -128,8 +188,10 @@ private extension EPUBPackageReaderTests {
           <manifest>
             <item id="chapter1" href="\(firstHref)" media-type="application/xhtml+xml"/>
             <item id="chapter2" href="Text/chapter2.xhtml" media-type="application/xhtml+xml"/>
+            <item id="ncx" href="toc.ncx" media-type="application/x-dtbncx+xml"/>
           </manifest>
-          <spine>
+          \(elementBeforeSpine)
+          <spine toc="ncx">
             <itemref idref="chapter1"/>
             <itemref idref="chapter2"/>
           </spine>
@@ -144,6 +206,18 @@ private extension EPUBPackageReaderTests {
         <head><title>\(title)</title></head>
         <body><h1>\(title)</h1><p>Readable text.</p></body>
         </html>
+        """
+    }
+
+    var ncxXML: String {
+        """
+        <?xml version="1.0" encoding="UTF-8"?>
+        <ncx xmlns="http://www.daisy.org/z3986/2005/ncx/">
+          <navMap>
+            <navPoint id="one"><navLabel><text>Chapter 1</text></navLabel><content src="Text/chapter1.xhtml"/></navPoint>
+            <navPoint id="two"><navLabel><text>Chapter 2</text></navLabel><content src="Text/chapter2.xhtml"/></navPoint>
+          </navMap>
+        </ncx>
         """
     }
 

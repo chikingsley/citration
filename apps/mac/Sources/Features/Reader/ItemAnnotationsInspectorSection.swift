@@ -34,8 +34,11 @@ struct ItemAnnotationsInspectorSection: View {
                 model.reader.addNote()
             }
             .disabled(model.reader.noteDraft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+        } else if model.reader.activeAttachment?.documentFormat == .epub {
+            Text("Select text in the EPUB reader to create a synchronized highlight or underline.")
+                .foregroundStyle(.secondary)
         } else {
-            Text("Creating annotations is currently available for PDFs. EPUB annotations remain open.")
+            Text("Creating annotations is available for PDF and EPUB documents.")
                 .foregroundStyle(.secondary)
         }
 

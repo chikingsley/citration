@@ -6,9 +6,9 @@ The first supported backend is [Zotero Self-Host Server](https://github.com/chik
 
 ## Current State
 
-The macOS app already imports documents, resolves metadata, reads PDFs and basic EPUBs, stores PDF highlights and underlines, keeps notes, tags, collections, relationships, and reader progress, renders CSL citations, performs OCR, and discovers related works.
+The macOS app uses one GRDB/SQLite library, synchronizes ordinary Zotero API v3 objects and attachments, and provides the permanent native Library/document-tab workspace. It imports documents, edits schema-backed metadata and creators, safely renders notes, reads PDF, EPUB, HTML, and text attachments, preserves exact Zotero annotations including ink, renders CSL citations, performs OCR, and discovers related works.
 
-Those features currently use a mixture of SwiftData and JSON files and are not connected to the Zotero-compatible server. The next milestone replaces that fragmented persistence with one SQLite database and proves a lossless, read-only synchronization of the existing self-hosted library before enabling writes.
+The EPUB reader now supports EPUB 2/3 contents, spine navigation, cross-book search, typography and themes, durable standard CFI progress, and synchronized highlight or underline creation using Zotero's Web Annotation `FragmentSelector` representation. Remaining work is tracked only in `TODO.md`; completed evidence is recorded in `CHANGELOG.md`.
 
 See [`AGENTS.md`](AGENTS.md) for the execution baseline, [`TODO.md`](TODO.md) for the canonical ordered plan, [`docs/product-direction.md`](docs/product-direction.md) for the settled product and architecture decisions, and [`docs/zotero-reference-notes.md`](docs/zotero-reference-notes.md) for the live-library coverage audit and protocol requirements. Completed work belongs in [`CHANGELOG.md`](CHANGELOG.md).
 

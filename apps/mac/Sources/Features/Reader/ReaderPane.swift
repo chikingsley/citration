@@ -145,7 +145,10 @@ struct ReaderPane: View {
             EPUBReaderView(
                 attachment: attachment,
                 progress: reader.progress,
-                onProgressChange: reader.updateProgress
+                annotations: reader.annotations,
+                state: reader.epubState,
+                onProgressChange: reader.updateProgress,
+                onCreateAnnotation: reader.addEPUBAnnotation
             )
 
         case .html:
