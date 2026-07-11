@@ -53,7 +53,7 @@ struct RootInspectorView: View {
 
     @ViewBuilder
     private var inspectorContent: some View {
-        if let item = model.selectedItem {
+        if let item = model.selectedLibraryItem {
             VStack(spacing: 0) {
                 sectionPicker
                 Divider()
@@ -87,15 +87,15 @@ struct RootInspectorView: View {
     }
 
     @ViewBuilder
-    private func selectedContent(_ item: BCItem) -> some View {
+    private func selectedContent(_ item: SynchronizedLibraryItem) -> some View {
         switch ItemInspectorSection(rawValue: selectedSectionRawValue) ?? .info {
         case .info:
-            ItemInfoInspectorSection(item: item)
+            ItemInfoInspectorSection(model: model, item: item)
             if model.importer.hasMetadataDiagnostics {
                 MetadataDiagnosticsInspectorSection(importer: model.importer)
             }
-            ItemTagsInspectorSection(tags: model.tags, item: item)
-            ItemCollectionsInspectorSection(model: model, item: item)
+            ItemTagsInspectorSection(tags: model.tags, item: item.bibliographic)
+            ItemCollectionsInspectorSection(model: model, item: item.bibliographic)
 
         case .attachments:
             ItemAttachmentsInspectorSection(model: model)

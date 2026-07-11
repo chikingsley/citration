@@ -141,6 +141,88 @@ struct CitrationLibraryStoreTests {
         #expect(after.tags.last?.value == "preserved-edit")
         #expect(after.tags.last?.type == nil)
     }
+
+    @Test("Field edits mutate one live-shaped object without narrowing its raw contract")
+    func fieldEditsPreserveRawContract() async throws {
+        let fixture = try StoreFixture()
+        defer { fixture.remove() }
+        let libraryIdentity = ZoteroLibraryIdentity(type: "user", remoteID: 42)
+        let libraryID = try fixture.database.upsertLibrary(identity: libraryIdentity, name: "Remote Fixture")
+        let item = try #require(try fixture.capturedItems().first { $0.itemType == "book" })
+        let itemKey = try #require(item.key)
+        try fixture.database.storeRemoteCollections(fixture.capturedCollections(), libraryID: libraryID)
+        try fixture.database.storeRemoteItems([item], libraryID: libraryID)
+        try fixture.database.ensureAppIdentities(collections: [], items: [item], libraryID: libraryID)
+        let store = try CitrationLibraryStore(
+            database: fixture.database,
+            attachmentsDirectory: fixture.root.appending(path: "remote-attachments", directoryHint: .isDirectory),
+            libraryIdentity: libraryIdentity,
+            libraryName: "Remote Fixture"
+        )
+        let beforeItem = try #require(try fixture.database.fetchProjectedItem(libraryID: libraryID, key: itemKey))
+        let beforeObject = try #require(try fixture.database.fetchObject(
+            libraryID: libraryID,
+            kind: .item,
+            key: itemKey
+        ))
+        let identity = try #require(await store.listLibraryItems().first).identity
+
+        let updated = try await store.updateItemFields(
+            identity: identity,
+            updates: [
+                ZoteroItemFieldUpdate(field: "title", value: .string("Edited captured book")),
+                ZoteroItemFieldUpdate(field: "abstractNote", value: .string("Edited abstract")),
+                ZoteroItemFieldUpdate(field: "series", value: .string("Edited series")),
+                ZoteroItemFieldUpdate(field: "shortTitle", value: nil),
+            ]
+        )
+
+        let afterItem = try #require(try fixture.database.fetchProjectedItem(libraryID: libraryID, key: itemKey))
+        let afterObject = try #require(try fixture.database.fetchObject(
+            libraryID: libraryID,
+            kind: .item,
+            key: itemKey
+        ))
+        #expect(updated.identity == identity)
+        #expect(updated.title == "Edited captured book")
+        #expect(afterItem.abstractNote == "Edited abstract")
+        #expect(afterItem.fields["series"] == .string("Edited series"))
+        #expect(afterItem.fields["shortTitle"] == nil)
+        #expect(afterItem.creators == beforeItem.creators)
+        #expect(afterItem.tags == beforeItem.tags)
+        #expect(afterItem.collectionKeys == beforeItem.collectionKeys)
+        #expect(afterObject.current.objectValue?["data"]?.objectValue?["publisher"]
+            == beforeObject.current.objectValue?["data"]?.objectValue?["publisher"])
+        #expect(afterObject.pristine == beforeObject.pristine)
+        #expect(afterObject.version == beforeObject.version)
+        #expect(afterObject.syncState == .dirty)
+    }
+
+    @Test("Field edits reject protected fields and mismatched synchronized identities")
+    func fieldEditsValidateIdentityAndProtectedFields() async throws {
+        let fixture = try StoreFixture()
+        defer { fixture.remove() }
+        let store = try fixture.makeStore()
+        await store.upsert(fixture.items[0])
+        let identity = try #require(await store.listLibraryItems().first).identity
+
+        await #expect(throws: ZoteroItemEditingError.invalidField("version")) {
+            try await store.updateItemFields(
+                identity: identity,
+                updates: [ZoteroItemFieldUpdate(field: "version", value: .integer(999))]
+            )
+        }
+        await #expect(throws: ZoteroItemEditingError.identityMismatch) {
+            try await store.updateItemFields(
+                identity: SynchronizedLibraryItemIdentity(
+                    libraryID: identity.libraryID + 1,
+                    objectKey: identity.objectKey,
+                    appUUID: identity.appUUID
+                ),
+                updates: [ZoteroItemFieldUpdate(field: "title", value: .string("Wrong library"))]
+            )
+        }
+    }
 }
 
 // MARK: - StoreFixture

@@ -97,4 +97,25 @@ struct LibraryObservationTests {
         #expect(childNode.collection == child)
         #expect(childNode.children?.first?.collection == grandchild)
     }
+
+    @Test("Native field edits retain synchronized identity in the real app database")
+    func fieldEditsRetainSynchronizedIdentity() async throws {
+        let item = BCItem(title: "Before Edit", itemType: .book)
+        let model = makeAppModel(initialItems: [item])
+        await model.refreshItems()
+        let identity = try #require(model.selectedItemIdentity)
+
+        let updated = try await model.updateItemFields(
+            identity: identity,
+            updates: [
+                ZoteroItemFieldUpdate(field: "title", value: .string("After Edit")),
+                ZoteroItemFieldUpdate(field: "publisher", value: .string("Real SQLite Press")),
+            ]
+        )
+
+        #expect(updated.identity == identity)
+        #expect(model.selectedItemIdentity == identity)
+        #expect(model.selectedItem?.title == "After Edit")
+        #expect(model.selectedLibraryItem?.projected.fields["publisher"] == .string("Real SQLite Press"))
+    }
 }

@@ -18,6 +18,62 @@ extension CitrationDatabase {
         try storeItems(objects, libraryID: libraryID, syncState: .dirty)
     }
 
+    public func updateLocalItemFields(
+        libraryID: Int64,
+        key: String,
+        updates: [ZoteroItemFieldUpdate],
+        modifiedAt: Date = .now
+    ) throws -> ZoteroStoredObject {
+        let protectedFields = Set(["key", "version", "itemType", "dateAdded", "dateModified", "deleted"])
+        for update in updates {
+            guard
+                !update.field.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+                !protectedFields.contains(update.field)
+            else {
+                throw ZoteroItemEditingError.invalidField(update.field)
+            }
+        }
+
+        return try databaseQueue.write { database in
+            guard
+                let existing = try Self.fetchStoredObject(
+                    libraryID: libraryID,
+                    kind: .item,
+                    key: key,
+                    database: database
+                )
+            else {
+                throw ZoteroItemEditingError.itemNotFound
+            }
+            guard var envelope = existing.current.objectValue, var data = envelope["data"]?.objectValue else {
+                throw ZoteroItemEditingError.malformedObject
+            }
+
+            for update in updates {
+                data[update.field] = update.value
+            }
+            data["dateModified"] = .string(ISO8601DateFormatter().string(from: modifiedAt))
+            data["key"] = .string(key)
+            envelope["key"] = .string(key)
+            envelope["data"] = .object(data)
+
+            let rawObject = try ZoteroRawObject(rawValue: .object(envelope))
+            let candidate = try ZoteroStoredObject(kind: .item, object: rawObject, syncState: .dirty)
+            let persisted = try Self.upsertLocal(
+                object: candidate,
+                libraryID: libraryID,
+                database: database
+            )
+            try Self.replaceItemProjection(
+                object: ZoteroRawObject(rawValue: persisted.current),
+                libraryID: libraryID,
+                database: database
+            )
+            try database.notifyChanges(in: Table("item_projections"))
+            return persisted
+        }
+    }
+
     private func storeCollections(
         _ objects: [ZoteroRawObject],
         libraryID: Int64,

@@ -22,6 +22,28 @@ extension CitrationLibraryStore {
         }
     }
 
+    public func updateItemFields(
+        identity: SynchronizedLibraryItemIdentity,
+        updates: [ZoteroItemFieldUpdate]
+    ) throws -> SynchronizedLibraryItem {
+        guard
+            identity.libraryID == libraryID,
+            try objectKey(for: identity.appUUID, kind: .item) == identity.objectKey
+        else {
+            throw ZoteroItemEditingError.identityMismatch
+        }
+
+        _ = try database.updateLocalItemFields(
+            libraryID: libraryID,
+            key: identity.objectKey,
+            updates: updates
+        )
+        guard let updated = try fetchLibraryItems().first(where: { $0.identity == identity }) else {
+            throw ZoteroItemEditingError.itemNotFound
+        }
+        return updated
+    }
+
     public func removeItem(id: UUID) {
         do {
             guard let key = try objectKey(for: id, kind: .item) else {
@@ -33,7 +55,7 @@ extension CitrationLibraryStore {
         }
     }
 
-    private func fetchLibraryItems() throws -> [SynchronizedLibraryItem] {
+    func fetchLibraryItems() throws -> [SynchronizedLibraryItem] {
         try database.databaseQueue.read { database in
             let rows = try Row.fetchAll(
                 database,
@@ -132,6 +154,34 @@ extension CitrationLibraryStore {
             createdAt: parseDate(row["date_added"]) ?? .distantPast,
             updatedAt: parseDate(row["date_modified"]) ?? .distantPast
         )
+        let projected = try ZoteroProjectedItem(
+            key: key,
+            itemType: row["item_type"],
+            title: row["title"],
+            abstractNote: row["abstract_note"],
+            date: row["date_text"],
+            publicationTitle: row["publication_title"],
+            doi: row["doi"],
+            isbn: row["isbn"],
+            issn: row["issn"],
+            url: row["url"],
+            language: row["language"],
+            rights: row["rights"],
+            extra: row["extra"],
+            fields: CitrationDatabase.fetchFields(libraryID: libraryID, key: key, database: database),
+            identifiers: CitrationDatabase.fetchIdentifiers(libraryID: libraryID, key: key, database: database),
+            parentItemKey: row["parent_item_key"],
+            noteHTML: row["note_html"],
+            creators: CitrationDatabase.fetchCreators(libraryID: libraryID, key: key, database: database),
+            tags: CitrationDatabase.fetchTags(libraryID: libraryID, key: key, database: database),
+            collectionKeys: CitrationDatabase.fetchCollectionKeys(
+                libraryID: libraryID,
+                key: key,
+                database: database
+            ),
+            attachment: nil,
+            annotation: nil
+        )
         return SynchronizedLibraryItem(
             identity: SynchronizedLibraryItemIdentity(
                 libraryID: libraryID,
@@ -139,6 +189,7 @@ extension CitrationLibraryStore {
                 appUUID: id
             ),
             bibliographic: bibliographic,
+            projected: projected,
             zoteroItemType: row["item_type"],
             zoteroDate: row["date_text"],
             publicationTitle: row["publication_title"],

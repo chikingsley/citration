@@ -35,6 +35,7 @@ public struct SynchronizedLibraryItem: Identifiable, Hashable, Sendable {
     public init(
         identity: SynchronizedLibraryItemIdentity,
         bibliographic: BCItem,
+        projected: ZoteroProjectedItem,
         zoteroItemType: String,
         zoteroDate: String,
         publicationTitle: String,
@@ -42,6 +43,7 @@ public struct SynchronizedLibraryItem: Identifiable, Hashable, Sendable {
     ) {
         self.identity = identity
         self.bibliographic = bibliographic
+        self.projected = projected
         self.zoteroItemType = zoteroItemType
         self.zoteroDate = zoteroDate
         self.publicationTitle = publicationTitle
@@ -52,6 +54,7 @@ public struct SynchronizedLibraryItem: Identifiable, Hashable, Sendable {
 
     public let identity: SynchronizedLibraryItemIdentity
     public var bibliographic: BCItem
+    public let projected: ZoteroProjectedItem
     public let zoteroItemType: String
     public let zoteroDate: String
     public let publicationTitle: String
@@ -102,4 +105,8 @@ public struct SynchronizedLibraryItem: Identifiable, Hashable, Sendable {
 
 public protocol SynchronizedLibraryItemStoring: BCItemStore {
     func listLibraryItems() async -> [SynchronizedLibraryItem]
+    func updateItemFields(
+        identity: SynchronizedLibraryItemIdentity,
+        updates: [ZoteroItemFieldUpdate]
+    ) async throws -> SynchronizedLibraryItem
 }

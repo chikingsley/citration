@@ -63,7 +63,8 @@ Done when the real running Mac app uses the agreed Library/document-tab structur
 
 ## 6. Reach Complete Real-Library Parity
 
-- [ ] Display and edit every live bibliographic type and field while retaining raw compatibility data.
+- [x] Display and edit every scalar bibliographic field present in the live baseline while retaining complex and unknown raw compatibility data.
+- [ ] Add schema-aware item-type conversion and structured creator-role editing to complete every live bibliographic type and field.
 - [ ] Render Zotero note HTML safely and preserve note parents, tags, keys, and versions.
 - [ ] Open cached PDFs, EPUBs, HTML snapshots, and plain text through explicit supported reader behavior.
 - [ ] Render and edit compatible highlight, underline, note, and ink annotations with exact position JSON, page labels, sort indexes, comments, text, colors, tags, keys, and versions.

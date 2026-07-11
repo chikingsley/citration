@@ -41,7 +41,7 @@ extension CitrationDatabase {
         }
     }
 
-    private static func fetchCreators(
+    static func fetchCreators(
         libraryID: Int64,
         key: String,
         database: Database
@@ -64,7 +64,7 @@ extension CitrationDatabase {
         }
     }
 
-    private static func fetchTags(
+    static func fetchTags(
         libraryID: Int64,
         key: String,
         database: Database
@@ -81,7 +81,7 @@ extension CitrationDatabase {
         }
     }
 
-    private static func fetchCollectionKeys(
+    static func fetchCollectionKeys(
         libraryID: Int64,
         key: String,
         database: Database
