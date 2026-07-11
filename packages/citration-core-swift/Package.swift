@@ -9,8 +9,16 @@ let package = Package(
     products: [
         .library(name: "CitrationCore", targets: ["CitrationCore"])
     ],
+    dependencies: [
+        .package(url: "https://github.com/groue/GRDB.swift.git", exact: "7.10.0")
+    ],
     targets: [
-        .target(name: "CitrationCore"),
+        .target(
+            name: "CitrationCore",
+            dependencies: [
+                .product(name: "GRDB", package: "GRDB.swift")
+            ]
+        ),
         .testTarget(
             name: "CitrationCoreTests",
             dependencies: ["CitrationCore"],

@@ -1,0 +1,226 @@
+import GRDB
+
+extension CitrationDatabase {
+    static var migrator: DatabaseMigrator {
+        var migrator = DatabaseMigrator()
+        migrator.registerMigration("v1_create_zotero_raw_store") { database in
+            try database.execute(sql: """
+            CREATE TABLE libraries (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                remote_type TEXT NOT NULL,
+                remote_id INTEGER NOT NULL,
+                name TEXT,
+                current_version INTEGER NOT NULL DEFAULT 0 CHECK (current_version >= 0),
+                created_at REAL NOT NULL,
+                updated_at REAL NOT NULL,
+                UNIQUE (remote_type, remote_id)
+            );
+
+            CREATE TABLE zotero_objects (
+                library_id INTEGER NOT NULL REFERENCES libraries(id) ON DELETE CASCADE,
+                object_kind TEXT NOT NULL,
+                object_key TEXT NOT NULL,
+                object_version INTEGER NOT NULL CHECK (object_version >= 0),
+                object_type TEXT,
+                current_json BLOB NOT NULL,
+                pristine_json BLOB NOT NULL,
+                sync_state TEXT NOT NULL CHECK (sync_state IN ('synced', 'dirty', 'deleted', 'failed')),
+                is_deleted INTEGER NOT NULL DEFAULT 0 CHECK (is_deleted IN (0, 1)),
+                failure_message TEXT,
+                updated_at REAL NOT NULL,
+                PRIMARY KEY (library_id, object_kind, object_key)
+            ) WITHOUT ROWID;
+
+            CREATE INDEX zotero_objects_by_type
+                ON zotero_objects(library_id, object_kind, object_type);
+            CREATE INDEX zotero_objects_by_state
+                ON zotero_objects(library_id, sync_state, is_deleted);
+            """)
+        }
+        migrator.registerMigration("v2_create_projections_and_local_state") { database in
+            try database.execute(sql: """
+            CREATE TABLE item_projections (
+                library_id INTEGER NOT NULL REFERENCES libraries(id) ON DELETE CASCADE,
+                item_key TEXT NOT NULL,
+                item_type TEXT NOT NULL,
+                title TEXT NOT NULL DEFAULT '',
+                abstract_note TEXT NOT NULL DEFAULT '',
+                date_text TEXT NOT NULL DEFAULT '',
+                publication_title TEXT NOT NULL DEFAULT '',
+                doi TEXT NOT NULL DEFAULT '',
+                isbn TEXT NOT NULL DEFAULT '',
+                issn TEXT NOT NULL DEFAULT '',
+                url TEXT NOT NULL DEFAULT '',
+                language TEXT NOT NULL DEFAULT '',
+                rights TEXT NOT NULL DEFAULT '',
+                extra TEXT NOT NULL DEFAULT '',
+                parent_item_key TEXT,
+                note_html TEXT,
+                PRIMARY KEY (library_id, item_key)
+            ) WITHOUT ROWID;
+
+            CREATE INDEX item_projections_by_type
+                ON item_projections(library_id, item_type, title);
+            CREATE INDEX item_projections_by_parent
+                ON item_projections(library_id, parent_item_key);
+
+            CREATE TABLE item_creators (
+                library_id INTEGER NOT NULL REFERENCES libraries(id) ON DELETE CASCADE,
+                item_key TEXT NOT NULL,
+                position INTEGER NOT NULL CHECK (position >= 0),
+                creator_type TEXT NOT NULL,
+                first_name TEXT,
+                last_name TEXT,
+                literal_name TEXT,
+                raw_json BLOB NOT NULL,
+                PRIMARY KEY (library_id, item_key, position),
+                FOREIGN KEY (library_id, item_key)
+                    REFERENCES item_projections(library_id, item_key) ON DELETE CASCADE
+            ) WITHOUT ROWID;
+
+            CREATE TABLE item_tags (
+                library_id INTEGER NOT NULL REFERENCES libraries(id) ON DELETE CASCADE,
+                item_key TEXT NOT NULL,
+                position INTEGER NOT NULL CHECK (position >= 0),
+                tag TEXT NOT NULL,
+                tag_type INTEGER,
+                raw_json BLOB NOT NULL,
+                PRIMARY KEY (library_id, item_key, position),
+                FOREIGN KEY (library_id, item_key)
+                    REFERENCES item_projections(library_id, item_key) ON DELETE CASCADE
+            ) WITHOUT ROWID;
+
+            CREATE INDEX item_tags_by_value ON item_tags(library_id, tag);
+
+            CREATE TABLE collection_projections (
+                library_id INTEGER NOT NULL REFERENCES libraries(id) ON DELETE CASCADE,
+                collection_key TEXT NOT NULL,
+                collection_version INTEGER NOT NULL CHECK (collection_version >= 0),
+                name TEXT NOT NULL,
+                parent_collection_key TEXT,
+                PRIMARY KEY (library_id, collection_key),
+                FOREIGN KEY (library_id, parent_collection_key)
+                    REFERENCES collection_projections(library_id, collection_key)
+                    ON DELETE SET NULL DEFERRABLE INITIALLY DEFERRED
+            ) WITHOUT ROWID;
+
+            CREATE INDEX collections_by_parent
+                ON collection_projections(library_id, parent_collection_key, name);
+
+            CREATE TABLE collection_items (
+                library_id INTEGER NOT NULL REFERENCES libraries(id) ON DELETE CASCADE,
+                collection_key TEXT NOT NULL,
+                item_key TEXT NOT NULL,
+                position INTEGER NOT NULL CHECK (position >= 0),
+                PRIMARY KEY (library_id, collection_key, item_key),
+                FOREIGN KEY (library_id, collection_key)
+                    REFERENCES collection_projections(library_id, collection_key) ON DELETE CASCADE,
+                FOREIGN KEY (library_id, item_key)
+                    REFERENCES item_projections(library_id, item_key) ON DELETE CASCADE
+            ) WITHOUT ROWID;
+
+            CREATE INDEX collection_items_by_item
+                ON collection_items(library_id, item_key, collection_key);
+
+            CREATE TABLE attachment_projections (
+                library_id INTEGER NOT NULL REFERENCES libraries(id) ON DELETE CASCADE,
+                item_key TEXT NOT NULL,
+                parent_item_key TEXT,
+                link_mode TEXT NOT NULL,
+                content_type TEXT NOT NULL DEFAULT '',
+                charset TEXT NOT NULL DEFAULT '',
+                filename TEXT NOT NULL DEFAULT '',
+                remote_url TEXT NOT NULL DEFAULT '',
+                remote_md5 TEXT,
+                remote_mtime INTEGER,
+                cache_state TEXT NOT NULL DEFAULT 'notDownloaded'
+                    CHECK (cache_state IN ('notDownloaded', 'downloading', 'downloaded', 'failed', 'stale')),
+                local_path TEXT,
+                verified_sha256 TEXT,
+                downloaded_at REAL,
+                PRIMARY KEY (library_id, item_key),
+                FOREIGN KEY (library_id, item_key)
+                    REFERENCES item_projections(library_id, item_key) ON DELETE CASCADE
+            ) WITHOUT ROWID;
+
+            CREATE INDEX attachments_by_parent
+                ON attachment_projections(library_id, parent_item_key, content_type);
+            CREATE INDEX attachments_by_cache_state
+                ON attachment_projections(library_id, cache_state);
+
+            CREATE TABLE annotation_projections (
+                library_id INTEGER NOT NULL REFERENCES libraries(id) ON DELETE CASCADE,
+                item_key TEXT NOT NULL,
+                parent_item_key TEXT NOT NULL,
+                annotation_type TEXT NOT NULL,
+                color TEXT NOT NULL DEFAULT '',
+                page_label TEXT NOT NULL DEFAULT '',
+                sort_index TEXT NOT NULL DEFAULT '',
+                annotation_text TEXT NOT NULL DEFAULT '',
+                annotation_comment TEXT NOT NULL DEFAULT '',
+                position_json TEXT NOT NULL,
+                PRIMARY KEY (library_id, item_key),
+                FOREIGN KEY (library_id, item_key)
+                    REFERENCES item_projections(library_id, item_key) ON DELETE CASCADE
+            ) WITHOUT ROWID;
+
+            CREATE INDEX annotations_by_parent
+                ON annotation_projections(library_id, parent_item_key, sort_index);
+
+            CREATE TABLE fulltext_content (
+                library_id INTEGER NOT NULL REFERENCES libraries(id) ON DELETE CASCADE,
+                item_key TEXT NOT NULL,
+                object_version INTEGER NOT NULL CHECK (object_version >= 0),
+                content TEXT NOT NULL DEFAULT '',
+                content_type TEXT NOT NULL DEFAULT '',
+                charset TEXT NOT NULL DEFAULT '',
+                indexed_pages INTEGER,
+                total_pages INTEGER,
+                updated_at REAL NOT NULL,
+                PRIMARY KEY (library_id, item_key)
+            ) WITHOUT ROWID;
+
+            CREATE TABLE synchronization_failures (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                library_id INTEGER NOT NULL REFERENCES libraries(id) ON DELETE CASCADE,
+                object_kind TEXT NOT NULL,
+                object_key TEXT NOT NULL,
+                operation TEXT NOT NULL,
+                message TEXT NOT NULL,
+                retry_count INTEGER NOT NULL DEFAULT 0 CHECK (retry_count >= 0),
+                next_retry_at REAL,
+                created_at REAL NOT NULL,
+                resolved_at REAL
+            );
+
+            CREATE INDEX synchronization_failures_pending
+                ON synchronization_failures(library_id, resolved_at, next_retry_at);
+
+            CREATE TABLE reader_state (
+                library_id INTEGER NOT NULL REFERENCES libraries(id) ON DELETE CASCADE,
+                item_key TEXT NOT NULL,
+                locator_json BLOB,
+                fraction_complete REAL NOT NULL DEFAULT 0
+                    CHECK (fraction_complete >= 0 AND fraction_complete <= 1),
+                selected_page INTEGER,
+                updated_at REAL NOT NULL,
+                PRIMARY KEY (library_id, item_key)
+            ) WITHOUT ROWID;
+
+            CREATE VIRTUAL TABLE library_search USING fts5(
+                library_id UNINDEXED,
+                object_key UNINDEXED,
+                object_kind UNINDEXED,
+                title,
+                creators,
+                tags,
+                note_text,
+                annotation_text,
+                fulltext,
+                tokenize = 'unicode61 remove_diacritics 2'
+            );
+            """)
+        }
+        return migrator
+    }
+}

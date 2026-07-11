@@ -12,6 +12,8 @@ All notable completed changes to Citration are tracked here. Entries are newest 
 - Added sanitized API v3 fixtures captured read-only from the live version-1291 library, including all current item, creator, attachment, annotation, collection, setting, deletion, and full-text shapes.
 - Added a lossless JSON boundary and structural round-trip tests so unknown Zotero fields survive decoding and re-encoding.
 - Added a Swift fixture-capture command with deterministic relationship-preserving sanitization and a private-string leak check.
+- Added GRDB 7.10.0 and the first final-database migrations for libraries, lossless raw objects, typed projections, collection membership, attachment cache state, annotations, full text, synchronization failures, reader state, and FTS5 search.
+- Added real temporary-SQLite tests proving every captured response and every captured Zotero object persists, reloads, and re-encodes without structural loss, including repeatable migrations and integrity checks.
 
 ### Changed
 

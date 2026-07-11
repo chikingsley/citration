@@ -7,7 +7,7 @@ This is the only active task ledger. `AGENTS.md` defines the execution and evide
 - [x] Capture sanitized fixtures from the live self-hosted library for each present top-level item type: book, preprint, journal article, and conference paper.
 - [x] Capture representative collection, note, PDF attachment, EPUB attachment, HTML snapshot, full-text, setting, deletion, highlight, underline, annotation note, and ink objects.
 - [x] Capture edge cases for creator roles, uncommon live metadata fields, parent/child relationships, tags, collection membership, and unknown fields.
-- [ ] Add round-trip tests proving every fixture decodes, persists, reloads, and re-encodes without losing compatibility data.
+- [x] Add round-trip tests proving every fixture decodes, persists, reloads, and re-encodes without losing compatibility data.
 - [x] Record fixture provenance, sanitization rules, server/schema version, and a reproducible refresh procedure without storing credentials or private content.
 - [ ] Audit the existing test suite and replace mock/in-memory product claims with real fixtures, real temporary databases, real files, and explicit live acceptance gates.
 
@@ -16,8 +16,8 @@ Done when the real library contract—not `BCItem` or an invented schema—deter
 ## 2. Build The Final GRDB/SQLite Model
 
 - [ ] Add GRDB to `packages/citration-core-swift` and open one app-owned SQLite database through the production database layer.
-- [ ] Create migrations for libraries, raw Zotero objects, typed item projections, collection hierarchy/membership, attachment cache state, full-text content/indexes, synchronization failures, and app-only reader state.
-- [ ] Store library identity/version plus each object’s type, key, version, current JSON, last-synced pristine JSON, dirty/synced state, deletion state, and failure state.
+- [x] Create migrations for libraries, raw Zotero objects, typed item projections, collection hierarchy/membership, attachment cache state, full-text content/indexes, synchronization failures, and app-only reader state.
+- [x] Store library identity/version plus each object’s type, key, version, current JSON, last-synced pristine JSON, dirty/synced state, deletion state, and failure state.
 - [ ] Create typed projections for all item types, fields, identifiers, ordered creator roles, notes, attachments, annotations, collections, tags, and full-text state present in the live baseline.
 - [ ] Add FTS5 projections for metadata, creators, tags, notes, annotation text/comments, and downloaded full text.
 - [ ] Add transactional backup, integrity checking, migration tests, and database observation used by future SwiftUI views.
