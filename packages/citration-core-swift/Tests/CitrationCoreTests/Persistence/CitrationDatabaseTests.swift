@@ -103,6 +103,75 @@ struct CitrationDatabaseTests {
         #expect(try reopened.integrityCheck() == "ok")
     }
 
+    @Test("Captured objects populate typed relationship and document projections")
+    func capturedObjectsPopulateProjections() throws {
+        try withTemporaryDatabase { database in
+            let libraryID = try database.upsertLibrary(
+                identity: ZoteroLibraryIdentity(type: "user", remoteID: 1),
+                currentVersion: 1291
+            )
+            let collections = try capturedObjects(filename: "collections.json")
+            let items = try capturedObjects(filename: "items.json")
+
+            try database.storeRemoteCollections(collections, libraryID: libraryID)
+            try database.storeRemoteItems(items, libraryID: libraryID)
+
+            var creatorRoles = Set<String>()
+            var contentTypes = Set<String>()
+            var annotationTypes = Set<String>()
+
+            for object in items {
+                let key = try #require(object.key)
+                let fetched = try database.fetchProjectedItem(libraryID: libraryID, key: key)
+                let projected = try #require(fetched)
+                #expect(projected.itemType == object.itemType)
+                #expect(projected.parentItemKey == object.data["parentItem"]?.stringValue)
+                #expect(projected.collectionKeys == object.data["collections"]?.arrayValue?.compactMap(\.stringValue) ?? [])
+
+                creatorRoles.formUnion(projected.creators.map(\.creatorType))
+                if let attachment = projected.attachment {
+                    contentTypes.insert(attachment.contentType)
+                }
+                if let annotation = projected.annotation {
+                    annotationTypes.insert(annotation.type)
+                    #expect(annotation.positionJSON == object.data["annotationPosition"]?.stringValue)
+                }
+            }
+
+            #expect(creatorRoles.isSuperset(of: ["author", "contributor", "editor"]))
+            #expect(contentTypes.isSuperset(of: ["application/epub+zip", "application/pdf", "text/html"]))
+            #expect(annotationTypes == ["highlight", "ink", "note", "underline"])
+            #expect(try database.integrityCheck() == "ok")
+        }
+    }
+
+    @Test("Backup produces an independently readable integrity-checked database")
+    func backupIsRestorable() throws {
+        let directory = FileManager.default.temporaryDirectory
+            .appending(path: "citration-db-backup-\(UUID().uuidString)", directoryHint: .isDirectory)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+
+        let source = try CitrationDatabase(at: directory.appending(path: "source.sqlite"))
+        let libraryID = try source.upsertLibrary(identity: ZoteroLibraryIdentity(type: "user", remoteID: 1))
+        try source.storeRemoteObjects(
+            [ZoteroStoredObject(
+                kind: .setting,
+                key: "fixture-setting",
+                version: 3,
+                current: .object(["value": .string("fixture")])
+            )],
+            libraryID: libraryID
+        )
+
+        let backupURL = directory.appending(path: "backup.sqlite")
+        try source.backup(to: backupURL)
+
+        let restored = try CitrationDatabase(at: backupURL)
+        #expect(try restored.objectCount(libraryID: libraryID) == 1)
+        #expect(try restored.integrityCheck() == "ok")
+    }
+
     // MARK: Private
 
     private static let requiredSchemaObjects: Set<String> = [
@@ -132,5 +201,12 @@ struct CitrationDatabaseTests {
 
     private func fixtureDirectory() throws -> URL {
         try #require(Bundle.module.resourceURL?.appending(path: "Fixtures/Zotero"))
+    }
+
+    private func capturedObjects(filename: String) throws -> [ZoteroRawObject] {
+        try JSONDecoder().decode(
+            [ZoteroRawObject].self,
+            from: Data(contentsOf: fixtureDirectory().appending(path: filename))
+        )
     }
 }

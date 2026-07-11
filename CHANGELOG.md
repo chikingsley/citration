@@ -14,6 +14,8 @@ All notable completed changes to Citration are tracked here. Entries are newest 
 - Added a Swift fixture-capture command with deterministic relationship-preserving sanitization and a private-string leak check.
 - Added GRDB 7.10.0 and the first final-database migrations for libraries, lossless raw objects, typed projections, collection membership, attachment cache state, annotations, full text, synchronization failures, reader state, and FTS5 search.
 - Added real temporary-SQLite tests proving every captured response and every captured Zotero object persists, reloads, and re-encodes without structural loss, including repeatable migrations and integrity checks.
+- Added transactional projections for items, ordered creator roles, tags, collection membership, notes, PDF/EPUB/HTML attachments, and exact highlight/underline/note/ink annotation positions from the captured contract.
+- Added SQLite online backups with post-copy integrity verification and a real backup/reopen/restore test.
 
 ### Changed
 

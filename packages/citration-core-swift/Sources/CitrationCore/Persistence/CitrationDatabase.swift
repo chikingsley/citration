@@ -256,11 +256,25 @@ public final class CitrationDatabase: @unchecked Sendable {
         }
     }
 
-    // MARK: Private
+    public func backup(to destinationURL: URL) throws {
+        guard destinationURL.isFileURL else {
+            throw CitrationDatabaseError.invalidLibraryIdentity
+        }
+        let destination = try DatabaseQueue(path: destinationURL.path)
+        try databaseQueue.backup(to: destination)
+        let result = try destination.read { database in
+            try String.fetchOne(database, sql: "PRAGMA integrity_check")
+        }
+        guard result == "ok" else {
+            throw DatabaseError(resultCode: .SQLITE_CORRUPT, message: "Database backup failed integrity check")
+        }
+    }
 
-    private let databaseQueue: DatabaseQueue
+    // MARK: Internal
 
-    private static func upsert(
+    let databaseQueue: DatabaseQueue
+
+    static func upsert(
         object: ZoteroStoredObject,
         libraryID: Int64,
         database: Database
