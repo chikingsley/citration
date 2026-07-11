@@ -55,7 +55,7 @@ Done when the final database and sync engine converge with Zotero Self-Host and 
 - [x] Build the library table from database observations with sorting, filtering, multiple selection, and configurable useful columns.
 - [x] Replace the long inspector form with contextual Info, Attachments, Notes, Annotations, Cite, and Related surfaces.
 - [x] Move identifier entry into one Add flow and move OpenAlex, OCR, connection, and application configuration into Settings.
-- [ ] Expose quiet synchronization/download state and actionable failures without turning the app into a dashboard.
+- [x] Expose quiet synchronization/download state and actionable failures without turning the app into a dashboard.
 - [ ] Preserve native SwiftUI/AppKit behavior, keyboard commands, accessibility, drag/drop, and separate-window semantics.
 
 Done when the real running Mac app uses the agreed Library/document-tab structure and all navigation/selection/window state is backed by the final model rather than `BCItem` or a single global reader.

@@ -6,6 +6,18 @@ import Testing
 @Suite("Library database observation")
 @MainActor
 struct LibraryObservationTests {
+    @Test("Sync status observes pending work in the real app database")
+    func syncStatusObservation() async throws {
+        let model = makeAppModel(initialItems: [BCItem(title: "Pending Fixture")])
+
+        try await waitUntil {
+            model.syncStatus?.pendingUploadCount == 1
+        }
+
+        #expect(model.syncStatus?.currentVersion == 0)
+        #expect(model.syncStatus?.failures.isEmpty == true)
+    }
+
     @Test("A committed GRDB item refreshes the visible library without a command callback")
     func committedItemRefreshesVisibleLibrary() async throws {
         let model = makeAppModel()

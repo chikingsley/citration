@@ -220,10 +220,7 @@ struct RootView: View {
             .keyboardShortcut("n", modifiers: .command)
         }
         ToolbarItem(placement: .status) {
-            Text(model.statusMessage)
-                .lineLimit(1)
-                .font(.caption)
-                .foregroundStyle(.secondary)
+            SyncStatusMenu(model: model)
         }
         ToolbarItem {
             Button {

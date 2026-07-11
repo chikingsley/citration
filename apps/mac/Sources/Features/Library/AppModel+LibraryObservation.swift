@@ -74,16 +74,38 @@ extension AppModel {
         )
     }
 
+    func startSyncStatusObservation() {
+        guard let observedLibraryID else {
+            return
+        }
+        syncStatusObservation = database.observeSyncStatus(
+            libraryID: observedLibraryID,
+            onError: { [weak self] _ in
+                Task { @MainActor [weak self] in
+                    self?.statusMessage = "Failed to observe synchronization state"
+                }
+            },
+            onChange: { [weak self] snapshot in
+                Task { @MainActor [weak self] in
+                    self?.syncStatus = snapshot
+                }
+            }
+        )
+    }
+
     // MARK: Private
 
     private func switchObservations(to libraryID: Int64) {
         libraryObservation?.cancel()
         navigationObservation?.cancel()
+        syncStatusObservation?.cancel()
         libraryObservation = nil
         navigationObservation = nil
+        syncStatusObservation = nil
         observedLibraryID = libraryID
         startLibraryObservation()
         startNavigationObservation()
+        startSyncStatusObservation()
     }
 
     private func refreshConnectedFeatures() async {

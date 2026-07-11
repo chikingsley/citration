@@ -68,6 +68,7 @@ final class AppModel {
 
         startLibraryObservation()
         startNavigationObservation()
+        startSyncStatusObservation()
 
         Task {
             await zoteroSettings.refresh()
@@ -95,6 +96,7 @@ final class AppModel {
     var navigationObservationRevision = 0
     var savedSearches: [ZoteroSavedSearchSummary] = []
     var deletedItemCount = 0
+    var syncStatus: ZoteroSyncStatusSnapshot?
 
     let collections: CollectionsModel
     let notes: NotesModel
@@ -117,6 +119,7 @@ final class AppModel {
 
     @ObservationIgnored var libraryObservation: CitrationDatabaseObservation?
     @ObservationIgnored var navigationObservation: CitrationDatabaseObservation?
+    @ObservationIgnored var syncStatusObservation: CitrationDatabaseObservation?
     @ObservationIgnored var observedLibraryID: Int64?
 
     var selectedItem: BCItem? {
