@@ -74,7 +74,11 @@ public struct ZoteroStoredObject: Hashable, Sendable {
         self.failureMessage = failureMessage
     }
 
-    public init(kind: ZoteroObjectKind, object: ZoteroRawObject) throws {
+    public init(
+        kind: ZoteroObjectKind,
+        object: ZoteroRawObject,
+        syncState: ZoteroSyncState = .synced
+    ) throws {
         guard let key = object.key else {
             throw CitrationDatabaseError.missingObjectKey
         }
@@ -83,7 +87,8 @@ public struct ZoteroStoredObject: Hashable, Sendable {
             key: key,
             version: object.version ?? 0,
             objectType: object.itemType,
-            current: object.rawValue
+            current: object.rawValue,
+            syncState: syncState
         )
     }
 

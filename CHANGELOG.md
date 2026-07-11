@@ -20,6 +20,8 @@ All notable completed changes to Citration are tracked here. Entries are newest 
 - Hardened fixture sanitization to remap Zotero item keys embedded inside dynamic setting names before fixtures are written.
 - Completed the GRDB model with queryable lossless field values, explicit identifiers, verified database observation, and a production Application Support `library.sqlite` opened at app bootstrap.
 - Removed the production in-memory fallback for persistence initialization so startup cannot silently present an empty library after a storage failure.
+- Added a one-time legacy-library migrator that creates an atomic recoverable backup, reads the real SwiftData and JSON stores, preserves original records, and projects version-zero dirty objects into the final GRDB schema.
+- Added populated on-disk migration evidence for items, collections, membership, notes, attachments, annotations, relationships, and reader progress, including idempotent reruns and recovery after invalid source data.
 
 ### Changed
 

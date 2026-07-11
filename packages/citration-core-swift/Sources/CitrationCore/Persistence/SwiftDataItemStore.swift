@@ -57,16 +57,19 @@ public actor SwiftDataItemStore: BCItemStore {
 
     public func listItems() -> [BCItem] {
         do {
-            let context = ModelContext(container)
-            let records = try context.fetch(FetchDescriptor<ItemRecord>())
-
-            return try records
-                .map(decodeItem)
-                .sorted(by: sortItems)
+            return try exportItems()
         } catch {
             assertionFailure("SwiftDataItemStore.listItems failed: \(error)")
             return []
         }
+    }
+
+    public func exportItems() throws -> [BCItem] {
+        let context = ModelContext(container)
+        let records = try context.fetch(FetchDescriptor<ItemRecord>())
+        return try records
+            .map(decodeItem)
+            .sorted(by: sortItems)
     }
 
     public func upsert(_ item: BCItem) {

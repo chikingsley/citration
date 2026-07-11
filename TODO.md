@@ -27,10 +27,10 @@ Done when all captured fixtures persist in one real temporary SQLite database, q
 ## 3. Migrate Existing Citration Data Once
 
 - [x] Inventory the current SwiftData item store and JSON-backed notes, collections, attachments, annotations, relationships, and reader progress.
-- [ ] Back up every legacy store before migration.
-- [ ] Import legacy records into the final SQLite schema without creating a permanent parallel model.
-- [ ] Verify counts, IDs, timestamps, relationships, attachment paths, annotation locations, and reader progress against migration fixtures.
-- [ ] Make migration resumable or safely restartable after interruption.
+- [x] Back up every legacy store before migration.
+- [x] Import legacy records into the final SQLite schema without creating a permanent parallel model.
+- [x] Verify counts, IDs, timestamps, relationships, attachment paths, annotation locations, and reader progress against migration fixtures.
+- [x] Make migration resumable or safely restartable after interruption.
 - [ ] Remove the SwiftData/JSON production paths and in-memory fallbacks only after migration evidence is green.
 
 Done when the existing local library opens from the final database, the verified backup remains recoverable, and there is one production persistence implementation.

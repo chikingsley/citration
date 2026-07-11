@@ -3,19 +3,47 @@ import GRDB
 
 extension CitrationDatabase {
     public func storeRemoteCollections(_ objects: [ZoteroRawObject], libraryID: Int64) throws {
+        try storeCollections(objects, libraryID: libraryID, syncState: .synced)
+    }
+
+    public func storeLocalCollections(_ objects: [ZoteroRawObject], libraryID: Int64) throws {
+        try storeCollections(objects, libraryID: libraryID, syncState: .dirty)
+    }
+
+    public func storeRemoteItems(_ objects: [ZoteroRawObject], libraryID: Int64) throws {
+        try storeItems(objects, libraryID: libraryID, syncState: .synced)
+    }
+
+    public func storeLocalItems(_ objects: [ZoteroRawObject], libraryID: Int64) throws {
+        try storeItems(objects, libraryID: libraryID, syncState: .dirty)
+    }
+
+    private func storeCollections(
+        _ objects: [ZoteroRawObject],
+        libraryID: Int64,
+        syncState: ZoteroSyncState
+    ) throws {
         try databaseQueue.write { database in
             for object in objects {
-                let storedObject = try ZoteroStoredObject(kind: .collection, object: object)
+                let storedObject = try ZoteroStoredObject(
+                    kind: .collection,
+                    object: object,
+                    syncState: syncState
+                )
                 try Self.upsert(object: storedObject, libraryID: libraryID, database: database)
                 try Self.upsertCollectionProjection(object: object, libraryID: libraryID, database: database)
             }
         }
     }
 
-    public func storeRemoteItems(_ objects: [ZoteroRawObject], libraryID: Int64) throws {
+    private func storeItems(
+        _ objects: [ZoteroRawObject],
+        libraryID: Int64,
+        syncState: ZoteroSyncState
+    ) throws {
         try databaseQueue.write { database in
             for object in objects {
-                let storedObject = try ZoteroStoredObject(kind: .item, object: object)
+                let storedObject = try ZoteroStoredObject(kind: .item, object: object, syncState: syncState)
                 try Self.upsert(object: storedObject, libraryID: libraryID, database: database)
                 try Self.replaceItemProjection(object: object, libraryID: libraryID, database: database)
             }

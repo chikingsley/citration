@@ -257,6 +257,47 @@ extension CitrationDatabase {
                 ON item_identifiers(library_id, identifier_type, identifier_value);
             """)
         }
+        migrator.registerMigration("v4_create_legacy_migration_state") { database in
+            try database.execute(sql: """
+            CREATE TABLE legacy_migration_runs (
+                migration_name TEXT PRIMARY KEY,
+                source_fingerprint TEXT NOT NULL,
+                status TEXT NOT NULL CHECK (status IN ('running', 'completed', 'failed')),
+                backup_path TEXT NOT NULL,
+                report_json BLOB,
+                error_message TEXT,
+                started_at REAL NOT NULL,
+                completed_at REAL
+            ) WITHOUT ROWID;
+
+            CREATE TABLE legacy_records (
+                library_id INTEGER NOT NULL REFERENCES libraries(id) ON DELETE CASCADE,
+                entity_kind TEXT NOT NULL,
+                legacy_id TEXT NOT NULL,
+                payload_json BLOB NOT NULL,
+                migrated_object_kind TEXT,
+                migrated_object_key TEXT,
+                PRIMARY KEY (library_id, entity_kind, legacy_id)
+            ) WITHOUT ROWID;
+
+            CREATE TABLE app_relationships (
+                library_id INTEGER NOT NULL REFERENCES libraries(id) ON DELETE CASCADE,
+                relationship_id TEXT NOT NULL,
+                source_item_key TEXT NOT NULL,
+                target_item_key TEXT NOT NULL,
+                relationship_kind TEXT NOT NULL,
+                confidence REAL NOT NULL CHECK (confidence >= 0 AND confidence <= 1),
+                note TEXT,
+                raw_json BLOB NOT NULL,
+                PRIMARY KEY (library_id, relationship_id)
+            ) WITHOUT ROWID;
+
+            CREATE INDEX app_relationships_by_source
+                ON app_relationships(library_id, source_item_key, relationship_kind);
+            CREATE INDEX app_relationships_by_target
+                ON app_relationships(library_id, target_item_key, relationship_kind);
+            """)
+        }
         return migrator
     }
 }
