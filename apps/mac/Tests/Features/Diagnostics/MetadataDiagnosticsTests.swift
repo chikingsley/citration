@@ -15,9 +15,10 @@ struct MetadataDiagnosticsTests {
         let model = makeAppModel(providers: [provider])
         await model.refreshItems()
 
-        model.importer.doiInput = doi
-        model.importer.addByDOI()
-        try await waitUntil { !model.importer.isResolvingDOI }
+        model.importer.identifierKind = .doi
+        model.importer.identifierInput = doi
+        model.importer.addByIdentifier()
+        try await waitUntil { !model.importer.isResolvingIdentifier }
 
         #expect(model.statusMessage == "Added: Published Title · check metadata")
         #expect(model.items.first?.title == "Published Title")

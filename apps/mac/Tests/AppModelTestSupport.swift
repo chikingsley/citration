@@ -45,7 +45,13 @@ func makeAppModel(
         relationshipStore: persistence,
         readerProgressStore: readerProgressStore ?? persistence,
         pdfDOIExtractor: pdfDOIExtractor,
-        ocrService: ocrService
+        ocrService: ocrService,
+        openAlexAPIKeyStore: FileAPIKeyStore(
+            fileURL: makeTempDirectory().appending(path: "openalex-api-key")
+        ),
+        ocrAPIKeyStore: FileAPIKeyStore(
+            fileURL: makeTempDirectory().appending(path: "mistral-api-key")
+        )
     )
 }
 

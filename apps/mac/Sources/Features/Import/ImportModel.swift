@@ -33,8 +33,9 @@ final class ImportModel {
 
     // MARK: Internal
 
-    var doiInput: String = ""
-    var isResolvingDOI: Bool = false
+    var identifierKind: AddIdentifierKind = .doi
+    var identifierInput: String = ""
+    var isResolvingIdentifier: Bool = false
     var isImporting: Bool = false
     var reprocessingItemID: UUID?
     var metadataWarnings: [String] = []
@@ -57,27 +58,28 @@ final class ImportModel {
         self.reader = reader
     }
 
-    // MARK: - DOI entry
+    // MARK: - Identifier entry
 
-    func addByDOI() {
-        guard let doi = normalizedDOIInput() else {
+    func addByIdentifier() {
+        let kind = identifierKind
+        guard let identifier = normalizedIdentifierInput() else {
             return
         }
 
         clearMetadataDiagnostics()
-        isResolvingDOI = true
-        context?.statusMessage = "Resolving DOI \(doi)..."
+        isResolvingIdentifier = true
+        context?.statusMessage = "Resolving \(kind.title) \(identifier.value)..."
 
         Task {
             let request = MetadataResolutionRequest(
-                identifiers: [Identifier(type: .doi, value: doi)]
+                identifiers: [identifier]
             )
             let result = await metadataRegistry.resolveAll(request)
             recordMetadataDiagnostics(result)
 
             guard let best = result.bestMatch else {
-                isResolvingDOI = false
-                context?.statusMessage = "No metadata found for \(doi)"
+                isResolvingIdentifier = false
+                context?.statusMessage = "No metadata found for \(kind.title) \(identifier.value)"
                 return
             }
 
@@ -85,7 +87,7 @@ final class ImportModel {
             let item = BCItem(
                 title: MetadataMerging.normalizedTitle(best.title) ?? "Untitled Item",
                 identifiers: MetadataMerging.mergeIdentifiers(
-                    best.identifiers + [Identifier(type: .doi, value: doi)],
+                    best.identifiers + [identifier],
                     into: fallbackItem
                 ).identifiers,
                 itemType: best.itemType,
@@ -96,8 +98,8 @@ final class ImportModel {
             await store.upsert(item)
             context?.selectedItemID = item.id
             await context?.refreshLibrary()
-            doiInput = ""
-            isResolvingDOI = false
+            identifierInput = ""
+            isResolvingIdentifier = false
             context?.statusMessage = "Added: \(item.title)"
             appendMetadataDiagnosticsStatus()
         }
@@ -345,16 +347,22 @@ final class ImportModel {
         context?.statusMessage += " · detected \(detectedDOIs.count) \(noun)"
     }
 
-    private func normalizedDOIInput() -> String? {
-        guard let trimmed = doiInput.bcTrimmedNonEmpty else {
-            context?.statusMessage = "Enter a DOI first"
+    private func normalizedIdentifierInput() -> Identifier? {
+        guard let trimmed = identifierInput.bcTrimmedNonEmpty else {
+            context?.statusMessage = "Enter \(identifierKind.title) first"
             return nil
         }
-        guard let doi = DOIParsing.normalizeCandidate(trimmed) else {
-            context?.statusMessage = "Enter a valid DOI"
+
+        let value: String? = switch identifierKind {
+        case .doi: DOIParsing.normalizeCandidate(trimmed)
+        case .isbn: ISBNParsing.normalizeCandidate(trimmed)
+        case .arxiv: ArXivParsing.normalizeCandidate(trimmed)
+        }
+        guard let value else {
+            context?.statusMessage = "Enter a valid \(identifierKind.title)"
             return nil
         }
-        return doi
+        return Identifier(type: identifierKind.identifierType, value: value)
     }
 }
 

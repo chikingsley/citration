@@ -25,7 +25,8 @@ final class AppModel {
         pdfDOIExtractor: any PDFDOIExtracting = NullPDFDOIExtractor(),
         relatedWorkDiscoveryProvider: any RelatedWorkDiscoveryProvider = NoopRelatedWorkDiscoveryProvider(),
         ocrService: any OCRServicing = MistralOCRService(),
-        openAlexAPIKeyStore: any APIKeyStore = InMemoryAPIKeyStore()
+        openAlexAPIKeyStore: any APIKeyStore = InMemoryAPIKeyStore(),
+        ocrAPIKeyStore: any APIKeyStore = InMemoryAPIKeyStore()
     ) {
         self.database = database
         self.connectionManager = connectionManager
@@ -35,6 +36,7 @@ final class AppModel {
         self.readerProgressStore = readerProgressStore
         citation = CitationModel(formatter: citationFormatter)
         zoteroSettings = ZoteroSettingsModel(connectionManager: connectionManager)
+        ocrSettings = OCRSettingsModel(keyStore: ocrAPIKeyStore)
         self.storageConnectors = storageConnectors
         collections = CollectionsModel(store: collectionStore)
         notes = NotesModel(store: noteStore)
@@ -60,6 +62,7 @@ final class AppModel {
         citation.bind(context: self)
         insights.bind(context: self, relationships: relationships)
         zoteroSettings.bind(context: self)
+        ocrSettings.bind(context: self)
         openAlexSettings.bind(context: self, insights: insights)
         importer.bind(context: self, collections: collections, reader: reader)
 
@@ -68,6 +71,7 @@ final class AppModel {
 
         Task {
             await zoteroSettings.refresh()
+            await ocrSettings.refreshKeyStatus()
             await openAlexSettings.refreshKeyStatus()
             await collections.refresh()
             if libraryObservation == nil {
@@ -101,6 +105,7 @@ final class AppModel {
     let citation: CitationModel
     let insights: InsightsModel
     let zoteroSettings: ZoteroSettingsModel
+    let ocrSettings: OCRSettingsModel
     let openAlexSettings: OpenAlexSettingsModel
     let database: CitrationDatabase
     let connectionManager: ZoteroConnectionManager

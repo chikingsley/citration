@@ -84,6 +84,15 @@ struct RootView: View {
         ) { result in
             handleImportedAttachments(result)
         }
+        .sheet(isPresented: $addItemPresented) {
+            AddItemView(
+                model: model,
+                onImportDocuments: {
+                    addItemPresented = false
+                    attachmentImporterPresented = true
+                }
+            )
+        }
         .onDeleteCommand {
             deleteSelection()
         }
@@ -109,6 +118,7 @@ struct RootView: View {
     @State private var searchScope: SearchScope = .allFields
     @State private var selectedSource: LibrarySource? = .allItems
     @State private var selectedItemIDs: Set<UUID> = []
+    @State private var addItemPresented = false
     @State private var attachmentImporterPresented = false
     @State private var isImportDropTargeted = false
     @State private var isAttachDropTargeted = false
@@ -203,30 +213,11 @@ struct RootView: View {
 
     @ToolbarContentBuilder
     private var rootToolbar: some ToolbarContent {
-        @Bindable var importer = model.importer
-        ToolbarItemGroup {
-            TextField("DOI", text: $importer.doiInput)
-                .frame(width: 260)
-            Button(model.importer.isResolvingDOI ? "Resolving..." : "Add DOI", systemImage: "plus.circle") {
-                model.importer.addByDOI()
+        ToolbarItem(placement: .navigation) {
+            Button("Add", systemImage: "plus") {
+                addItemPresented = true
             }
-            .disabled(model.importer.isResolvingDOI)
-
-            Button("New Item", systemImage: "doc.badge.plus") {
-                model.addEmptyItem()
-            }
-
-            Button("New Collection", systemImage: "folder.badge.plus") {
-                model.collections.create()
-            }
-
-            Button("New Note", systemImage: "note.text.badge.plus") {
-                model.notes.prepareNewNote()
-            }
-
-            Button("Attach", systemImage: "paperclip") {
-                attachmentImporterPresented = true
-            }
+            .keyboardShortcut("n", modifiers: .command)
         }
         ToolbarItem(placement: .status) {
             Text(model.statusMessage)
@@ -234,7 +225,7 @@ struct RootView: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
-        ToolbarItem(placement: .primaryAction) {
+        ToolbarItem {
             Button {
                 inspectorPresented.toggle()
             } label: {

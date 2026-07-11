@@ -15,6 +15,7 @@ struct ApplicationSettingsView: View {
 
             Form {
                 OpenAlexSettingsSection(settings: model.openAlexSettings)
+                OCRSettingsSection(settings: model.ocrSettings)
             }
             .formStyle(.grouped)
             .tabItem {

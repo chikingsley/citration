@@ -15,6 +15,7 @@ extension AppModel {
         let citationFormatter = CSLCitationFormatter()
         let pdfDOIExtractor = PDFKitDOIExtractor()
         let openAlexAPIKeyStore = FileAPIKeyStore()
+        let ocrAPIKeyStore = FileAPIKeyStore(fileName: "mistral-api-key")
         let openAlexCredentialSource = OpenAlexCredentialSource(keyStore: openAlexAPIKeyStore)
         let relatedWorkDiscoveryProvider = OpenAlexRelatedWorkProvider(apiKeyProvider: openAlexCredentialSource)
         let storageConnectors = [
@@ -41,7 +42,9 @@ extension AppModel {
             readerProgressStore: store,
             pdfDOIExtractor: pdfDOIExtractor,
             relatedWorkDiscoveryProvider: relatedWorkDiscoveryProvider,
-            openAlexAPIKeyStore: openAlexAPIKeyStore
+            ocrService: MistralOCRService(keyStore: ocrAPIKeyStore),
+            openAlexAPIKeyStore: openAlexAPIKeyStore,
+            ocrAPIKeyStore: ocrAPIKeyStore
         )
     }
 
