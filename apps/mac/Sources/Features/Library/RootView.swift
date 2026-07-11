@@ -45,7 +45,7 @@ struct RootView: View {
                 selectedCollection = LibrarySelectionIdentifier.value(for: collectionID)
             }
         } detail: {
-            LibraryDetailView(
+            WorkspaceContentView(
                 model: model,
                 filteredItems: filteredItems,
                 selectedItemIDs: $selectedItemIDs,

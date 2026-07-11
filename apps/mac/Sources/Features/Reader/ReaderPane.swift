@@ -12,6 +12,8 @@ struct ReaderPane: View {
     let attachment: LocalAttachment
     let item: BCItem?
     let reader: ReaderModel
+    let onClose: () -> Void
+    let onDetach: (() -> Void)?
 
     var body: some View {
         VStack(spacing: 0) {
@@ -89,7 +91,14 @@ struct ReaderPane: View {
             }
             .help("Open externally")
 
-            Button(action: reader.close) {
+            if let onDetach {
+                Button(action: onDetach) {
+                    Image(systemName: "macwindow.badge.plus")
+                }
+                .help("Move to New Window")
+            }
+
+            Button(action: onClose) {
                 Image(systemName: "xmark")
             }
             .help("Close reader")

@@ -28,6 +28,8 @@ final class AppModel {
         self.database = database
         self.connectionManager = connectionManager
         self.store = store
+        self.annotationStore = annotationStore
+        self.readerProgressStore = readerProgressStore
         citation = CitationModel(formatter: citationFormatter)
         self.storageConnectors = storageConnectors
         collections = CollectionsModel(store: collectionStore)
@@ -72,6 +74,8 @@ final class AppModel {
     var items: [BCItem] = []
     var selectedItemID: UUID?
     var storageConnectors: [StorageConnector]
+    var selectedWorkspaceTab: WorkspaceTab = .library
+    private(set) var openDocuments: [LocalAttachment] = []
 
     let collections: CollectionsModel
     let notes: NotesModel
@@ -85,6 +89,8 @@ final class AppModel {
     let database: CitrationDatabase
     let connectionManager: ZoteroConnectionManager
     let store: any BCItemStore
+    let annotationStore: any LibraryAnnotationStoring
+    let readerProgressStore: any LibraryReaderProgressStoring
 
     var selectedItem: BCItem? {
         guard let selectedItemID else {
@@ -133,6 +139,9 @@ final class AppModel {
         }
 
         Task { @MainActor in
+            for attachment in openDocuments where uniqueIDs.contains(attachment.itemID) {
+                closeDocument(attachmentKey: attachment.objectKey)
+            }
             for id in uniqueIDs {
                 await store.removeItem(id: id)
             }
@@ -187,5 +196,54 @@ final class AppModel {
             selectedItemID = selectedID
             statusMessage = status
         }
+    }
+
+    func openDocument(_ attachment: LocalAttachment) {
+        if let index = openDocuments.firstIndex(where: { $0.objectKey == attachment.objectKey }) {
+            openDocuments[index] = attachment
+        } else {
+            openDocuments.append(attachment)
+        }
+        selectWorkspaceTab(.document(attachment.objectKey))
+    }
+
+    func selectWorkspaceTab(_ tab: WorkspaceTab) {
+        switch tab {
+        case .library:
+            selectedWorkspaceTab = .library
+            reader.clear()
+
+        case let .document(attachmentKey):
+            guard let attachment = openDocuments.first(where: { $0.objectKey == attachmentKey }) else {
+                selectedWorkspaceTab = .library
+                reader.clear()
+                return
+            }
+            selectedWorkspaceTab = tab
+            reader.open(attachment)
+        }
+    }
+
+    func closeDocument(attachmentKey: String) {
+        guard let index = openDocuments.firstIndex(where: { $0.objectKey == attachmentKey }) else {
+            return
+        }
+        let wasSelected = selectedWorkspaceTab == .document(attachmentKey)
+        openDocuments.remove(at: index)
+        guard wasSelected else {
+            return
+        }
+        if openDocuments.isEmpty {
+            selectWorkspaceTab(.library)
+        } else {
+            let nextIndex = min(index, openDocuments.index(before: openDocuments.endIndex))
+            selectWorkspaceTab(.document(openDocuments[nextIndex].objectKey))
+        }
+    }
+
+    func makeReaderModel() -> ReaderModel {
+        let model = ReaderModel(progressStore: readerProgressStore, annotationStore: annotationStore)
+        model.bind(context: self)
+        return model
     }
 }

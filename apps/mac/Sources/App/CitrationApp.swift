@@ -47,6 +47,13 @@ struct CitrationApp: App {
                 .frame(minWidth: 1080, minHeight: 720)
         }
         .windowToolbarStyle(.unified)
+
+        WindowGroup(for: DocumentWindowRoute.self) { $route in
+            if let route {
+                DetachedDocumentView(model: model, route: route)
+            }
+        }
+        .windowToolbarStyle(.unified)
     }
 
     // MARK: Private

@@ -167,7 +167,7 @@ struct RootInspectorView: View {
             }
             Spacer()
             Button {
-                model.reader.open(attachment)
+                model.openDocument(attachment)
             } label: {
                 Image(systemName: "book.pages")
             }

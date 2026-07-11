@@ -4,20 +4,13 @@ import SwiftUI
 struct LibraryDetailView: View {
     // MARK: Internal
 
-    @Bindable var model: AppModel
     let filteredItems: [BCItem]
     @Binding var selectedItemIDs: Set<UUID>
 
     let onSelectionChange: (Set<UUID>) -> Void
 
     var body: some View {
-        if let attachment = model.reader.activeAttachment {
-            ReaderPane(
-                attachment: attachment,
-                item: model.selectedItem,
-                reader: model.reader
-            )
-        } else if filteredItems.isEmpty {
+        if filteredItems.isEmpty {
             ContentUnavailableView(
                 "No Items",
                 systemImage: "tray",
