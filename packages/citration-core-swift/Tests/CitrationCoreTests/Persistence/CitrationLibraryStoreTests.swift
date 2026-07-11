@@ -223,6 +223,71 @@ struct CitrationLibraryStoreTests {
             )
         }
     }
+
+    @Test("Schema conversion keeps shared and unknown data while removing invalid source fields")
+    func schemaConversionPreservesCompatibleData() async throws {
+        let fixture = try StoreFixture()
+        defer { fixture.remove() }
+        let libraryIdentity = ZoteroLibraryIdentity(type: "user", remoteID: 42)
+        let libraryID = try fixture.database.upsertLibrary(identity: libraryIdentity, name: "Remote Fixture")
+        let captured = try #require(try fixture.capturedItems().first { $0.itemType == "book" })
+        let itemKey = try #require(captured.key)
+        var envelope = try #require(captured.rawValue.objectValue)
+        var data = try #require(envelope["data"]?.objectValue)
+        data["futureField"] = .string("preserve me")
+        data["creators"] = .array((data["creators"]?.arrayValue ?? []) + [
+            .object([
+                "creatorType": .string("seriesEditor"),
+                "firstName": .string("Series"),
+                "lastName": .string("Editor"),
+            ])
+        ])
+        envelope["data"] = .object(data)
+        let item = try ZoteroRawObject(rawValue: .object(envelope))
+        try fixture.database.storeRemoteCollections(fixture.capturedCollections(), libraryID: libraryID)
+        try fixture.database.storeRemoteItems([item], libraryID: libraryID)
+        try fixture.database.ensureAppIdentities(collections: [], items: [item], libraryID: libraryID)
+        let store = try CitrationLibraryStore(
+            database: fixture.database,
+            attachmentsDirectory: fixture.root.appending(path: "remote-attachments", directoryHint: .isDirectory),
+            libraryIdentity: libraryIdentity,
+            libraryName: "Remote Fixture"
+        )
+        let identity = try #require(await store.listLibraryItems().first).identity
+
+        let converted = try await store.convertItemType(
+            identity: identity,
+            sourceSchema: itemSchema(
+                type: "book",
+                fields: ["title", "abstractNote", "publisher", "series", "DOI"]
+            ),
+            targetSchema: itemSchema(
+                type: "preprint",
+                fields: ["title", "abstractNote", "repository", "series", "DOI"]
+            )
+        )
+
+        let object = try #require(try fixture.database.fetchObject(libraryID: libraryID, kind: .item, key: itemKey))
+        let convertedData = try #require(object.current.objectValue?["data"]?.objectValue)
+        #expect(converted.projected.itemType == "preprint")
+        #expect(convertedData["publisher"] == nil)
+        #expect(convertedData["repository"] == .string(""))
+        #expect(convertedData["series"] == data["series"])
+        #expect(convertedData["futureField"] == .string("preserve me"))
+        #expect(converted.projected.creators.last?.creatorType == "author")
+        #expect(object.syncState == .dirty)
+    }
+}
+
+private func itemSchema(type: String, fields: [String]) -> ZoteroItemEditingSchema {
+    ZoteroItemEditingSchema(
+        itemType: ZoteroItemTypeDefinition(itemType: type, localized: type),
+        fields: fields.map { ZoteroItemFieldDefinition(field: $0, localized: $0) },
+        creatorTypes: [
+            ZoteroCreatorTypeDefinition(creatorType: "author", localized: "Author", primary: true),
+            ZoteroCreatorTypeDefinition(creatorType: "editor", localized: "Editor", primary: nil),
+        ]
+    )
 }
 
 // MARK: - StoreFixture

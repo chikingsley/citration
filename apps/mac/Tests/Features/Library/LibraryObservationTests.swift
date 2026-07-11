@@ -3,6 +3,8 @@ import CitrationCore
 import Foundation
 import Testing
 
+// MARK: - LibraryObservationTests
+
 @Suite("Library database observation")
 @MainActor
 struct LibraryObservationTests {
@@ -118,4 +120,47 @@ struct LibraryObservationTests {
         #expect(model.selectedItem?.title == "After Edit")
         #expect(model.selectedLibraryItem?.projected.fields["publisher"] == .string("Real SQLite Press"))
     }
+
+    @Test("Schema conversion and creator roles persist through the app model")
+    func schemaConversionAndCreatorsPersist() async throws {
+        let item = BCItem(title: "Schema Item", itemType: .book)
+        let model = makeAppModel(initialItems: [item])
+        await model.refreshItems()
+        let identity = try #require(model.selectedItemIdentity)
+        _ = try await model.updateItemFields(
+            identity: identity,
+            updates: [ZoteroItemFieldUpdate(field: "publisher", value: .string("Remove on conversion"))]
+        )
+        let book = testEditingSchema(type: "book", fields: ["title", "publisher"])
+        let preprint = testEditingSchema(type: "preprint", fields: ["title", "repository"])
+        model.itemTypeDefinitions = [book.itemType, preprint.itemType]
+        model.itemEditingSchemas = ["book": book, "preprint": preprint]
+
+        let converted = try await model.convertItemType(identity: identity, to: "preprint")
+        let creatorUpdated = try await model.updateCreators(
+            identity: identity,
+            creators: [[
+                "creatorType": .string("editor"),
+                "name": .string("Literal Editor"),
+            ]]
+        )
+
+        #expect(converted.projected.itemType == "preprint")
+        #expect(converted.projected.fields["publisher"] == nil)
+        #expect(converted.projected.fields["repository"] == .string(""))
+        #expect(creatorUpdated.projected.creators.first?.creatorType == "editor")
+        #expect(creatorUpdated.projected.creators.first?.literalName == "Literal Editor")
+        #expect(model.selectedItemIdentity == identity)
+    }
+}
+
+private func testEditingSchema(type: String, fields: [String]) -> ZoteroItemEditingSchema {
+    ZoteroItemEditingSchema(
+        itemType: ZoteroItemTypeDefinition(itemType: type, localized: type.capitalized),
+        fields: fields.map { ZoteroItemFieldDefinition(field: $0, localized: $0) },
+        creatorTypes: [
+            ZoteroCreatorTypeDefinition(creatorType: "author", localized: "Author", primary: true),
+            ZoteroCreatorTypeDefinition(creatorType: "editor", localized: "Editor"),
+        ]
+    )
 }

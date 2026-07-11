@@ -97,6 +97,8 @@ final class AppModel {
     var savedSearches: [ZoteroSavedSearchSummary] = []
     var deletedItemCount = 0
     var syncStatus: ZoteroSyncStatusSnapshot?
+    var itemTypeDefinitions: [ZoteroItemTypeDefinition] = []
+    var itemEditingSchemas: [String: ZoteroItemEditingSchema] = [:]
 
     let collections: CollectionsModel
     let notes: NotesModel

@@ -141,6 +141,29 @@ public actor ZoteroAPIClient {
         try await get(path: "users/\(userID)/groups")
     }
 
+    public func itemTypes() async throws -> [ZoteroItemTypeDefinition] {
+        let response: ZoteroResponse<[ZoteroItemTypeDefinition]> = try await get(path: "itemTypes")
+        return response.value
+    }
+
+    public func itemEditingSchema(
+        itemType: ZoteroItemTypeDefinition
+    ) async throws -> ZoteroItemEditingSchema {
+        async let fieldsResponse: ZoteroResponse<[ZoteroItemFieldDefinition]> = get(
+            path: "itemTypeFields",
+            query: [URLQueryItem(name: "itemType", value: itemType.itemType)]
+        )
+        async let creatorsResponse: ZoteroResponse<[ZoteroCreatorTypeDefinition]> = get(
+            path: "itemTypeCreatorTypes",
+            query: [URLQueryItem(name: "itemType", value: itemType.itemType)]
+        )
+        return try await ZoteroItemEditingSchema(
+            itemType: itemType,
+            fields: fieldsResponse.value,
+            creatorTypes: creatorsResponse.value
+        )
+    }
+
     public func writeObjects(
         path: String,
         objects: [ZoteroStoredObject],

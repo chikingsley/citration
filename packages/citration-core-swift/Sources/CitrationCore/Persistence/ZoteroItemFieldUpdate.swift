@@ -24,4 +24,5 @@ public enum ZoteroItemEditingError: Error, Equatable, Sendable {
     case invalidField(String)
     case itemNotFound
     case malformedObject
+    case schemaMismatch
 }

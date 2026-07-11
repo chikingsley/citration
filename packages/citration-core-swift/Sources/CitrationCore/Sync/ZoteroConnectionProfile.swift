@@ -80,6 +80,7 @@ public actor ZoteroConnectionManager {
     }
 
     public func connect(serverURL: URL, apiKey: String) async throws -> ZoteroConnectionProfile {
+        clearSchemaCache()
         let connection = try ZoteroConnection(serverURL: serverURL, apiKey: apiKey)
         let client = ZoteroAPIClient(connection: connection, session: session)
         let keyInfo = try await client.keyInfo()
@@ -119,6 +120,7 @@ public actor ZoteroConnectionManager {
     }
 
     public func useLocalOnly() async throws {
+        clearSchemaCache()
         let previousCredential = try await credentialStore.loadCredential()
         try await credentialStore.saveCredential(nil)
         do {
@@ -187,6 +189,36 @@ public actor ZoteroConnectionManager {
         ).download(itemKey: itemKey)
     }
 
+    public func itemTypes() async throws -> [ZoteroItemTypeDefinition] {
+        if let cachedItemTypes, schemaCacheExpiresAt > .now {
+            return cachedItemTypes
+        }
+        guard let connection = try await activeConnection() else {
+            throw ZoteroConnectionManagerError.missingCredential
+        }
+        let itemTypes = try await ZoteroAPIClient(connection: connection, session: session).itemTypes()
+            .filter { !["attachment", "note", "annotation"].contains($0.itemType) }
+        cachedItemTypes = itemTypes
+        schemaCacheExpiresAt = .now.addingTimeInterval(60 * 60)
+        return itemTypes
+    }
+
+    public func itemEditingSchema(itemType: String) async throws -> ZoteroItemEditingSchema {
+        if let cached = cachedSchemas[itemType], schemaCacheExpiresAt > .now {
+            return cached
+        }
+        guard let definition = try await itemTypes().first(where: { $0.itemType == itemType }) else {
+            throw ZoteroItemEditingError.invalidField("itemType")
+        }
+        guard let connection = try await activeConnection() else {
+            throw ZoteroConnectionManagerError.missingCredential
+        }
+        let schema = try await ZoteroAPIClient(connection: connection, session: session)
+            .itemEditingSchema(itemType: definition)
+        cachedSchemas[itemType] = schema
+        return schema
+    }
+
     public func streamingSubscription() async throws -> ZoteroStreamingSubscription {
         guard let connection = try await activeConnection() else {
             throw ZoteroConnectionManagerError.missingCredential
@@ -206,4 +238,13 @@ public actor ZoteroConnectionManager {
     private let credentialStore: any ZoteroCredentialStore
     private let attachmentsDirectory: URL?
     private let session: URLSession
+    private var cachedItemTypes: [ZoteroItemTypeDefinition]?
+    private var cachedSchemas: [String: ZoteroItemEditingSchema] = [:]
+    private var schemaCacheExpiresAt: Date = .distantPast
+
+    private func clearSchemaCache() {
+        cachedItemTypes = nil
+        cachedSchemas = [:]
+        schemaCacheExpiresAt = .distantPast
+    }
 }

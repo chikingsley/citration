@@ -34,7 +34,69 @@ extension CitrationDatabase {
             }
         }
 
-        return try databaseQueue.write { database in
+        return try mutateLocalItemData(
+            libraryID: libraryID,
+            key: key,
+            modifiedAt: modifiedAt
+        ) { data in
+            for update in updates {
+                data[update.field] = update.value
+            }
+        }
+    }
+
+    public func convertLocalItemType(
+        libraryID: Int64,
+        key: String,
+        sourceSchema: ZoteroItemEditingSchema,
+        targetSchema: ZoteroItemEditingSchema,
+        modifiedAt: Date = .now
+    ) throws -> ZoteroStoredObject {
+        try mutateLocalItemData(
+            libraryID: libraryID,
+            key: key,
+            modifiedAt: modifiedAt
+        ) { data in
+            guard data["itemType"]?.stringValue == sourceSchema.itemType.itemType else {
+                throw ZoteroItemEditingError.schemaMismatch
+            }
+
+            let sourceFields = Set(sourceSchema.fields.map(\.field))
+            let targetFields = Set(targetSchema.fields.map(\.field))
+            for field in sourceFields.subtracting(targetFields) {
+                data[field] = nil
+            }
+            for field in targetFields where data[field] == nil {
+                data[field] = .string("")
+            }
+
+            let validCreatorTypes = Set(targetSchema.creatorTypes.map(\.creatorType))
+            guard let primaryCreatorType = targetSchema.primaryCreatorType else {
+                throw ZoteroItemEditingError.schemaMismatch
+            }
+            data["creators"] = .array((data["creators"]?.arrayValue ?? []).map { creator in
+                guard var creatorData = creator.objectValue else {
+                    return creator
+                }
+                if
+                    let creatorType = creatorData["creatorType"]?.stringValue,
+                    !validCreatorTypes.contains(creatorType)
+                {
+                    creatorData["creatorType"] = .string(primaryCreatorType)
+                }
+                return .object(creatorData)
+            })
+            data["itemType"] = .string(targetSchema.itemType.itemType)
+        }
+    }
+
+    private func mutateLocalItemData(
+        libraryID: Int64,
+        key: String,
+        modifiedAt: Date,
+        mutation: (inout [String: JSONValue]) throws -> Void
+    ) throws -> ZoteroStoredObject {
+        try databaseQueue.write { database in
             guard
                 let existing = try Self.fetchStoredObject(
                     libraryID: libraryID,
@@ -49,9 +111,7 @@ extension CitrationDatabase {
                 throw ZoteroItemEditingError.malformedObject
             }
 
-            for update in updates {
-                data[update.field] = update.value
-            }
+            try mutation(&data)
             data["dateModified"] = .string(ISO8601DateFormatter().string(from: modifiedAt))
             data["key"] = .string(key)
             envelope["key"] = .string(key)

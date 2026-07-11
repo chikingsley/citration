@@ -44,6 +44,30 @@ extension CitrationLibraryStore {
         return updated
     }
 
+    public func convertItemType(
+        identity: SynchronizedLibraryItemIdentity,
+        sourceSchema: ZoteroItemEditingSchema,
+        targetSchema: ZoteroItemEditingSchema
+    ) throws -> SynchronizedLibraryItem {
+        guard
+            identity.libraryID == libraryID,
+            try objectKey(for: identity.appUUID, kind: .item) == identity.objectKey
+        else {
+            throw ZoteroItemEditingError.identityMismatch
+        }
+
+        _ = try database.convertLocalItemType(
+            libraryID: libraryID,
+            key: identity.objectKey,
+            sourceSchema: sourceSchema,
+            targetSchema: targetSchema
+        )
+        guard let updated = try fetchLibraryItems().first(where: { $0.identity == identity }) else {
+            throw ZoteroItemEditingError.itemNotFound
+        }
+        return updated
+    }
+
     public func removeItem(id: UUID) {
         do {
             guard let key = try objectKey(for: id, kind: .item) else {

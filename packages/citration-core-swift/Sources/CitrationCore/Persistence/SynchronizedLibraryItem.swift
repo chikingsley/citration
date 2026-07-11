@@ -109,4 +109,9 @@ public protocol SynchronizedLibraryItemStoring: BCItemStore {
         identity: SynchronizedLibraryItemIdentity,
         updates: [ZoteroItemFieldUpdate]
     ) async throws -> SynchronizedLibraryItem
+    func convertItemType(
+        identity: SynchronizedLibraryItemIdentity,
+        sourceSchema: ZoteroItemEditingSchema,
+        targetSchema: ZoteroItemEditingSchema
+    ) async throws -> SynchronizedLibraryItem
 }
