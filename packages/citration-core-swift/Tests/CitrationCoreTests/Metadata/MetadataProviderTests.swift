@@ -6,9 +6,9 @@ import Testing
 
 @Suite("MetadataProviderRegistry")
 struct MetadataProviderTests {
-    @Test("noop provider produces no records")
-    func noopProviderProducesNoRecords() async {
-        let registry = MetadataProviderRegistry(providers: [NoopMetadataProvider()])
+    @Test("empty registry produces no records")
+    func emptyRegistryProducesNoRecords() async {
+        let registry = MetadataProviderRegistry(providers: [])
         let request = MetadataResolutionRequest(
             identifiers: [Identifier(type: .doi, value: "10.1000/example")]
         )
@@ -101,8 +101,7 @@ struct MetadataProviderTests {
     func registryCollectsWarningWhenProviderThrows() async {
         let registry = MetadataProviderRegistry(
             providers: [
-                ThrowingProvider(name: "failing", errorMessage: "network timeout"),
-                NoopMetadataProvider(name: "noop"),
+                ThrowingProvider(name: "failing", errorMessage: "network timeout")
             ]
         )
         let request = MetadataResolutionRequest(

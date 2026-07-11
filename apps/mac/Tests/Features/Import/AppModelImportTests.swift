@@ -103,7 +103,7 @@ struct AppModelImportTests {
         let attachmentStore = try LocalAttachmentStore(baseDirectory: attachmentsDirectory)
 
         let model = makeAppModel(
-            providers: [MockDOIMetadataProvider()],
+            providers: [],
             attachmentStore: attachmentStore
         )
         await model.refreshItems()
@@ -125,7 +125,7 @@ struct AppModelImportTests {
 
         let slowExtractor = SlowPDFExtractor(delayNanoseconds: 2_000_000_000)
         let model = makeAppModel(
-            providers: [MockDOIMetadataProvider()],
+            providers: [],
             pdfDOIExtractor: slowExtractor,
             attachmentStore: attachmentStore
         )

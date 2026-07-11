@@ -20,11 +20,10 @@ See [`AGENTS.md`](AGENTS.md) for the execution baseline, [`TODO.md`](TODO.md) fo
 apps/mac/                              current native macOS app
 packages/citration-core-swift/         shared Apple-native domain, database, sync, and reader logic
 tools/citration-cli/                   development and migration utilities
-services/citration-api/                obsolete custom-sync scaffold scheduled for removal
-apps/mobile/                           placeholder scheduled to become the native iPhone/iPad app
-apps/web/                              unused placeholder scheduled for removal
-packages/citration-contracts/          unused custom-contract placeholder scheduled for removal
+docs/                                  product direction and Zotero compatibility evidence
 ```
+
+Native iPhone and iPad targets are later work. They will share CitrationCore rather than inherit the removed Expo placeholder or introduce a second client architecture.
 
 `project.yml` is the XcodeGen source of truth. `Citration.xcodeproj` is generated and is not committed.
 

@@ -7,40 +7,6 @@ public protocol APIKeyStore: Sendable {
     func saveAPIKey(_ apiKey: String?) async
 }
 
-// MARK: - InMemoryAPIKeyStore
-
-public actor InMemoryAPIKeyStore: APIKeyStore {
-    // MARK: Lifecycle
-
-    public init(apiKey: String? = nil) {
-        self.apiKey = Self.normalizedAPIKey(apiKey)
-    }
-
-    // MARK: Public
-
-    public func loadAPIKey() -> String? {
-        apiKey
-    }
-
-    public func saveAPIKey(_ apiKey: String?) {
-        self.apiKey = Self.normalizedAPIKey(apiKey)
-    }
-
-    // MARK: Private
-
-    private var apiKey: String?
-
-    private static func normalizedAPIKey(_ apiKey: String?) -> String? {
-        guard
-            let apiKey = apiKey?.trimmingCharacters(in: .whitespacesAndNewlines),
-            !apiKey.isEmpty
-        else {
-            return nil
-        }
-        return apiKey
-    }
-}
-
 // MARK: - FileAPIKeyStore
 
 /// Stores the OpenAlex API key in a plain 0600 file under Application

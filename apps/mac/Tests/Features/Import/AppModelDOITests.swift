@@ -6,17 +6,6 @@ import Testing
 @Suite("AppModel DOI entry")
 @MainActor
 struct AppModelDOITests {
-    @Test("MockDOIProvider returns record for known DOI")
-    func mockDOIProviderReturnsRecordForDOI() {
-        let provider = MockDOIMetadataProvider()
-        let request = MetadataResolutionRequest(
-            identifiers: [Identifier(type: .doi, value: "10.1038/nature12373")]
-        )
-        let records = provider.resolve(request)
-        #expect(records.count == 1)
-        #expect(records.first?.title == "Nanometre-scale thermometry in a living cell")
-    }
-
     @Test("DOI identifier entry updates state and status lifecycle")
     func doiEntryUpdatesStateAndStatusLifecycle() async throws {
         let doi = "10.1038/nature12373"
@@ -85,7 +74,7 @@ struct AppModelDOITests {
 
     @Test("DOI identifier rejects empty input immediately")
     func doiRejectsEmptyInputImmediately() {
-        let model = makeAppModel(providers: [NoopMetadataProvider()])
+        let model = makeAppModel(providers: [])
         model.importer.identifierKind = .doi
         model.importer.identifierInput = "   "
         model.importer.addByIdentifier()
@@ -126,7 +115,7 @@ struct AppModelDOITests {
 
     @Test("ISBN and arXiv inputs use their production normalizers")
     func additionalIdentifierNormalizers() async throws {
-        let model = makeAppModel(providers: [NoopMetadataProvider()])
+        let model = makeAppModel(providers: [])
 
         model.importer.identifierKind = .isbn
         model.importer.identifierInput = "978-0-306-40615-7"

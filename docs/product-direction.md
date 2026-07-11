@@ -27,7 +27,7 @@ CitrationCore owns the native client implementation: the Zotero API transport, o
 
 The client accepts a compatible server URL and scoped API/device key. That connection is not a Citration user account. Local-only operation remains possible, and connecting later synchronizes local work through the same object model.
 
-The current custom `services/citration-api` Worker, workspace/auth types, Sign in with Apple UI, TypeScript contracts placeholder, Expo placeholder, and web placeholder are abandoned architecture and should be removed deliberately after their remaining useful tests or fixtures are identified.
+The former custom Worker, account/workspace authentication types, Sign in with Apple UI, TypeScript contracts placeholder, Expo placeholder, and web placeholder have been removed. Their audit found no reusable Zotero fixtures or protocol implementation: the custom synchronization routes returned only `501`, while the native client already uses the production Zotero API v3 contract and real captured fixtures.
 
 ## Local Data Decision
 

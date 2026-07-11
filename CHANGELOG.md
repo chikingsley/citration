@@ -75,6 +75,8 @@ All notable completed changes to Citration are tracked here. Entries are newest 
 
 ### Removed
 
+- Removed the abandoned custom Cloudflare Worker and D1 user/workspace/device schema, its `501`-only custom sync contract and isolated JavaScript dependency tree, the unused TypeScript contracts and web placeholders, and the obsolete Expo mobile placeholder. The repository gate now covers the production native core, CLI, and Mac application only; future iPhone and iPad work will start as native Swift targets over CitrationCore.
+- Removed test-only fake implementations from shipping source, including the in-memory item and API-key stores, fake DOI provider, stub citation renderer, and default no-op metadata, PDF, and discovery providers. The production app now requires explicit real implementations at construction, while controlled test-target collaborators remain limited to deterministic unit orchestration and are not reported as product evidence.
 - Removed the unused JSON `LocalAnnotationStore` and its isolated store tests after the production reader and annotation inspector moved to the final synchronized GRDB store.
 - Removed the duplicate task pointer and obsolete custom-sync PRD, scratchpad, market-gap notes, and generic monorepo standard from the active documentation set.
 

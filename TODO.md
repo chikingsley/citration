@@ -9,7 +9,7 @@ This is the only active task ledger. `AGENTS.md` defines the execution and evide
 - [x] Capture edge cases for creator roles, uncommon live metadata fields, parent/child relationships, tags, collection membership, and unknown fields.
 - [x] Add round-trip tests proving every fixture decodes, persists, reloads, and re-encodes without losing compatibility data.
 - [x] Record fixture provenance, sanitization rules, server/schema version, and a reproducible refresh procedure without storing credentials or private content.
-- [ ] Audit the existing test suite and replace mock/in-memory product claims with real fixtures, real temporary databases, real files, and explicit live acceptance gates.
+- [x] Audit the existing test suite and replace mock/in-memory product claims with real fixtures, real temporary databases, real files, and explicit live acceptance gates.
 
 Done when the real library contract—not `BCItem` or an invented schema—determines the implementation and the safety net can detect dropped fields or altered object structure.
 
@@ -82,7 +82,7 @@ Done when all 414 baseline objects are represented or visibly preserved as unsup
 - [x] Complete sync/conflict/retry/download diagnostics and recovery controls.
 - [x] Exercise keyboard, accessibility, multiple windows, offline launch, interrupted synchronization, database migration, backup/restore, and large-library performance; eliminate runtime AttributeGraph cycles during import, tab, and reader interactions.
 - [x] Run strict formatting, strict linting, targeted suites, the full repository gate, live read-only sync, disposable bidirectional acceptance, and visible Mac UI acceptance.
-- [ ] Remove obsolete `services/citration-api`, `packages/citration-contracts`, `apps/web`, the old remote auth/workspace code, and temporary compatibility paths after their replacements are proven.
+- [x] Remove obsolete `services/citration-api`, `packages/citration-contracts`, `apps/web`, the old remote auth/workspace code, and temporary compatibility paths after their replacements are proven.
 - [ ] Update README and product documentation, move completed work to CHANGELOG, commit coherent final slices, and push the verified state.
 
 Done when Citration is reliable as the primary native Mac interface for the self-hosted library and the repository contains no known temporary architecture from steps 1 through 7.

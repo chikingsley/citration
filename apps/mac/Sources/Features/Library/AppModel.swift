@@ -22,11 +22,11 @@ final class AppModel {
         noteStore: any SynchronizedLibraryNoteStoring,
         relationshipStore: any LibraryRelationshipStoring,
         readerProgressStore: any LibraryReaderProgressStoring,
-        pdfDOIExtractor: any PDFDOIExtracting = NullPDFDOIExtractor(),
-        relatedWorkDiscoveryProvider: any RelatedWorkDiscoveryProvider = NoopRelatedWorkDiscoveryProvider(),
+        pdfDOIExtractor: any PDFDOIExtracting,
+        relatedWorkDiscoveryProvider: any RelatedWorkDiscoveryProvider,
         ocrService: any OCRServicing = MistralOCRService(),
-        openAlexAPIKeyStore: any APIKeyStore = InMemoryAPIKeyStore(),
-        ocrAPIKeyStore: any APIKeyStore = InMemoryAPIKeyStore()
+        openAlexAPIKeyStore: any APIKeyStore,
+        ocrAPIKeyStore: any APIKeyStore
     ) {
         self.database = database
         self.connectionManager = connectionManager

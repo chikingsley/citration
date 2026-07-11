@@ -14,7 +14,7 @@ struct AppModelReaderTests {
             fileName: "reader.pdf",
             contentType: "application/pdf"
         )
-        let model = makeAppModel(initialItems: [item], providers: [NoopMetadataProvider()])
+        let model = makeAppModel(initialItems: [item], providers: [])
         await model.refreshItems()
 
         model.reader.open(attachment)
@@ -31,7 +31,7 @@ struct AppModelReaderTests {
             fileName: "book.epub",
             contentType: "application/epub+zip"
         )
-        let model = makeAppModel(providers: [NoopMetadataProvider()])
+        let model = makeAppModel(providers: [])
 
         model.reader.open(attachment)
 
@@ -52,7 +52,7 @@ struct AppModelReaderTests {
             fileName: "notes.txt",
             contentType: "text/plain"
         )
-        let model = makeAppModel(providers: [NoopMetadataProvider()])
+        let model = makeAppModel(providers: [])
 
         model.reader.open(html)
         #expect(model.reader.activeAttachment == html)
@@ -70,7 +70,7 @@ struct AppModelReaderTests {
             fileName: "reader.pdf",
             contentType: "application/pdf"
         )
-        let model = makeAppModel(providers: [NoopMetadataProvider()])
+        let model = makeAppModel(providers: [])
 
         model.reader.open(attachment)
         model.selectItem(id: UUID())

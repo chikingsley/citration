@@ -73,7 +73,7 @@ struct OCRResultCacheTests {
 
         // No API key anywhere: a cache miss would throw notConfigured.
         let service = MistralOCRService(
-            keyStore: InMemoryAPIKeyStore(),
+            keyStore: FileAPIKeyStore(fileURL: directory.appendingPathComponent("missing-api-key")),
             cache: cache
         )
         let text = try await service.recognizeText(from: document)
@@ -105,8 +105,10 @@ struct OCRImportFlowTests {
         let pdfData = try Data(contentsOf: scannedPDF)
         let cache = OCRResultCache(directory: tempDirectory.appendingPathComponent("ocr-cache", isDirectory: true))
         cache.store(markdown, contentHash: OCRResultCache.contentHash(of: pdfData))
+        let keyStore = FileAPIKeyStore(fileURL: tempDirectory.appendingPathComponent("mistral-api-key"))
+        await keyStore.saveAPIKey("cached-result")
         let service = MistralOCRService(
-            keyStore: InMemoryAPIKeyStore(apiKey: "cached-result"),
+            keyStore: keyStore,
             cache: cache
         )
 

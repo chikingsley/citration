@@ -10,13 +10,13 @@ private let appModelTestCitationFormatter: CSLCitationFormatter = .init()
 @MainActor
 func makeAppModel(
     initialItems: [BCItem] = [],
-    providers: [any MetadataProvider] = [NoopMetadataProvider()],
-    pdfDOIExtractor: any PDFDOIExtracting = NullPDFDOIExtractor(),
+    providers: [any MetadataProvider] = [],
+    pdfDOIExtractor: any PDFDOIExtracting = TestPDFDOIExtractor(),
     attachmentStore: LocalAttachmentStore? = nil,
     readerProgressStore: LocalReaderProgressStore? = nil,
     ocrService: any OCRServicing = NullOCRService(),
     citationFormatter: any CitationFormattingEngine = appModelTestCitationFormatter,
-    relatedWorkDiscoveryProvider: any RelatedWorkDiscoveryProvider = NoopRelatedWorkDiscoveryProvider()
+    relatedWorkDiscoveryProvider: any RelatedWorkDiscoveryProvider = TestRelatedWorkDiscoveryProvider()
 ) -> AppModel {
     let database = makeDatabase()
     let persistence: CitrationLibraryStore
@@ -68,6 +68,32 @@ func makeDatabase() -> CitrationDatabase {
         return try CitrationDatabase(at: directory.appending(path: "library.sqlite"))
     } catch {
         fatalError("Unable to initialize test database: \(error)")
+    }
+}
+
+// MARK: - TestPDFDOIExtractor
+
+struct TestPDFDOIExtractor: PDFDOIExtracting {
+    func extractDOI(from pdfURL: URL) -> String? {
+        _ = pdfURL
+        return nil
+    }
+
+    func extractCandidates(from pdfURL: URL) -> PDFMetadataCandidates {
+        _ = pdfURL
+        return PDFMetadataCandidates()
+    }
+}
+
+// MARK: - TestRelatedWorkDiscoveryProvider
+
+struct TestRelatedWorkDiscoveryProvider: RelatedWorkDiscoveryProvider {
+    let name = "test-empty"
+
+    func suggestions(for item: BCItem, limit: Int) -> [WorkDiscoverySuggestion] {
+        _ = item
+        _ = limit
+        return []
     }
 }
 

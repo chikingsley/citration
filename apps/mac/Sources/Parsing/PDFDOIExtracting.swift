@@ -45,20 +45,6 @@ extension PDFDOIExtracting {
     }
 }
 
-// MARK: - NullPDFDOIExtractor
-
-struct NullPDFDOIExtractor: PDFDOIExtracting {
-    func extractDOI(from pdfURL: URL) -> String? {
-        _ = pdfURL
-        return nil
-    }
-
-    func extractCandidates(from pdfURL: URL) -> PDFMetadataCandidates {
-        _ = pdfURL
-        return PDFMetadataCandidates()
-    }
-}
-
 // MARK: - PDFKitDOIExtractor
 
 /// Extracts bibliographic identifiers from a PDF's text layer via PDFKit.

@@ -216,24 +216,6 @@ public protocol RelatedWorkDiscoveryProvider: Sendable {
     func suggestions(for item: BCItem, limit: Int) async throws -> [WorkDiscoverySuggestion]
 }
 
-// MARK: - NoopRelatedWorkDiscoveryProvider
-
-public struct NoopRelatedWorkDiscoveryProvider: RelatedWorkDiscoveryProvider {
-    // MARK: Lifecycle
-
-    public init() {}
-
-    // MARK: Public
-
-    public let name = "none"
-
-    public func suggestions(for item: BCItem, limit: Int) -> [WorkDiscoverySuggestion] {
-        _ = item
-        _ = limit
-        return []
-    }
-}
-
 // MARK: - LibraryInsightEngine
 
 public struct LibraryInsightEngine: Sendable {

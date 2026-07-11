@@ -27,13 +27,4 @@ app-test:
     xcodegen generate
     xcodebuild test -quiet -project Citration.xcodeproj -scheme Citration -destination 'platform=macOS,arch=arm64'
 
-api-check:
-    cd services/citration-api && pnpm run check
-
-api-test:
-    cd services/citration-api && pnpm test:contract
-
-api-migrate-local:
-    cd services/citration-api && pnpm run migrate:local
-
-check: format-lint lint core-test cli-build app-test api-check api-test
+check: format-lint lint core-test cli-build app-test

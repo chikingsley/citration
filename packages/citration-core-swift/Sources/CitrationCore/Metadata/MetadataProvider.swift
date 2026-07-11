@@ -208,22 +208,3 @@ public struct MetadataProviderRegistry: Sendable {
             .lowercased()
     }
 }
-
-// MARK: - NoopMetadataProvider
-
-public struct NoopMetadataProvider: MetadataProvider {
-    // MARK: Lifecycle
-
-    public init(name: String = "noop") {
-        self.name = name
-    }
-
-    // MARK: Public
-
-    public let name: String
-
-    public func resolve(_ request: MetadataResolutionRequest) -> [CanonicalMetadataRecord] {
-        _ = request
-        return []
-    }
-}
