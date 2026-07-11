@@ -111,6 +111,9 @@ struct RootInspectorView: View {
 
         case .related:
             ItemRelatedInspectorSection(relationships: model.relationships, model: model)
+
+        case .data:
+            LibraryDataInspectorSection(model: model, item: item)
         }
     }
 }
@@ -124,6 +127,7 @@ private enum ItemInspectorSection: String, CaseIterable, Identifiable {
     case annotations
     case cite
     case related
+    case data
 
     // MARK: Internal
 
@@ -139,6 +143,7 @@ private enum ItemInspectorSection: String, CaseIterable, Identifiable {
         case .annotations: "Annotations"
         case .cite: "Cite"
         case .related: "Related"
+        case .data: "Data"
         }
     }
 
@@ -150,6 +155,7 @@ private enum ItemInspectorSection: String, CaseIterable, Identifiable {
         case .annotations: "highlighter"
         case .cite: "quote.opening"
         case .related: "point.3.connected.trianglepath.dotted"
+        case .data: "externaldrive.badge.checkmark"
         }
     }
 }

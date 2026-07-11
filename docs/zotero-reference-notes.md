@@ -129,16 +129,16 @@ Citration’s current `BCItem` stores only a UUID, title, simplified identifiers
 | Item types | Article, book, preprint, thesis, dataset, webpage, unknown | Preserve every Zotero item type; project live types without collapsing journal and conference records |
 | Metadata | Small citation-oriented subset | All live fields above, exact dates, multiple identifiers, publication/container fields, rights, archive/repository, and unknown fields |
 | Creators | Names only | Ordered creators with creator role and literal or split names |
-| Collections | Local UUID/name/parent | Zotero key/version/parent key, nested hierarchy, item membership, deletions |
-| Tags | Strings | Tag value and type, including unknown future properties |
+| Collections | Synchronized key/version/parent hierarchy and editable item membership | Preserve raw collection objects and deletion state alongside the native hierarchy |
+| Tags | Ordered synchronized values and types with native browsing/editing | Preserve raw tag entries, types, and unknown future properties |
 | Notes | Plain local note records | Zotero note HTML, parent relationships, tags, versions, safe rendering and editing |
-| Attachments | Local imported files | Remote key/version, parent, link mode, filename, content type, charset, hashes, timestamps, URL, lazy cache, upload/download |
+| Attachments | Remote identity/metadata plus explicit cache, local-file, transfer, and selected-item reader state | Maintain lazy verified transfer and expose every non-downloaded, stale, downloading, failed, or downloaded state |
 | PDF annotations | Simplified highlight/underline/note by page | Exact highlight/underline/note/ink data, position JSON, page label, sort index, comments, text, colors, tags, versions |
 | EPUB reading | EPUB 2/3 navigation, durable CFI progress, selection, exact synchronized annotations, typography, and full-book search | Maintain Zotero-compatible `FragmentSelector` round trips and broaden the fixture set as new package layouts appear |
 | HTML/text | Recognized but not read in-app | Safe snapshot/text reader or an explicit supported external-open path |
-| Full text | No unified index | Synchronize full-text state and index downloaded content locally with FTS5 |
-| Deletions | Immediate local removal | Local deletion log, remote tombstones, version-safe conflict handling |
-| Settings | No compatible model | Lossless synchronized settings with typed handling only where Citration needs it |
+| Full text | Lossless synchronized records, page coverage, and local FTS5 content | Keep versions/page state inspectable and include downloaded document text in final search |
+| Deletions | Durable synchronized tombstones with exact kind/key diagnostics | Add deliberate restore/recovery controls without discarding remote deletion history |
+| Settings | Lossless synchronized key/version/raw JSON exposed read-only | Add typed handling only where a concrete Citration feature requires it |
 | Groups/searches/relations | Minimal or absent | Protocol support and dedicated fixtures after the personal-library slice |
 
 ## Full-Library Sync Requirements
