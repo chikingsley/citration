@@ -54,6 +54,18 @@ struct ZoteroSyncStatusTests {
             #expect(status.failedAttachmentCount == 1)
             #expect(status.failures.count == 2)
             #expect(Set(status.failures.map(\.operation)) == ["upload", "attachment-download"])
+
+            let downloadFailure = try #require(status.failures.first { $0.operation == "attachment-download" })
+            #expect(downloadFailure.nextRetryAt != nil)
+            try database.scheduleSyncFailureRetry(id: downloadFailure.id, libraryID: libraryID)
+            let scheduled = try database.syncStatusSnapshot(libraryID: libraryID)
+            #expect(scheduled.failures.first { $0.id == downloadFailure.id }?.nextRetryAt == nil)
+
+            let parentKey = try #require(attachment.data["parentItem"]?.stringValue)
+            let records = try database.attachmentCacheRecords(libraryID: libraryID, parentItemKey: parentKey)
+            #expect(records.map(\.itemKey) == [attachment.key])
+            #expect(records.first?.cacheState == .failed)
+            #expect(records.first?.transferError == "fixture attachment failure")
         }
     }
 

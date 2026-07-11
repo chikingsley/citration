@@ -23,6 +23,12 @@ struct SyncStatusMenu: View {
                     }
                 }
                 .disabled(model.zoteroSettings.isWorking)
+                if let status = model.syncStatus, !status.failures.isEmpty {
+                    Button("Retry All Failures", systemImage: "arrow.clockwise") {
+                        model.retryAllSyncFailures()
+                    }
+                    .disabled(!model.syncRecoveryOperationIDs.isEmpty)
+                }
             } else {
                 Text("Local library")
                 Text("Connect a Zotero-compatible server in Settings.")
@@ -77,11 +83,8 @@ struct SyncStatusMenu: View {
         if status.failedAttachmentCount > 0 {
             Label("\(status.failedAttachmentCount) failed attachment transfers", systemImage: "exclamationmark.icloud")
         }
-        ForEach(status.failures.prefix(5)) { failure in
-            Text("\(failure.operation): \(failure.message)")
-        }
-        if status.failures.count > 5 {
-            Text("\(status.failures.count - 5) more failures")
+        ForEach(status.failures) { failure in
+            failureMenu(failure)
         }
         if
             status.pendingChangeCount == 0,
@@ -92,5 +95,37 @@ struct SyncStatusMenu: View {
         {
             Label("Up to date", systemImage: "checkmark.circle")
         }
+    }
+
+    private func failureMenu(_ failure: ZoteroSyncFailureSummary) -> some View {
+        Menu {
+            Text("\(failure.objectKind.rawValue):\(failure.objectKey)")
+            Text(failure.message)
+            if failure.retryCount > 0 {
+                Text("Attempts: \(failure.retryCount)")
+            }
+            if let nextRetryAt = failure.nextRetryAt {
+                Text("Next retry: \(nextRetryAt.formatted(date: .omitted, time: .shortened))")
+            }
+            Divider()
+            Button("Retry Now", systemImage: "arrow.clockwise") {
+                model.retrySyncFailure(failure)
+            }
+            if failure.operation == "merge-conflict" {
+                Divider()
+                Button("Keep Local Version") {
+                    model.resolveSyncConflict(failure, resolution: .keepLocal)
+                }
+                Button("Keep Remote Version") {
+                    model.resolveSyncConflict(failure, resolution: .keepRemote)
+                }
+                Button("Delete Object", role: .destructive) {
+                    model.resolveSyncConflict(failure, resolution: .delete)
+                }
+            }
+        } label: {
+            Label("\(failure.operation): \(failure.message)", systemImage: "exclamationmark.triangle")
+        }
+        .disabled(model.syncRecoveryOperationIDs.contains(failure.id))
     }
 }

@@ -97,6 +97,9 @@ final class AppModel {
     var savedSearches: [ZoteroSavedSearchSummary] = []
     var deletedItemCount = 0
     var syncStatus: ZoteroSyncStatusSnapshot?
+    var selectedAttachmentCacheRecords: [ZoteroAttachmentCacheRecord] = []
+    var syncRecoveryOperationIDs: Set<Int64> = []
+    var attachmentDownloadKeys: Set<String> = []
     var itemTypeDefinitions: [ZoteroItemTypeDefinition] = []
     var itemEditingSchemas: [String: ZoteroItemEditingSchema] = [:]
 
@@ -174,6 +177,7 @@ final class AppModel {
             await citation.renderPreviewForSelection()
         }
         await importer.refreshSelectedItemAttachments()
+        refreshSelectedAttachmentCacheRecords()
         await notes.refreshForSelection()
         relationships.refreshForSelection()
         await insights.refreshForSelection()
@@ -243,6 +247,7 @@ final class AppModel {
         Task {
             await citation.renderPreviewForSelection()
             await importer.refreshSelectedItemAttachments()
+            refreshSelectedAttachmentCacheRecords()
             collections.refreshSelectedItemMemberships()
             await notes.refreshForSelection()
             relationships.refreshForSelection()

@@ -13,7 +13,7 @@ public enum ZoteroAttachmentCacheState: String, Sendable {
 
 // MARK: - ZoteroAttachmentCacheRecord
 
-public struct ZoteroAttachmentCacheRecord: Sendable {
+public struct ZoteroAttachmentCacheRecord: Hashable, Identifiable, Sendable {
     public let itemKey: String
     public let parentItemKey: String?
     public let linkMode: String
@@ -26,12 +26,36 @@ public struct ZoteroAttachmentCacheRecord: Sendable {
     public let verifiedMD5: String?
     public let verifiedSHA256: String?
     public let transferError: String?
+
+    public var id: String {
+        itemKey
+    }
 }
 
 public extension CitrationDatabase {
     func attachmentCacheRecord(libraryID: Int64, itemKey: String) throws -> ZoteroAttachmentCacheRecord? {
         try databaseQueue.read { database in
             try Self.attachmentCacheRecord(libraryID: libraryID, itemKey: itemKey, database: database)
+        }
+    }
+
+    func attachmentCacheRecords(
+        libraryID: Int64,
+        parentItemKey: String
+    ) throws -> [ZoteroAttachmentCacheRecord] {
+        try databaseQueue.read { database in
+            let keys = try String.fetchAll(
+                database,
+                sql: """
+                SELECT item_key FROM attachment_projections
+                WHERE library_id = ? AND parent_item_key = ?
+                ORDER BY filename COLLATE NOCASE, item_key
+                """,
+                arguments: [libraryID, parentItemKey]
+            )
+            return try keys.compactMap {
+                try Self.attachmentCacheRecord(libraryID: libraryID, itemKey: $0, database: database)
+            }
         }
     }
 

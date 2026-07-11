@@ -54,6 +54,32 @@ public extension CitrationDatabase {
         return CitrationDatabaseObservation(cancellable)
     }
 
+    func scheduleSyncFailureRetry(id: Int64, libraryID: Int64) throws {
+        try databaseQueue.write { database in
+            try database.execute(
+                sql: """
+                UPDATE synchronization_failures
+                SET next_retry_at = NULL
+                WHERE id = ? AND library_id = ? AND resolved_at IS NULL
+                """,
+                arguments: [id, libraryID]
+            )
+        }
+    }
+
+    func scheduleAllSyncFailureRetries(libraryID: Int64) throws {
+        try databaseQueue.write { database in
+            try database.execute(
+                sql: """
+                UPDATE synchronization_failures
+                SET next_retry_at = NULL
+                WHERE library_id = ? AND resolved_at IS NULL
+                """,
+                arguments: [libraryID]
+            )
+        }
+    }
+
     private static func fetchSyncStatusSnapshot(
         libraryID: Int64,
         database: Database

@@ -2,6 +2,8 @@ import CitrationCore
 import Foundation
 import SwiftUI
 
+// MARK: - ItemAttachmentsInspectorSection
+
 struct ItemAttachmentsInspectorSection: View {
     // MARK: Internal
 
@@ -22,11 +24,21 @@ struct ItemAttachmentsInspectorSection: View {
                     || model.importer.selectedItemAttachments.isEmpty
             )
 
-            if model.importer.selectedItemAttachments.isEmpty {
+            if
+                model.importer.selectedItemAttachments.isEmpty,
+                model.selectedAttachmentCacheRecords.isEmpty
+            {
                 Text("No cached attachments. Drop a file here or download a synchronized attachment.")
                     .foregroundStyle(.secondary)
             } else {
-                ForEach(model.importer.selectedItemAttachments) { attachment in
+                ForEach(model.selectedAttachmentCacheRecords) { record in
+                    if let attachment = localAttachment(for: record) {
+                        attachmentRow(attachment)
+                    } else {
+                        attachmentCacheRow(record)
+                    }
+                }
+                ForEach(unprojectedLocalAttachments) { attachment in
                     attachmentRow(attachment)
                 }
             }
@@ -34,6 +46,11 @@ struct ItemAttachmentsInspectorSection: View {
     }
 
     // MARK: Private
+
+    private var unprojectedLocalAttachments: [LocalAttachment] {
+        let projectedKeys = Set(model.selectedAttachmentCacheRecords.map(\.itemKey))
+        return model.importer.selectedItemAttachments.filter { !projectedKeys.contains($0.objectKey) }
+    }
 
     private func attachmentRow(_ attachment: LocalAttachment) -> some View {
         HStack {
@@ -63,6 +80,38 @@ struct ItemAttachmentsInspectorSection: View {
         }
     }
 
+    private func attachmentCacheRow(_ record: ZoteroAttachmentCacheRecord) -> some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 2) {
+                Label(record.filename, systemImage: iconName(for: record.documentFormat))
+                Text(record.cacheState.displayName)
+                    .font(.caption)
+                    .foregroundStyle(record.cacheState == .failed ? .red : .secondary)
+                if let error = record.transferError?.bcTrimmedNonEmpty {
+                    Text(error)
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(2)
+                }
+            }
+            Spacer()
+            if let localURL = record.localURL {
+                Link("Cached File", destination: localURL)
+            }
+            Button(record.cacheState.actionTitle) {
+                model.downloadAttachment(record)
+            }
+            .disabled(
+                record.cacheState == .downloading
+                    || model.attachmentDownloadKeys.contains(record.itemKey)
+            )
+        }
+    }
+
+    private func localAttachment(for record: ZoteroAttachmentCacheRecord) -> LocalAttachment? {
+        model.importer.selectedItemAttachments.first { $0.objectKey == record.itemKey }
+    }
+
     private func attachmentDetail(for attachment: LocalAttachment) -> String {
         let size = ByteCountFormatter.string(fromByteCount: attachment.size, countStyle: .file)
         let format = attachment.documentFormat.displayName
@@ -88,6 +137,34 @@ struct ItemAttachmentsInspectorSection: View {
         case .image: "photo"
         case .audio: "waveform"
         case .unknown: "doc"
+        }
+    }
+}
+
+private extension ZoteroAttachmentCacheRecord {
+    var documentFormat: DocumentFormat {
+        DocumentFormat.infer(fileName: filename, contentType: contentType)
+    }
+}
+
+private extension ZoteroAttachmentCacheState {
+    var displayName: String {
+        switch self {
+        case .notDownloaded: "Not Downloaded"
+        case .downloading: "Downloading"
+        case .downloaded: "Downloaded file unavailable"
+        case .failed: "Download Failed"
+        case .stale: "Cached File Is Stale"
+        }
+    }
+
+    var actionTitle: String {
+        switch self {
+        case .notDownloaded: "Download"
+        case .downloading: "Downloading…"
+        case .downloaded,
+             .failed: "Retry"
+        case .stale: "Refresh"
         }
     }
 }

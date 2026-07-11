@@ -79,7 +79,7 @@ Done when all 414 baseline objects are represented or visibly preserved as unsup
 
 - [x] Add local FTS5 search across metadata, creators, tags, collections, notes, annotations, and downloaded document text.
 - [x] Finish reader tabs/windows, annotation navigation/editing, portable sidecar export, and annotated PDF-copy export without modifying canonical attachments.
-- [ ] Complete sync/conflict/retry/download diagnostics and recovery controls.
+- [x] Complete sync/conflict/retry/download diagnostics and recovery controls.
 - [ ] Exercise keyboard, accessibility, multiple windows, offline launch, interrupted synchronization, database migration, backup/restore, and large-library performance; eliminate runtime AttributeGraph cycles during import, tab, and reader interactions.
 - [ ] Run strict formatting, strict linting, targeted suites, the full repository gate, live read-only sync, disposable bidirectional acceptance, and visible Mac UI acceptance.
 - [ ] Remove obsolete `services/citration-api`, `packages/citration-contracts`, `apps/web`, the old remote auth/workspace code, and temporary compatibility paths after their replacements are proven.
