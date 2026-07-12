@@ -11,18 +11,13 @@ struct IPadRootView: View {
     var body: some View {
         NavigationSplitView {
             sidebar
-        } content: {
-            libraryList
         } detail: {
-            detail
+            library
         }
-        .navigationSplitViewStyle(.balanced)
-        .searchable(text: $model.searchText, prompt: "Search library")
-        .onChange(of: model.searchText) {
-            model.updateSearch()
-        }
-        .safeAreaInset(edge: .bottom) {
-            statusBar
+        .navigationSplitViewStyle(.prominentDetail)
+        .inspector(isPresented: $model.inspectorPresented) {
+            inspector
+                .inspectorColumnWidth(min: 300, ideal: 360, max: 440)
         }
         .sheet(isPresented: $model.settingsPresented) {
             IPadConnectionSettingsView(model: model)
@@ -77,6 +72,8 @@ struct IPadRootView: View {
     @SceneStorage("citration.source") private var restoredSourceToken = "all"
     @SceneStorage("citration.item") private var restoredItemKey = ""
     @SceneStorage("citration.attachment") private var restoredAttachmentKey = ""
+    @State private var collectionsExpanded = true
+    @State private var tagsExpanded = false
 
     private var documentChoicesPresented: Binding<Bool> {
         Binding(
@@ -89,41 +86,116 @@ struct IPadRootView: View {
         )
     }
 
+    private var openActionTitle: String {
+        let readable = readableAttachments
+        guard readable.count == 1, let record = readable.first else {
+            return readable.isEmpty ? "Open" : "Choose"
+        }
+        return record.cacheState == .downloaded ? "Open" : "Download"
+    }
+
+    private var openActionIcon: String {
+        switch openActionTitle {
+        case "Download": "arrow.down.circle"
+        case "Choose": "doc.on.doc"
+        default: "book.pages"
+        }
+    }
+
+    private var readableAttachments: [ZoteroAttachmentCacheRecord] {
+        model.attachmentRecords.filter {
+            DocumentFormat.infer(fileName: $0.filename, contentType: $0.contentType).isSupportedOnIPad
+        }
+    }
+
+    private var accountStatusText: String {
+        if model.isWorking {
+            return model.statusMessage
+        }
+        switch model.configuration {
+        case .localOnly:
+            return "Local only"
+        case .connected:
+            return model.syncStatus?.pendingChangeCount == 0 ? "Up to date" : model.statusMessage
+        }
+    }
+
     private var sidebar: some View {
         List(selection: $model.selectedSource) {
-            Section("Library") {
-                Label("All Items", systemImage: "tray.full")
-                    .tag(IPadLibraryModel.Source.allItems)
-            }
+            Label("All Items", systemImage: "tray.full")
+                .tag(IPadLibraryModel.Source.allItems)
+
             if !model.collections.collections.isEmpty {
-                Section("Collections") {
+                DisclosureGroup(isExpanded: $collectionsExpanded) {
                     ForEach(model.collections.collections) { collection in
                         Label(collection.name, systemImage: "folder")
                             .tag(IPadLibraryModel.Source.collection(collection.id))
                     }
+                } label: {
+                    Label("Collections", systemImage: "folder.fill")
                 }
             }
+
             if !model.availableTags.isEmpty {
-                Section("Tags") {
+                DisclosureGroup(isExpanded: $tagsExpanded) {
                     ForEach(model.availableTags, id: \.self) { tag in
                         Label(tag, systemImage: "tag")
                             .tag(IPadLibraryModel.Source.tag(tag))
                     }
+                } label: {
+                    Label("Tags", systemImage: "tag.fill")
                 }
             }
         }
         .navigationTitle("Citration")
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button("Settings", systemImage: "gear") {
-                    model.settingsPresented = true
-                }
-                .keyboardShortcut(",", modifiers: .command)
-            }
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            accountMenu
         }
     }
 
-    private var libraryList: some View {
+    private var accountMenu: some View {
+        Menu {
+            Text(model.accountDisplayName)
+            connectionStatus
+            Divider()
+            Button("Sync Now", systemImage: "arrow.triangle.2.circlepath") {
+                Task { await model.synchronize() }
+            }
+            .disabled(model.isWorking || model.configuration == .localOnly)
+            Button("Settings", systemImage: "gearshape") {
+                model.settingsPresented = true
+            }
+            .keyboardShortcut(",", modifiers: .command)
+        } label: {
+            HStack(spacing: 10) {
+                Text(model.accountInitials)
+                    .font(.caption.weight(.semibold))
+                    .frame(width: 32, height: 32)
+                    .background(.tint, in: Circle())
+                    .foregroundStyle(.white)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(model.accountDisplayName)
+                        .font(.subheadline.weight(.medium))
+                        .lineLimit(1)
+                    Text(accountStatusText)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                }
+                Spacer()
+                Image(systemName: "ellipsis")
+                    .foregroundStyle(.secondary)
+            }
+            .contentShape(Rectangle())
+            .padding(.horizontal, 14)
+            .padding(.vertical, 10)
+            .background(.bar)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Account and settings for \(model.accountDisplayName)")
+    }
+
+    private var library: some View {
         Group {
             if model.visibleItems.isEmpty {
                 ContentUnavailableView(
@@ -135,69 +207,123 @@ struct IPadRootView: View {
                     get: { model.selectedItemIdentity },
                     set: { model.selectItem($0) }
                 )) { item in
-                    HStack {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(item.title)
-                                .font(.headline)
-                                .lineLimit(2)
-                            HStack(spacing: 8) {
-                                Text(item.creators.first?.displayName ?? item.zoteroItemType)
-                                if let year = item.publicationYear {
-                                    Text(String(year))
-                                }
+                    itemRow(item)
+                        .tag(item.identity)
+                        .simultaneousGesture(TapGesture(count: 2).onEnded {
+                            if model.selectedItemIdentity != item.identity {
+                                model.selectItem(item.identity)
                             }
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                        }
-                        Spacer(minLength: 8)
-                        if model.openingItemIdentity == item.identity {
-                            ProgressView()
-                                .controlSize(.small)
-                        }
-                    }
-                    .tag(item.identity)
+                            model.openSelectedItem()
+                        })
                 }
             }
         }
-        .navigationTitle("Library")
+        .navigationTitle(model.selectedSourceTitle)
+        .searchable(text: $model.searchText, prompt: "Search \(model.selectedSourceTitle)")
+        .onChange(of: model.searchText) {
+            model.updateSearch()
+        }
         .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button("Sync", systemImage: "arrow.triangle.2.circlepath") {
-                    Task { await model.synchronize() }
+            ToolbarItemGroup(placement: .topBarTrailing) {
+                Button("Open", systemImage: "book.pages") {
+                    model.openSelectedItem()
                 }
-                .disabled(model.isWorking || model.configuration == .localOnly)
-                .keyboardShortcut("r", modifiers: .command)
+                .disabled(model.selectedItem == nil || model.selectionLoadingIdentity != nil)
+                .keyboardShortcut(.return, modifiers: [])
+
+                Button("Info", systemImage: "info.circle") {
+                    model.inspectorPresented.toggle()
+                }
+                .disabled(model.selectedItem == nil)
+
+                if let status = model.syncStatus {
+                    IPadSyncStatusMenu(model: model, status: status)
+                }
             }
         }
     }
 
     @ViewBuilder
-    private var detail: some View {
+    private var inspector: some View {
         if let item = model.selectedItem {
-            IPadItemLandingView(model: model, item: item)
+            IPadItemInfoView(model: model, item: item)
         } else {
-            ContentUnavailableView("Choose Something to Read", systemImage: "books.vertical")
+            ContentUnavailableView("No Selection", systemImage: "info.circle")
         }
     }
 
-    private var statusBar: some View {
-        HStack(spacing: 8) {
-            if model.isWorking {
-                ProgressView()
-                    .controlSize(.small)
-            }
-            Text(model.statusMessage)
+    @ViewBuilder
+    private var connectionStatus: some View {
+        switch model.configuration {
+        case .localOnly:
+            Label("Local Only", systemImage: "externaldrive")
+        case let .connected(profile):
+            Label(profile.serverURL.host() ?? "Connected", systemImage: "checkmark.icloud")
+        }
+    }
+
+    private func itemRow(_ item: SynchronizedLibraryItem) -> some View {
+        HStack(spacing: 12) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(item.title)
+                    .font(.headline)
+                    .lineLimit(2)
+                HStack(spacing: 8) {
+                    Text(item.creators.first?.displayName ?? item.zoteroItemType)
+                    if let year = item.publicationYear {
+                        Text(String(year))
+                    }
+                }
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
                 .lineLimit(1)
-            Spacer()
-            if let syncStatus = model.syncStatus {
-                IPadSyncStatusMenu(model: model, status: syncStatus)
+            }
+            Spacer(minLength: 8)
+            if model.selectedItemIdentity == item.identity {
+                selectedItemAccessory(item)
             }
         }
-        .font(.footnote)
-        .foregroundStyle(.secondary)
-        .padding(.horizontal)
-        .padding(.vertical, 8)
-        .background(.bar)
+        .padding(.vertical, 4)
+        .contextMenu {
+            Button("Open", systemImage: "book.pages") {
+                if model.selectedItemIdentity != item.identity {
+                    model.selectItem(item.identity)
+                }
+                model.openSelectedItem()
+            }
+            Button("Show Info", systemImage: "info.circle") {
+                model.selectItem(item.identity)
+                model.inspectorPresented = true
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func selectedItemAccessory(_ item: SynchronizedLibraryItem) -> some View {
+        if model.selectionLoadingIdentity == item.identity {
+            ProgressView()
+                .controlSize(.small)
+                .accessibilityLabel("Loading document information")
+        } else if model.openingItemIdentity == item.identity {
+            let progress = model.attachmentDownloadProgress.values.first
+            VStack(alignment: .trailing, spacing: 4) {
+                if let progress {
+                    ProgressView(value: progress)
+                        .frame(width: 92)
+                    Text(progress, format: .percent.precision(.fractionLength(0)))
+                        .font(.caption.monospacedDigit())
+                        .foregroundStyle(.secondary)
+                } else {
+                    ProgressView()
+                        .controlSize(.small)
+                }
+            }
+        } else if !model.attachmentRecords.isEmpty {
+            Button(openActionTitle, systemImage: openActionIcon) {
+                model.openSelectedItem()
+            }
+            .buttonStyle(.bordered)
+        }
     }
 }
 
@@ -212,9 +338,10 @@ private struct IPadSyncStatusMenu: View {
 
     var body: some View {
         Menu {
-            Text("Library version \(status.currentVersion)")
             if status.pendingChangeCount > 0 {
                 Label("\(status.pendingChangeCount) pending changes", systemImage: "arrow.up.arrow.down")
+            } else {
+                Label("Up to Date", systemImage: "checkmark.icloud")
             }
             if status.failedAttachmentCount > 0 {
                 Label("\(status.failedAttachmentCount) failed attachments", systemImage: "exclamationmark.icloud")
@@ -222,49 +349,49 @@ private struct IPadSyncStatusMenu: View {
             ForEach(status.failures) { failure in
                 failureMenu(failure)
             }
+            Divider()
+            Button("Sync Now", systemImage: "arrow.triangle.2.circlepath") {
+                Task { await model.synchronize() }
+            }
+            .disabled(model.isWorking || model.configuration == .localOnly)
             if !status.failures.isEmpty {
-                Divider()
                 Button("Retry All Failures", systemImage: "arrow.clockwise") {
                     Task { await model.retryAllSyncFailures() }
                 }
                 .disabled(!model.recoveringFailureIDs.isEmpty)
             }
         } label: {
-            if !status.failures.isEmpty {
-                Label("\(status.failures.count) failures", systemImage: "exclamationmark.triangle.fill")
+            if model.isWorking {
+                Label(model.statusMessage, systemImage: "arrow.triangle.2.circlepath")
+            } else if !status.failures.isEmpty {
+                Label("\(status.failures.count) Failures", systemImage: "exclamationmark.triangle.fill")
             } else if status.pendingChangeCount > 0 {
-                Label("\(status.pendingChangeCount) pending", systemImage: "arrow.up.arrow.down")
+                Label("\(status.pendingChangeCount) Pending", systemImage: "arrow.up.arrow.down")
             } else {
-                Label("v\(status.currentVersion)", systemImage: "checkmark.icloud")
+                Label("Up to Date", systemImage: "checkmark.icloud")
             }
         }
-        .monospacedDigit()
     }
 
     // MARK: Private
 
     private func failureMenu(_ failure: ZoteroSyncFailureSummary) -> some View {
-        Menu {
-            Text(failure.message)
-            Text("\(failure.objectKind.rawValue):\(failure.objectKey)")
-                .font(.caption.monospaced())
-            Button("Retry Now", systemImage: "arrow.clockwise") {
-                Task { await model.retrySyncFailure(failure) }
-            }
+        Menu("\(failure.operation): \(failure.objectKey)") {
             if failure.operation == "merge-conflict" {
-                Divider()
-                Button("Keep Local Version") {
+                Button("Keep Local") {
                     Task { await model.resolveSyncConflict(failure, resolution: .keepLocal) }
                 }
-                Button("Keep Remote Version") {
+                Button("Keep Remote") {
                     Task { await model.resolveSyncConflict(failure, resolution: .keepRemote) }
                 }
-                Button("Delete Object", role: .destructive) {
+                Button("Delete") {
                     Task { await model.resolveSyncConflict(failure, resolution: .delete) }
                 }
+            } else {
+                Button("Retry") {
+                    Task { await model.retrySyncFailure(failure) }
+                }
             }
-        } label: {
-            Label(failure.operation, systemImage: "exclamationmark.triangle")
         }
         .disabled(model.recoveringFailureIDs.contains(failure.id))
     }

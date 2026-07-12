@@ -72,7 +72,7 @@ Groups, saved searches, and relations are absent from the current live library. 
 
 Attachment metadata and binary state are separate. Citration synchronizes attachment objects first and downloads bytes lazily into an app-managed cache. Downloads and uploads are hash-verified and resumable where the server contract permits it.
 
-PDF, EPUB, HTML snapshots, and plain text open through explicit in-app readers. Unsupported formats remain downloadable and exportable instead of being presented as supported.
+PDF, EPUB, HTML snapshots, and plain text open through explicit in-app readers on both Apple clients. The iPad reader additionally opens unencrypted classic MOBI and PRC publications through a bounded local parser; DRM-protected Kindle files and newer unsupported variants fail explicitly and remain exportable rather than being misrepresented as readable.
 
 The canonical source file is not modified when the user annotates. Exporting an annotated PDF creates a new copy. This preserves clean originals and keeps annotations synchronized as structured objects.
 

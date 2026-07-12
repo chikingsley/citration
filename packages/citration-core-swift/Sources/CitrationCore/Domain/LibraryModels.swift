@@ -5,6 +5,7 @@ import Foundation
 public enum DocumentFormat: String, Codable, CaseIterable, Sendable {
     case pdf
     case epub
+    case mobi
     case html
     case plainText
     case image
@@ -19,6 +20,8 @@ public enum DocumentFormat: String, Codable, CaseIterable, Sendable {
             "PDF"
         case .epub:
             "EPUB"
+        case .mobi:
+            "MOBI"
         case .html:
             "HTML"
         case .plainText:
@@ -38,6 +41,8 @@ public enum DocumentFormat: String, Codable, CaseIterable, Sendable {
             [.pageNavigation, .textSelection, .annotations, .tableOfContents]
         case .epub:
             [.reflowableText, .textSelection, .annotations, .tableOfContents]
+        case .mobi:
+            [.reflowableText, .textSelection, .tableOfContents]
         case .html,
              .plainText:
             [.reflowableText, .textSelection, .annotations]
@@ -62,30 +67,19 @@ public enum DocumentFormat: String, Codable, CaseIterable, Sendable {
             true
         case .image,
              .audio,
+             .mobi,
              .unknown:
             false
         }
     }
 
+    public var isSupportedOnIPad: Bool {
+        self == .mobi || isSupportedInApp
+    }
+
     public static func infer(fileName: String, contentType: String? = nil) -> DocumentFormat {
-        let normalizedContentType = contentType?.lowercased()
-        switch normalizedContentType {
-        case "application/pdf":
-            return .pdf
-        case "application/epub+zip",
-             "application/x-ibooks+zip":
-            return .epub
-        case "text/html",
-             "application/xhtml+xml":
-            return .html
-        case "text/plain":
-            return .plainText
-        case let type? where type.hasPrefix("image/"):
-            return .image
-        case let type? where type.hasPrefix("audio/"):
-            return .audio
-        default:
-            break
+        if let contentTypeFormat = infer(contentType: contentType) {
+            return contentTypeFormat
         }
 
         switch fileName.split(separator: ".").last?.lowercased() {
@@ -93,6 +87,9 @@ public enum DocumentFormat: String, Codable, CaseIterable, Sendable {
             return .pdf
         case "epub":
             return .epub
+        case "mobi",
+             "prc":
+            return .mobi
         case "html",
              "htm",
              "xhtml":
@@ -116,6 +113,32 @@ public enum DocumentFormat: String, Codable, CaseIterable, Sendable {
             return .audio
         default:
             return .unknown
+        }
+    }
+
+    // MARK: Private
+
+    private static func infer(contentType: String?) -> DocumentFormat? {
+        switch contentType?.lowercased() {
+        case "application/pdf":
+            .pdf
+        case "application/epub+zip",
+             "application/x-ibooks+zip":
+            .epub
+        case "application/x-mobipocket-ebook",
+             "application/vnd.amazon.ebook":
+            .mobi
+        case "text/html",
+             "application/xhtml+xml":
+            .html
+        case "text/plain":
+            .plainText
+        case let type? where type.hasPrefix("image/"):
+            .image
+        case let type? where type.hasPrefix("audio/"):
+            .audio
+        default:
+            nil
         }
     }
 }

@@ -48,9 +48,12 @@ final class IPadLibraryModel {
     var statusMessage = "Ready"
     var isWorking = false
     var settingsPresented = false
+    var inspectorPresented = false
     var openDocument: OpenDocument?
     var pendingDocumentChoices: [ZoteroAttachmentCacheRecord] = []
     var openingItemIdentity: SynchronizedLibraryItemIdentity?
+    var selectionLoadingIdentity: SynchronizedLibraryItemIdentity?
+    var attachmentDownloadProgress: [String: Double] = [:]
     var readerAnnotations: [SynchronizedLibraryAnnotation] = []
     var readerProgress: ReaderProgress?
     var recoveringFailureIDs: Set<Int64> = []
@@ -64,29 +67,6 @@ final class IPadLibraryModel {
             return nil
         }
         return items.first { $0.identity == selectedItemIdentity }
-    }
-
-    var availableTags: [String] {
-        Set(items.flatMap(\.tags)).sorted {
-            $0.localizedCaseInsensitiveCompare($1) == .orderedAscending
-        }
-    }
-
-    var visibleItems: [SynchronizedLibraryItem] {
-        let sourceItems = switch selectedSource ?? .allItems {
-        case .allItems:
-            items
-        case let .collection(collectionID):
-            collectionItems(collectionID: collectionID)
-        case let .tag(tag):
-            items.filter { item in
-                item.tags.contains { $0.localizedCaseInsensitiveCompare(tag) == .orderedSame }
-            }
-        }
-        guard !searchText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            return sourceItems
-        }
-        return sourceItems.filter { searchResultKeys.contains($0.identity.objectKey) }
     }
 
     static func bootstrap() -> IPadLibraryModel {
@@ -131,20 +111,16 @@ final class IPadLibraryModel {
         selectedItemIdentity = identity
         pendingDocumentChoices = []
         guard let identity else {
-            openingItemIdentity = nil
+            selectionLoadingIdentity = nil
             attachmentRecords = []
             selectedNotes = []
             return
         }
-        openingItemIdentity = identity
+        selectionLoadingIdentity = identity
         selectionTask = Task {
             await refreshSelection()
-            guard !Task.isCancelled, selectedItemIdentity == identity else {
-                return
-            }
-            await openPreferredDocumentForSelection()
             if selectedItemIdentity == identity {
-                openingItemIdentity = nil
+                selectionLoadingIdentity = nil
             }
         }
     }
@@ -164,6 +140,25 @@ final class IPadLibraryModel {
         Task {
             await openOrDownload(record, for: item)
             if selectedItemIdentity == item.identity {
+                openingItemIdentity = nil
+            }
+        }
+    }
+
+    func openSelectedItem() {
+        guard let item = selectedItem else {
+            return
+        }
+        openingItemIdentity = item.identity
+        Task {
+            if selectionLoadingIdentity == item.identity {
+                await selectionTask?.value
+            }
+            guard selectedItemIdentity == item.identity else {
+                return
+            }
+            await openPreferredDocumentForSelection()
+            if selectedItemIdentity == item.identity, pendingDocumentChoices.isEmpty {
                 openingItemIdentity = nil
             }
         }
@@ -224,12 +219,19 @@ final class IPadLibraryModel {
         selectedNotes = await (try? store.listSynchronizedNotes(itemID: selectedItem.identity.appUUID)) ?? []
     }
 
-    func openPreferredDocumentForSelection() async {
+    // MARK: Private
+
+    private var searchTask: Task<Void, Never>?
+    private var selectionTask: Task<Void, Never>?
+    private var itemObservation: CitrationDatabaseObservation?
+    private var syncObservation: CitrationDatabaseObservation?
+
+    private func openPreferredDocumentForSelection() async {
         guard let item = selectedItem else {
             return
         }
         let readable = attachmentRecords
-            .filter { DocumentFormat.infer(fileName: $0.filename, contentType: $0.contentType).isSupportedInApp }
+            .filter { DocumentFormat.infer(fileName: $0.filename, contentType: $0.contentType).isSupportedOnIPad }
             .sorted(by: compareReadableAttachments)
         switch readable.count {
         case 0:
@@ -243,22 +245,6 @@ final class IPadLibraryModel {
         default:
             pendingDocumentChoices = readable
         }
-    }
-
-    // MARK: Private
-
-    private var searchTask: Task<Void, Never>?
-    private var selectionTask: Task<Void, Never>?
-    private var itemObservation: CitrationDatabaseObservation?
-    private var syncObservation: CitrationDatabaseObservation?
-
-    private func collectionItems(collectionID: UUID) -> [SynchronizedLibraryItem] {
-        let itemIDs = Set(
-            collections.memberships
-                .filter { $0.collectionID == collectionID }
-                .map(\.itemID)
-        )
-        return items.filter { itemIDs.contains($0.identity.appUUID) }
     }
 
     private func openOrDownload(
@@ -290,7 +276,7 @@ final class IPadLibraryModel {
     ) -> Bool {
         let leftFormat = DocumentFormat.infer(fileName: lhs.filename, contentType: lhs.contentType)
         let rightFormat = DocumentFormat.infer(fileName: rhs.filename, contentType: rhs.contentType)
-        let priority: [DocumentFormat: Int] = [.pdf: 0, .epub: 1, .html: 2, .plainText: 3]
+        let priority: [DocumentFormat: Int] = [.pdf: 0, .epub: 1, .mobi: 2, .html: 3, .plainText: 4]
         let left = priority[leftFormat] ?? Int.max
         let right = priority[rightFormat] ?? Int.max
         if left == right {

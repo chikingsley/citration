@@ -1,106 +1,9 @@
 import CitrationCore
 import SwiftUI
 
-// MARK: - IPadItemLandingView
-
-struct IPadItemLandingView: View {
-    // MARK: Internal
-
-    @Bindable var model: IPadLibraryModel
-
-    let item: SynchronizedLibraryItem
-
-    var body: some View {
-        List {
-            Section {
-                Text(item.title)
-                    .font(.title2.weight(.semibold))
-                if !item.creators.isEmpty {
-                    Text(item.creators.map(\.displayName).joined(separator: ", "))
-                        .foregroundStyle(.secondary)
-                }
-            }
-
-            Section("Documents") {
-                if model.attachmentRecords.isEmpty {
-                    ContentUnavailableView(
-                        "No Readable Document",
-                        systemImage: "doc.text.magnifyingglass",
-                        description: Text("Item information is still available from Info.")
-                    )
-                } else {
-                    ForEach(model.attachmentRecords) { record in
-                        HStack {
-                            Label(record.filename, systemImage: documentIcon(record))
-                            Spacer()
-                            attachmentAction(record)
-                        }
-                    }
-                }
-            }
-        }
-        .navigationTitle("Read")
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button("Info", systemImage: "info.circle") {
-                    infoPresented = true
-                }
-            }
-        }
-        .sheet(isPresented: $infoPresented) {
-            NavigationStack {
-                IPadItemInfoView(model: model, item: item)
-                    .toolbar {
-                        ToolbarItem(placement: .confirmationAction) {
-                            Button("Done") {
-                                infoPresented = false
-                            }
-                        }
-                    }
-            }
-        }
-    }
-
-    // MARK: Private
-
-    @State private var infoPresented = false
-
-    @ViewBuilder
-    private func attachmentAction(_ record: ZoteroAttachmentCacheRecord) -> some View {
-        switch record.cacheState {
-        case .downloaded:
-            Button("Open") {
-                model.openDocumentChoice(record)
-            }
-
-        case .downloading:
-            ProgressView()
-
-        case .notDownloaded,
-             .stale,
-             .failed:
-            Button(record.cacheState == .failed ? "Retry" : "Download") {
-                model.openDocumentChoice(record)
-            }
-            .disabled(model.isWorking)
-        }
-    }
-
-    private func documentIcon(_ record: ZoteroAttachmentCacheRecord) -> String {
-        switch DocumentFormat.infer(fileName: record.filename, contentType: record.contentType) {
-        case .pdf: "doc.richtext"
-        case .epub: "book.closed"
-        case .html: "globe"
-        case .plainText: "doc.plaintext"
-        default: "doc"
-        }
-    }
-}
-
 // MARK: - IPadItemInfoView
 
-private struct IPadItemInfoView: View {
+struct IPadItemInfoView: View {
     // MARK: Internal
 
     @Bindable var model: IPadLibraryModel
@@ -188,10 +91,11 @@ struct IPadDocumentView: View {
 
     var body: some View {
         documentContent
-            .toolbar(chromeVisible ? .visible : .hidden, for: .navigationBar)
+            .navigationTitle(record.filename)
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Close", systemImage: "xmark") {
+                    Button("Library", systemImage: "chevron.left") {
                         model.closeDocument()
                     }
                     .keyboardShortcut(.cancelAction)
@@ -202,45 +106,20 @@ struct IPadDocumentView: View {
                     }
                 }
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Hide Controls", systemImage: "arrow.up.right.and.arrow.down.left") {
-                        withAnimation {
-                            chromeVisible = false
-                        }
+                    ShareLink(item: url) {
+                        Label("Share", systemImage: "square.and.arrow.up")
                     }
                 }
             }
-            .overlay(alignment: .topTrailing) {
-                if !chromeVisible {
-                    Button("Show Controls", systemImage: "arrow.down.left.and.arrow.up.right") {
-                        withAnimation {
-                            chromeVisible = true
-                        }
-                    }
-                    .labelStyle(.iconOnly)
-                    .buttonStyle(.borderedProminent)
-                    .buttonBorderShape(.circle)
-                    .padding()
-                    .accessibilityLabel("Show reader controls")
-                }
-            }
-            .sheet(isPresented: $infoPresented) {
-                NavigationStack {
-                    IPadItemInfoView(model: model, item: item)
-                        .toolbar {
-                            ToolbarItem(placement: .confirmationAction) {
-                                Button("Done") {
-                                    infoPresented = false
-                                }
-                            }
-                        }
-                }
+            .inspector(isPresented: $infoPresented) {
+                IPadItemInfoView(model: model, item: item)
+                    .inspectorColumnWidth(min: 300, ideal: 360, max: 440)
             }
     }
 
     // MARK: Private
 
     @State private var infoPresented = false
-    @State private var chromeVisible = true
 
     @ViewBuilder
     private var documentContent: some View {
@@ -256,9 +135,11 @@ struct IPadDocumentView: View {
                 model: model,
                 item: item,
                 record: record,
-                url: url,
-                chromeVisible: chromeVisible
+                url: url
             )
+
+        case .mobi:
+            IPadMOBIReaderView(model: model, item: item, record: record, url: url)
 
         case .html:
             IPadWebDocumentView(
@@ -274,7 +155,6 @@ struct IPadDocumentView: View {
                     )
                 }
             )
-            .navigationTitle(record.filename)
             .task(id: record.itemKey) {
                 await model.openReader(item: item, record: record)
             }

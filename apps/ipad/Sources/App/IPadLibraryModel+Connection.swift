@@ -55,10 +55,18 @@ extension IPadLibraryModel {
             return
         }
         isWorking = true
+        attachmentDownloadProgress[record.itemKey] = 0
         statusMessage = "Downloading \(record.filename)"
-        defer { isWorking = false }
+        defer {
+            isWorking = false
+            attachmentDownloadProgress[record.itemKey] = nil
+        }
         do {
-            _ = try await connectionManager.downloadAttachment(itemKey: record.itemKey)
+            _ = try await connectionManager.downloadAttachment(itemKey: record.itemKey) { [weak self] progress in
+                Task { @MainActor [weak self] in
+                    self?.attachmentDownloadProgress[record.itemKey] = progress
+                }
+            }
             await refreshAttachments()
             statusMessage = "Downloaded \(record.filename)"
         } catch {

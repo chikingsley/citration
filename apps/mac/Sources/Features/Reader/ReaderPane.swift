@@ -261,6 +261,13 @@ struct ReaderPane: View {
                 onCreateAnnotation: reader.addEPUBAnnotation
             )
 
+        case .mobi:
+            ContentUnavailableView(
+                "MOBI Reader Available on iPad",
+                systemImage: "books.vertical",
+                description: Text("Mac MOBI presentation will follow the shared parser acceptance.")
+            )
+
         case .html:
             HTMLSnapshotReaderView(
                 attachment: attachment,
@@ -364,6 +371,8 @@ private extension ReaderPane {
             "doc.richtext"
         case .epub:
             "book"
+        case .mobi:
+            "books.vertical"
         case .html:
             "safari"
         case .plainText:

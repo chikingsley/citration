@@ -1,4 +1,5 @@
 import CitrationCore
+import Observation
 import PDFKit
 import PencilKit
 import SwiftUI
@@ -6,8 +7,11 @@ import SwiftUI
 // MARK: - IPadPDFViewProxy
 
 @MainActor
+@Observable
 final class IPadPDFViewProxy {
     weak var pdfView: PDFView?
+    var currentPage = 0
+    var pageCount = 0
 
     func fitPage() {
         guard let pdfView else {
@@ -15,6 +19,10 @@ final class IPadPDFViewProxy {
         }
         pdfView.displayMode = .singlePage
         pdfView.displayDirection = .horizontal
+        pdfView.usePageViewController(
+            true,
+            withViewOptions: [UIPageViewController.OptionsKey.interPageSpacing: 20]
+        )
         pdfView.autoScales = true
         pdfView.scaleFactor = pdfView.scaleFactorForSizeToFit
     }
@@ -23,6 +31,7 @@ final class IPadPDFViewProxy {
         guard let pdfView else {
             return
         }
+        pdfView.usePageViewController(false)
         pdfView.displayMode = .singlePageContinuous
         pdfView.displayDirection = .vertical
         pdfView.autoScales = true
@@ -35,6 +44,7 @@ final class IPadPDFViewProxy {
         else {
             return
         }
+        pdfView.usePageViewController(false)
         pdfView.displayMode = .singlePageContinuous
         pdfView.displayDirection = .vertical
         pdfView.autoScales = false
@@ -43,6 +53,41 @@ final class IPadPDFViewProxy {
             return
         }
         pdfView.scaleFactor = max(pdfView.bounds.width / pageWidth, pdfView.minScaleFactor)
+    }
+
+    func goToPreviousPage() {
+        pdfView?.goToPreviousPage(nil)
+    }
+
+    func goToNextPage() {
+        pdfView?.goToNextPage(nil)
+    }
+
+    func search(_ query: String) {
+        guard
+            let pdfView,
+            !query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+            let selection = pdfView.document?.findString(query, withOptions: .caseInsensitive).first
+        else {
+            return
+        }
+        pdfView.setCurrentSelection(selection, animate: true)
+        pdfView.go(to: selection)
+    }
+
+    func updatePageState() {
+        guard
+            let pdfView,
+            let document = pdfView.document,
+            let page = pdfView.currentPage
+        else {
+            currentPage = 0
+            pageCount = 0
+            return
+        }
+        let index = document.index(for: page)
+        currentPage = index == NSNotFound ? 0 : index + 1
+        pageCount = document.pageCount
     }
 
     func selection() -> (text: String, anchor: IPadPDFAnnotationAnchor)? {
@@ -164,6 +209,7 @@ struct IPadPDFRepresentable: UIViewRepresentable {
             guard index != NSNotFound else {
                 return
             }
+            parent.proxy.updatePageState()
             parent.onPageChange(index + 1, document.pageCount)
         }
 
@@ -265,6 +311,10 @@ struct IPadPDFRepresentable: UIViewRepresentable {
         container.pdfView.autoScales = true
         container.pdfView.displayMode = .singlePage
         container.pdfView.displayDirection = .horizontal
+        container.pdfView.usePageViewController(
+            true,
+            withViewOptions: [UIPageViewController.OptionsKey.interPageSpacing: 20]
+        )
         container.pdfView.displaysPageBreaks = true
         container.canvasView.delegate = context.coordinator
         container.canvasView.backgroundColor = .clear
@@ -300,6 +350,7 @@ struct IPadPDFRepresentable: UIViewRepresentable {
 
     private func load(in container: ContainerView, coordinator: Coordinator) {
         container.pdfView.document = PDFDocument(url: url)
+        proxy.updatePageState()
         coordinator.loadedURL = url
         coordinator.annotationToken = ""
         applyProgress(in: container.pdfView, coordinator: coordinator)

@@ -37,7 +37,10 @@ public actor ZoteroAttachmentTransfer {
 
     // MARK: Public
 
-    public func download(itemKey: String) async throws -> URL {
+    public func download(
+        itemKey: String,
+        progress: (@Sendable (Double) -> Void)? = nil
+    ) async throws -> URL {
         let context = try await libraryContext(requireWrite: false)
         guard
             let record = try database.attachmentCacheRecord(libraryID: context.libraryID, itemKey: itemKey),
@@ -60,7 +63,11 @@ public actor ZoteroAttachmentTransfer {
             operation: "attachment-download"
         )
         do {
-            let downloaded = try await client.downloadAttachment(userID: context.userID, itemKey: itemKey)
+            let downloaded = try await client.downloadAttachment(
+                userID: context.userID,
+                itemKey: itemKey,
+                progress: progress
+            )
             defer { try? fileManager.removeItem(at: downloaded.temporaryURL) }
             if let responseMD5 = downloaded.responseMD5, responseMD5 != expectedMD5 {
                 throw ZoteroAttachmentTransferError.hashMismatch(expected: expectedMD5, actual: responseMD5)

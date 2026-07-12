@@ -175,7 +175,10 @@ public actor ZoteroConnectionManager {
         return ZoteroClientSynchronizationReport(metadata: metadata, attachments: attachments)
     }
 
-    public func downloadAttachment(itemKey: String) async throws -> URL {
+    public func downloadAttachment(
+        itemKey: String,
+        progress: (@Sendable (Double) -> Void)? = nil
+    ) async throws -> URL {
         guard let attachmentsDirectory else {
             throw ZoteroConnectionManagerError.attachmentStorageUnavailable
         }
@@ -186,7 +189,7 @@ public actor ZoteroConnectionManager {
             database: database,
             client: ZoteroAPIClient(connection: connection, session: session),
             attachmentsDirectory: attachmentsDirectory
-        ).download(itemKey: itemKey)
+        ).download(itemKey: itemKey, progress: progress)
     }
 
     public func itemTypes() async throws -> [ZoteroItemTypeDefinition] {

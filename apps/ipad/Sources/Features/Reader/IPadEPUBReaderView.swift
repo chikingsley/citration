@@ -13,38 +13,40 @@ struct IPadEPUBReaderView: View {
     let item: SynchronizedLibraryItem
     let record: ZoteroAttachmentCacheRecord
     let url: URL
-    let chromeVisible: Bool
 
     var body: some View {
         @Bindable var state = state
 
-        VStack(spacing: 0) {
-            if chromeVisible {
-                controls
-                Divider()
+        content
+            .safeAreaInset(edge: .bottom) {
+                if let selection = state.selection {
+                    selectionBar(selection)
+                }
             }
-            content
-            if let selection = state.selection {
-                selectionBar(selection)
+            .searchable(
+                text: $state.searchText,
+                isPresented: $searchPresented,
+                placement: .toolbar,
+                prompt: "Search Book"
+            )
+            .onSubmit(of: .search, state.performSearch)
+            .toolbar { readerToolbar }
+            .task(id: record.itemKey) {
+                await model.openReader(item: item, record: record)
+                state.load(attachment: attachment, progress: model.readerProgress)
             }
-        }
-        .navigationTitle(record.filename)
-        .navigationBarTitleDisplayMode(.inline)
-        .task(id: record.itemKey) {
-            await model.openReader(item: item, record: record)
-            state.load(attachment: attachment, progress: model.readerProgress)
-        }
-        .onChange(of: model.readerProgress) { _, progress in
-            state.load(attachment: attachment, progress: progress)
-        }
-        .onDisappear {
-            state.reset()
-        }
+            .onChange(of: model.readerProgress) { _, progress in
+                state.load(attachment: attachment, progress: progress)
+            }
+            .onDisappear {
+                state.reset()
+            }
     }
 
     // MARK: Private
 
     @State private var state: EPUBReaderState = .init()
+    @State private var searchPresented = false
 
     private var attachment: LibraryAttachment {
         LibraryAttachment(
@@ -58,33 +60,41 @@ struct IPadEPUBReaderView: View {
         )
     }
 
-    private var controls: some View {
+    @ToolbarContentBuilder
+    private var readerToolbar: some ToolbarContent {
         @Bindable var state = state
 
-        return ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 12) {
-                Button("Previous", systemImage: "chevron.left", action: state.goBackward)
-                    .disabled(!state.canGoBackward)
-                Button("Next", systemImage: "chevron.right", action: state.goForward)
-                    .disabled(!state.canGoForward)
-                Menu {
-                    if let publication = state.publication {
-                        ForEach(publication.tableOfContents) { entry in
-                            Button(entry.title) {
-                                state.navigate(to: entry.readingOrderIndex, fragment: entry.fragment)
-                            }
+        ToolbarItemGroup(placement: .topBarLeading) {
+            Button("Previous", systemImage: "chevron.left", action: state.goBackward)
+                .disabled(!state.canGoBackward)
+            Button("Next", systemImage: "chevron.right", action: state.goForward)
+                .disabled(!state.canGoForward)
+            Menu {
+                if let publication = state.publication {
+                    ForEach(publication.tableOfContents) { entry in
+                        Button(entry.title) {
+                            state.navigate(to: entry.readingOrderIndex, fragment: entry.fragment)
                         }
                     }
-                } label: {
-                    Label(state.currentItem?.title ?? "Contents", systemImage: "list.bullet")
-                        .lineLimit(1)
                 }
-                TextField("Search book", text: $state.searchText)
-                    .textFieldStyle(.roundedBorder)
-                    .frame(width: 220)
-                    .onSubmit(state.performSearch)
-                Button("Search", systemImage: "magnifyingglass", action: state.performSearch)
+            } label: {
+                Label("Contents", systemImage: "sidebar.left")
+            }
+        }
+
+        ToolbarItemGroup(placement: .topBarTrailing) {
+            Button("Search", systemImage: "magnifyingglass") {
+                searchPresented = true
+            }
+            Menu {
+                Button("Smaller Text", systemImage: "textformat.size.smaller", action: state.decreaseFontSize)
+                Button("Larger Text", systemImage: "textformat.size.larger", action: state.increaseFontSize)
+                Divider()
+                ForEach(EPUBReaderTheme.allCases) { theme in
+                    Button(theme.label) { state.theme = theme }
+                }
                 if !state.searchResults.isEmpty {
+                    Divider()
                     Menu("\(state.searchResults.count) Results") {
                         ForEach(state.searchResults) { result in
                             Button("\(result.chapterTitle): \(result.excerpt)") {
@@ -93,21 +103,10 @@ struct IPadEPUBReaderView: View {
                         }
                     }
                 }
-                Button("Smaller Text", systemImage: "textformat.size.smaller", action: state.decreaseFontSize)
-                Button("Larger Text", systemImage: "textformat.size.larger", action: state.increaseFontSize)
-                Menu {
-                    ForEach(EPUBReaderTheme.allCases) { theme in
-                        Button(theme.label) { state.theme = theme }
-                    }
-                } label: {
-                    Label("Theme", systemImage: "circle.lefthalf.filled")
-                }
+            } label: {
+                Label("Appearance", systemImage: "textformat.size")
             }
-            .labelStyle(.iconOnly)
-            .padding(.horizontal)
-            .padding(.vertical, 8)
         }
-        .background(.bar)
     }
 
     @ViewBuilder
@@ -154,6 +153,12 @@ struct IPadEPUBReaderView: View {
             }
             Button("Underline") {
                 create(selection: selection, kind: .underline, color: .yellow)
+            }
+            Button("Note") {
+                create(selection: selection, kind: .note, color: .yellow)
+            }
+            Button("Cancel", role: .cancel) {
+                state.selection = nil
             }
         }
         .padding(10)

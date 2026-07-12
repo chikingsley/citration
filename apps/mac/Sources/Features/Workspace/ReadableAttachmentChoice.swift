@@ -121,11 +121,12 @@ extension AppModel {
         switch format {
         case .pdf: 0
         case .epub: 1
-        case .html: 2
-        case .plainText: 3
-        case .image: 4
-        case .audio: 5
-        case .unknown: 6
+        case .mobi: 2
+        case .html: 3
+        case .plainText: 4
+        case .image: 5
+        case .audio: 6
+        case .unknown: 7
         }
     }
 

@@ -118,6 +118,7 @@ struct ItemAttachmentsInspectorSection: View {
         switch attachment.documentFormat {
         case .pdf,
              .epub,
+             .mobi,
              .html,
              .plainText:
             return "\(format) · In-app reader · \(size)"
@@ -132,6 +133,7 @@ struct ItemAttachmentsInspectorSection: View {
         switch format {
         case .pdf: "doc.richtext"
         case .epub: "book"
+        case .mobi: "books.vertical"
         case .html: "safari"
         case .plainText: "doc.plaintext"
         case .image: "photo"

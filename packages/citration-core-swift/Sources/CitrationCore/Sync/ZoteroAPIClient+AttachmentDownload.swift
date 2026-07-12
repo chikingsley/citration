@@ -9,7 +9,11 @@ struct ZoteroDownloadedAttachment: Sendable {
 }
 
 extension ZoteroAPIClient {
-    func downloadAttachment(userID: Int64, itemKey: String) async throws -> ZoteroDownloadedAttachment {
+    func downloadAttachment(
+        userID: Int64,
+        itemKey: String,
+        progress: (@Sendable (Double) -> Void)? = nil
+    ) async throws -> ZoteroDownloadedAttachment {
         let endpoint = connection.serverURL.appending(path: "users/\(userID)/items/\(itemKey)/file")
         var request = URLRequest(url: endpoint)
         request.setValue("3", forHTTPHeaderField: "Zotero-API-Version")
@@ -18,7 +22,7 @@ extension ZoteroAPIClient {
 
         let (initialURL, initialResponse) = try await session.download(
             for: request,
-            delegate: ZoteroNoRedirectDelegate()
+            delegate: ZoteroAttachmentDownloadDelegate(allowsRedirects: false, progress: progress)
         )
         guard let initialHTTP = initialResponse as? HTTPURLResponse else {
             throw ZoteroAttachmentTransferError.invalidDownloadResponse
@@ -41,7 +45,10 @@ extension ZoteroAPIClient {
             throw ZoteroAttachmentTransferError.invalidDownloadResponse
         }
 
-        let (downloadURL, response) = try await session.download(from: redirectURL)
+        let (downloadURL, response) = try await session.download(
+            from: redirectURL,
+            delegate: ZoteroAttachmentDownloadDelegate(allowsRedirects: true, progress: progress)
+        )
         guard let http = response as? HTTPURLResponse, (200 ... 299).contains(http.statusCode) else {
             throw ZoteroAttachmentTransferError.invalidDownloadResponse
         }
@@ -90,16 +97,49 @@ extension ZoteroAPIClient {
     }
 }
 
-// MARK: - ZoteroNoRedirectDelegate
+// MARK: - ZoteroAttachmentDownloadDelegate
 
-private final class ZoteroNoRedirectDelegate: NSObject, URLSessionTaskDelegate, @unchecked Sendable {
+private final class ZoteroAttachmentDownloadDelegate: NSObject, URLSessionDownloadDelegate, @unchecked Sendable {
+    // MARK: Lifecycle
+
+    init(allowsRedirects: Bool, progress: (@Sendable (Double) -> Void)?) {
+        self.allowsRedirects = allowsRedirects
+        self.progress = progress
+    }
+
+    // MARK: Internal
+
     func urlSession(
         _: URLSession,
         task _: URLSessionTask,
         willPerformHTTPRedirection _: HTTPURLResponse,
-        newRequest _: URLRequest,
+        newRequest: URLRequest,
         completionHandler: @escaping (URLRequest?) -> Void
     ) {
-        completionHandler(nil)
+        completionHandler(allowsRedirects ? newRequest : nil)
     }
+
+    func urlSession(
+        _: URLSession,
+        downloadTask _: URLSessionDownloadTask,
+        didWriteData _: Int64,
+        totalBytesWritten: Int64,
+        totalBytesExpectedToWrite: Int64
+    ) {
+        guard totalBytesExpectedToWrite > 0 else {
+            return
+        }
+        progress?(min(max(Double(totalBytesWritten) / Double(totalBytesExpectedToWrite), 0), 1))
+    }
+
+    func urlSession(
+        _: URLSession,
+        downloadTask _: URLSessionDownloadTask,
+        didFinishDownloadingTo _: URL
+    ) {}
+
+    // MARK: Private
+
+    private let allowsRedirects: Bool
+    private let progress: (@Sendable (Double) -> Void)?
 }

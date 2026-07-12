@@ -7,13 +7,13 @@ final class IPadAdaptiveUITests: XCTestCase {
         XCUIDevice.shared.orientation = .portrait
         app.launch()
 
-        let portraitLibrary = app.navigationBars["Library"].waitForExistence(timeout: 10)
+        let portraitLibrary = app.navigationBars["All Items"].waitForExistence(timeout: 10)
         XCTAssertTrue(portraitLibrary)
 
         XCUIDevice.shared.orientation = .landscapeLeft
 
-        let landscapeLibrary = app.navigationBars["Library"].waitForExistence(timeout: 5)
-        let landscapeSearch = app.searchFields["Search library"].exists
+        let landscapeLibrary = app.navigationBars["All Items"].waitForExistence(timeout: 5)
+        let landscapeSearch = app.searchFields["Search All Items"].exists
         XCTAssertTrue(landscapeLibrary)
         XCTAssertTrue(landscapeSearch)
 

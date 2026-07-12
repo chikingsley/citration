@@ -95,6 +95,8 @@ struct WorkspaceTabBar: View {
             "doc.richtext"
         case .epub:
             "book"
+        case .mobi:
+            "books.vertical"
         case .html:
             "safari"
         case .plainText:

@@ -18,8 +18,6 @@ extension IPadLibraryModel {
             FileManager.default.fileExists(atPath: url.path)
         {
             open(item: item, record: record, url: url)
-        } else {
-            await openPreferredDocumentForSelection()
         }
     }
 
