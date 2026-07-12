@@ -48,6 +48,17 @@ struct CitrationApp: App {
         }
         .windowToolbarStyle(.unified)
         .commands {
+            SidebarCommands()
+            InspectorCommands()
+            CommandGroup(after: .newItem) {
+                Button("Open Selected Item", systemImage: "book.pages") {
+                    if let identity = model.selectedItemIdentity {
+                        model.openPrimaryDocument(for: identity)
+                    }
+                }
+                .keyboardShortcut(.return, modifiers: [])
+                .disabled(model.selectedItemIdentity == nil)
+            }
             CommandMenu("Library") {
                 Button("Sync Now", systemImage: "arrow.triangle.2.circlepath") {
                     Task {

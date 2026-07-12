@@ -32,69 +32,92 @@ struct ItemInfoInspectorSection: View {
         .task(id: item.identity) {
             resetDrafts(from: item)
             draftItemType = item.projected.itemType
+            isEditingCreators = false
+            isEditingFields = false
+            showAllFields = false
             _ = await model.loadItemEditingSchema(for: item.projected.itemType)
         }
 
         Section("Creators") {
-            if creatorDrafts.isEmpty {
-                Text("No creators")
-                    .foregroundStyle(.secondary)
-            } else {
+            if isEditingCreators {
                 ForEach(creatorDrafts) { creator in
-                    VStack(alignment: .leading, spacing: 8) {
-                        Picker("Role", selection: creatorTypeBinding(for: creator.id)) {
-                            ForEach(creatorTypeDefinitions, id: \.creatorType) { definition in
-                                Text(definition.localized).tag(definition.creatorType)
-                            }
-                        }
-                        Toggle("Single-Field Name", isOn: creatorLiteralModeBinding(for: creator.id))
-                        if creator.data["name"] != nil {
-                            TextField("Name", text: creatorFieldBinding(for: creator.id, field: "name"))
-                        } else {
-                            TextField("First Name", text: creatorFieldBinding(for: creator.id, field: "firstName"))
-                            TextField("Last Name", text: creatorFieldBinding(for: creator.id, field: "lastName"))
-                        }
-                        Button("Remove Creator", systemImage: "minus.circle", role: .destructive) {
-                            creatorDrafts.removeAll { $0.id == creator.id }
-                        }
-                    }
-                    .padding(.vertical, 4)
+                    creatorEditor(creator)
                 }
-            }
-            HStack {
                 Button("Add Creator", systemImage: "plus") {
                     addCreator()
                 }
-                Button("Save Creators", systemImage: "checkmark") {
-                    saveCreators()
+                HStack {
+                    Button("Cancel") {
+                        cancelCreatorEditing()
+                    }
+                    Spacer()
+                    Button(isSavingCreators ? "Saving…" : "Save") {
+                        saveCreators()
+                    }
+                    .disabled(!hasCreatorChanges || isSavingCreators)
                 }
-                .disabled(!hasCreatorChanges || isSavingCreators)
+            } else {
+                if creatorDrafts.isEmpty {
+                    Text("No creators")
+                        .foregroundStyle(.secondary)
+                } else {
+                    ForEach(creatorDrafts) { creator in
+                        LabeledContent(creatorRoleLabel(creator)) {
+                            Text(creatorDisplayName(creator))
+                                .multilineTextAlignment(.trailing)
+                                .textSelection(.enabled)
+                        }
+                    }
+                }
+                Button(creatorDrafts.isEmpty ? "Add Creator" : "Edit Creators", systemImage: "pencil") {
+                    isEditingCreators = true
+                    if creatorDrafts.isEmpty {
+                        addCreator()
+                    }
+                }
             }
         }
 
         Section("Fields") {
-            ForEach(editableStringFields, id: \.self) { field in
-                LabeledContent(fieldLabel(field)) {
-                    TextField(fieldLabel(field), text: binding(for: field), axis: field == "abstractNote" ? .vertical : .horizontal)
+            if isEditingFields {
+                Toggle("Show All Fields", isOn: $showAllFields)
+                ForEach(visibleEditableStringFields, id: \.self) { field in
+                    LabeledContent(fieldLabel(field)) {
+                        TextField(
+                            fieldLabel(field),
+                            text: binding(for: field),
+                            axis: field == "abstractNote" ? .vertical : .horizontal
+                        )
                         .labelsHidden()
                         .lineLimit(field == "abstractNote" ? 3 ... 8 : 1 ... 2)
-                }
-            }
-
-            Button("Save Changes", systemImage: "checkmark") {
-                saveChanges()
-            }
-            .disabled(!hasChanges || isSaving)
-        }
-
-        if !preservedFields.isEmpty {
-            Section("Preserved Data") {
-                ForEach(preservedFields, id: \.0) { field, value in
-                    LabeledContent(fieldLabel(field)) {
-                        Text(displayValue(value))
-                            .font(.caption.monospaced())
-                            .textSelection(.enabled)
                     }
+                }
+                HStack {
+                    Button("Cancel") {
+                        cancelFieldEditing()
+                    }
+                    Spacer()
+                    Button(isSaving ? "Saving…" : "Save") {
+                        saveChanges()
+                    }
+                    .disabled(!hasChanges || isSaving)
+                }
+            } else {
+                if populatedEditableStringFields.isEmpty {
+                    Text("No populated fields")
+                        .foregroundStyle(.secondary)
+                } else {
+                    ForEach(populatedEditableStringFields, id: \.self) { field in
+                        LabeledContent(fieldLabel(field)) {
+                            Text(item.projected.fields[field]?.stringValue ?? "")
+                                .multilineTextAlignment(.trailing)
+                                .lineLimit(field == "abstractNote" ? 6 : 2)
+                                .textSelection(.enabled)
+                        }
+                    }
+                }
+                Button("Edit Fields", systemImage: "pencil") {
+                    isEditingFields = true
                 }
             }
         }
@@ -116,6 +139,9 @@ struct ItemInfoInspectorSection: View {
     @State private var isConverting = false
     @State private var creatorDrafts: [CreatorDraft] = []
     @State private var isSavingCreators = false
+    @State private var isEditingCreators = false
+    @State private var isEditingFields = false
+    @State private var showAllFields = false
 
     private var editingSchema: ZoteroItemEditingSchema? {
         model.itemEditingSchemas[item.projected.itemType]
@@ -138,20 +164,25 @@ struct ItemInfoInspectorSection: View {
     }
 
     private var editableStringFields: [String] {
-        item.projected.fields
-            .filter { field, value in
-                value.stringValue != nil && !Self.readOnlyFields.contains(field)
+        let schemaFields = editingSchema?.fields.map(\.field) ?? []
+        let existingStringFields = item.projected.fields.compactMap { field, value in
+            value.stringValue == nil ? nil : field
+        }
+        return Set(schemaFields + existingStringFields)
+            .filter { field in
+                !Self.readOnlyFields.contains(field) && !Self.hiddenStructuralFields.contains(field)
             }
-            .map(\.key)
             .sorted(by: compareFields)
     }
 
-    private var preservedFields: [(String, JSONValue)] {
-        item.projected.fields
-            .filter { field, value in
-                value.stringValue == nil && !Self.hiddenStructuralFields.contains(field)
-            }
-            .sorted { $0.key.localizedCaseInsensitiveCompare($1.key) == .orderedAscending }
+    private var populatedEditableStringFields: [String] {
+        editableStringFields.filter { field in
+            item.projected.fields[field]?.stringValue?.bcTrimmedNonEmpty != nil
+        }
+    }
+
+    private var visibleEditableStringFields: [String] {
+        showAllFields ? editableStringFields : populatedEditableStringFields
     }
 
     private var hasChanges: Bool {
@@ -166,6 +197,41 @@ struct ItemInfoInspectorSection: View {
 
     private var hasCreatorChanges: Bool {
         creatorDrafts.map(\.data) != originalCreatorData
+    }
+}
+
+private extension ItemInfoInspectorSection {
+    private func creatorEditor(_ creator: CreatorDraft) -> some View {
+        HStack(spacing: 6) {
+            Picker("Role", selection: creatorTypeBinding(for: creator.id)) {
+                ForEach(creatorTypeDefinitions, id: \.creatorType) { definition in
+                    Text(definition.localized).tag(definition.creatorType)
+                }
+            }
+            .labelsHidden()
+            .frame(width: 88)
+
+            if creator.data["name"] != nil {
+                TextField("Name", text: creatorFieldBinding(for: creator.id, field: "name"))
+            } else {
+                TextField("Last", text: creatorFieldBinding(for: creator.id, field: "lastName"))
+                TextField("First", text: creatorFieldBinding(for: creator.id, field: "firstName"))
+            }
+
+            Menu {
+                Button(creator.data["name"] == nil ? "Use Single Name Field" : "Use First and Last Name") {
+                    toggleCreatorLiteralMode(id: creator.id)
+                }
+                Divider()
+                Button("Remove Creator", systemImage: "trash", role: .destructive) {
+                    creatorDrafts.removeAll { $0.id == creator.id }
+                }
+            } label: {
+                Image(systemName: "ellipsis.circle")
+            }
+            .menuStyle(.borderlessButton)
+            .fixedSize()
+        }
     }
 
     private func binding(for field: String) -> Binding<String> {
@@ -204,6 +270,7 @@ struct ItemInfoInspectorSection: View {
             do {
                 let updated = try await model.updateItemFields(identity: item.identity, updates: updates)
                 resetDrafts(from: updated)
+                isEditingFields = false
             } catch {
                 model.statusMessage = "Failed to update item"
             }
@@ -245,6 +312,7 @@ struct ItemInfoInspectorSection: View {
                     creators: creatorDrafts.map(\.data)
                 )
                 resetDrafts(from: updated)
+                isEditingCreators = false
             } catch {
                 model.statusMessage = "Failed to update creators"
             }
@@ -253,6 +321,38 @@ struct ItemInfoInspectorSection: View {
 
     private func creatorTypeBinding(for id: UUID) -> Binding<String> {
         creatorFieldBinding(for: id, field: "creatorType")
+    }
+
+    private func creatorDisplayName(_ creator: CreatorDraft) -> String {
+        if let literal = creator.data["name"]?.stringValue?.bcTrimmedNonEmpty {
+            return literal
+        }
+        let components = [
+            creator.data["firstName"]?.stringValue?.bcTrimmedNonEmpty,
+            creator.data["lastName"]?.stringValue?.bcTrimmedNonEmpty,
+        ].compactMap(\.self)
+        return components.isEmpty ? "Unnamed Creator" : components.joined(separator: " ")
+    }
+
+    private func creatorRoleLabel(_ creator: CreatorDraft) -> String {
+        let type = creator.data["creatorType"]?.stringValue ?? "creator"
+        return creatorTypeDefinitions.first(where: { $0.creatorType == type })?.localized ?? fieldLabel(type)
+    }
+
+    private func cancelCreatorEditing() {
+        resetDrafts(from: item)
+        isEditingCreators = false
+    }
+
+    private func cancelFieldEditing() {
+        resetDrafts(from: item)
+        showAllFields = false
+        isEditingFields = false
+    }
+
+    private func toggleCreatorLiteralMode(id: UUID) {
+        let binding = creatorLiteralModeBinding(for: id)
+        binding.wrappedValue.toggle()
     }
 
     private func creatorLiteralModeBinding(for id: UUID) -> Binding<Bool> {
@@ -311,7 +411,10 @@ struct ItemInfoInspectorSection: View {
     }
 
     private func fieldLabel(_ field: String) -> String {
-        field
+        if let localized = editingSchema?.fields.first(where: { $0.field == field })?.localized {
+            return localized
+        }
+        return field
             .replacingOccurrences(of: "([a-z0-9])([A-Z])", with: "$1 $2", options: .regularExpression)
             .replacingOccurrences(of: "_", with: " ")
             .capitalized
@@ -319,16 +422,6 @@ struct ItemInfoInspectorSection: View {
             .replacingOccurrences(of: "Isbn", with: "ISBN")
             .replacingOccurrences(of: "Issn", with: "ISSN")
             .replacingOccurrences(of: "Url", with: "URL")
-    }
-
-    private func displayValue(_ value: JSONValue) -> String {
-        guard
-            let data = try? ZoteroJSON.encode(value),
-            let text = String(data: data, encoding: .utf8)
-        else {
-            return value.kind
-        }
-        return text
     }
 }
 

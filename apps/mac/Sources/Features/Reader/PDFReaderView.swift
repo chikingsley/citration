@@ -1,5 +1,6 @@
 import AppKit
 import CitrationCore
+import Observation
 import PDFKit
 import SwiftUI
 
@@ -16,12 +17,15 @@ struct PDFReaderView: NSViewRepresentable {
         var isRestoringProgress = false
         var appliedAnnotationsToken: String?
         var renderedAnnotations: [PDFAnnotation] = []
+        weak var proxy: PDFViewProxy?
 
         func configure(
             attachment: LocalAttachment,
+            proxy: PDFViewProxy,
             onProgressChange: @escaping (ReaderProgress) -> Void
         ) {
             self.attachment = attachment
+            self.proxy = proxy
             self.onProgressChange = onProgressChange
         }
 
@@ -43,6 +47,8 @@ struct PDFReaderView: NSViewRepresentable {
             guard pageIndex != NSNotFound else {
                 return
             }
+
+            proxy?.updatePageStatus()
 
             onProgressChange?(
                 ReaderProgress(
@@ -79,7 +85,7 @@ struct PDFReaderView: NSViewRepresentable {
     func makeNSView(context: Context) -> InkPDFView {
         let pdfView = InkPDFView()
         proxy.pdfView = pdfView
-        context.coordinator.configure(attachment: attachment, onProgressChange: onProgressChange)
+        context.coordinator.configure(attachment: attachment, proxy: proxy, onProgressChange: onProgressChange)
         configureInk(in: pdfView)
         pdfView.autoScales = true
         pdfView.displayMode = .singlePageContinuous
@@ -98,7 +104,7 @@ struct PDFReaderView: NSViewRepresentable {
 
     func updateNSView(_ pdfView: InkPDFView, context: Context) {
         proxy.pdfView = pdfView
-        context.coordinator.configure(attachment: attachment, onProgressChange: onProgressChange)
+        context.coordinator.configure(attachment: attachment, proxy: proxy, onProgressChange: onProgressChange)
         configureInk(in: pdfView)
         guard context.coordinator.loadedURL != attachment.localURL else {
             applyProgressIfNeeded(in: pdfView, context: context)
@@ -118,6 +124,7 @@ struct PDFReaderView: NSViewRepresentable {
 
     private func loadDocument(in pdfView: PDFView, context: Context) {
         pdfView.document = PDFDocument(url: attachment.localURL)
+        proxy.updatePageStatus()
         context.coordinator.loadedURL = attachment.localURL
         context.coordinator.appliedProgressToken = nil
         pdfView.autoScales = true
@@ -314,9 +321,78 @@ struct PDFSelectionInfo: Sendable {
 
 /// Bridges the SwiftUI header actions to the underlying PDFView so
 /// the highlight menu can read the user's current text selection.
+@Observable
 @MainActor
 final class PDFViewProxy {
     weak var pdfView: PDFView?
+    private(set) var currentPageNumber = 0
+    private(set) var pageCount = 0
+
+    var canGoBackward: Bool {
+        currentPageNumber > 1
+    }
+
+    var canGoForward: Bool {
+        currentPageNumber > 0 && currentPageNumber < pageCount
+    }
+
+    func goBackward() {
+        pdfView?.goToPreviousPage(nil)
+        updatePageStatus()
+    }
+
+    func goForward() {
+        pdfView?.goToNextPage(nil)
+        updatePageStatus()
+    }
+
+    func zoomOut() {
+        pdfView?.zoomOut(nil)
+    }
+
+    func zoomIn() {
+        pdfView?.zoomIn(nil)
+    }
+
+    func fitPage() {
+        guard let pdfView else {
+            return
+        }
+        pdfView.autoScales = true
+        pdfView.scaleFactor = pdfView.scaleFactorForSizeToFit
+    }
+
+    func setLayout(mode: PDFDisplayMode, direction: PDFDisplayDirection) {
+        pdfView?.displayMode = mode
+        pdfView?.displayDirection = direction
+        fitPage()
+    }
+
+    func find(_ query: String) {
+        guard
+            let document = pdfView?.document,
+            let selection = document.findString(query, withOptions: .caseInsensitive).first
+        else {
+            return
+        }
+        pdfView?.setCurrentSelection(selection, animate: true)
+        pdfView?.go(to: selection)
+        updatePageStatus()
+    }
+
+    func updatePageStatus() {
+        guard
+            let document = pdfView?.document,
+            let page = pdfView?.currentPage
+        else {
+            currentPageNumber = 0
+            pageCount = pdfView?.document?.pageCount ?? 0
+            return
+        }
+        let index = document.index(for: page)
+        currentPageNumber = index == NSNotFound ? 0 : index + 1
+        pageCount = document.pageCount
+    }
 
     func selectionInfo() -> PDFSelectionInfo? {
         guard

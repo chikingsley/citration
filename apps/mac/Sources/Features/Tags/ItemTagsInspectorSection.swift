@@ -2,25 +2,37 @@ import CitrationCore
 import SwiftUI
 
 struct ItemTagsInspectorSection: View {
+    // MARK: Internal
+
     @Bindable var tags: TagsModel
 
     let item: BCItem
 
     var body: some View {
         Section("Tags") {
-            HStack {
-                TextField("Add tag", text: $tags.draft)
+            VStack(alignment: .leading, spacing: 8) {
+                TextField("New tag", text: $tags.draft)
                     .onSubmit {
                         tags.addToSelectedItem()
                     }
-                Button {
-                    tags.addToSelectedItem()
-                } label: {
-                    Image(systemName: "plus.circle")
+
+                HStack {
+                    if !availableTags.isEmpty {
+                        Menu("Add Existing Tag…", systemImage: "tag") {
+                            ForEach(availableTags, id: \.self) { tag in
+                                Button(tag) {
+                                    tags.draft = tag
+                                    tags.addToSelectedItem()
+                                }
+                            }
+                        }
+                    }
+                    Spacer()
+                    Button("Add Tag", systemImage: "plus") {
+                        tags.addToSelectedItem()
+                    }
+                    .disabled(tags.draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
-                .buttonStyle(.borderless)
-                .disabled(tags.draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                .help("Add tag")
             }
 
             if item.tags.isEmpty {
@@ -41,6 +53,17 @@ struct ItemTagsInspectorSection: View {
                     }
                 }
             }
+        }
+    }
+
+    // MARK: Private
+
+    private var availableTags: [String] {
+        let existing = Set(item.tags.map { $0.lowercased() })
+        let query = tags.draft.trimmingCharacters(in: .whitespacesAndNewlines)
+        return tags.all.filter { tag in
+            !existing.contains(tag.lowercased())
+                && (query.isEmpty || tag.localizedCaseInsensitiveContains(query))
         }
     }
 }

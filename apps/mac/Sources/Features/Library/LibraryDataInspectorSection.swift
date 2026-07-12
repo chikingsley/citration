@@ -1,6 +1,8 @@
 import CitrationCore
 import SwiftUI
 
+// MARK: - LibraryDataInspectorSection
+
 struct LibraryDataInspectorSection: View {
     // MARK: Internal
 
@@ -47,6 +49,9 @@ struct LibraryDataInspectorSection: View {
 
     private func representationSection(_ snapshot: ZoteroLibraryPreservationSnapshot) -> some View {
         Section("Library Representation") {
+            Text("A diagnostic count of the Zotero objects Citration preserves locally. These values are not ordinary item metadata.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
             LabeledContent("Raw Objects", value: snapshot.objectCounts.map(\.count).reduce(0, +).formatted())
             ForEach(snapshot.objectCounts, id: \.kind) { object in
                 LabeledContent(object.kind.capitalized, value: object.count.formatted())
@@ -68,7 +73,7 @@ struct LibraryDataInspectorSection: View {
                     .foregroundStyle(.secondary)
             } else {
                 ForEach(selectedAttachments) { attachment in
-                    DisclosureGroup(attachment.fileName) {
+                    DiagnosticDisclosureRow(title: attachment.fileName) {
                         LabeledContent("Key", value: attachment.key)
                         LabeledContent("Cache", value: attachment.cacheState)
                         LabeledContent("Content Type", value: attachment.contentType)
@@ -82,12 +87,15 @@ struct LibraryDataInspectorSection: View {
 
     private func settingSection(_ snapshot: ZoteroLibraryPreservationSnapshot) -> some View {
         Section("Synchronized Settings") {
+            Text("Library-level Zotero settings synchronized as opaque JSON so they can round-trip without data loss.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
             if snapshot.settings.isEmpty {
                 Text("No synchronized setting objects.")
                     .foregroundStyle(.secondary)
             } else {
                 ForEach(snapshot.settings) { setting in
-                    DisclosureGroup(setting.key) {
+                    DiagnosticDisclosureRow(title: setting.key) {
                         LabeledContent("Version", value: setting.version.formatted())
                         Text(json(setting.value))
                             .font(.caption.monospaced())
@@ -100,6 +108,9 @@ struct LibraryDataInspectorSection: View {
 
     private func deletedSection(_ snapshot: ZoteroLibraryPreservationSnapshot) -> some View {
         Section("Trash And Tombstones") {
+            Text("Tombstones remember deleted object keys so deletion can synchronize correctly across devices.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
             if snapshot.deletedObjects.isEmpty {
                 Text("No deleted objects are preserved.")
                     .foregroundStyle(.secondary)
@@ -116,6 +127,9 @@ struct LibraryDataInspectorSection: View {
 
     private func unsupportedSection(_ snapshot: ZoteroLibraryPreservationSnapshot) -> some View {
         Section("Unsupported Raw Objects") {
+            Text("Objects without a first-class Citration view remain preserved here in their original Zotero form.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
             if snapshot.unsupportedObjects.isEmpty {
                 Text("Every current raw object has a known lossless projection.")
                     .foregroundStyle(.secondary)
@@ -182,4 +196,43 @@ struct LibraryDataInspectorSection: View {
             errorMessage = "Failed to inspect preserved library data."
         }
     }
+}
+
+// MARK: - DiagnosticDisclosureRow
+
+private struct DiagnosticDisclosureRow<Content: View>: View {
+    // MARK: Internal
+
+    let title: String
+    @ViewBuilder let content: () -> Content
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Button {
+                expanded.toggle()
+            } label: {
+                HStack {
+                    Image(systemName: "chevron.right")
+                        .font(.caption.weight(.semibold))
+                        .rotationEffect(.degrees(expanded ? 90 : 0))
+                    Text(title)
+                        .lineLimit(1)
+                    Spacer(minLength: 0)
+                }
+                .contentShape(.rect)
+            }
+            .buttonStyle(.plain)
+
+            if expanded {
+                VStack(alignment: .leading, spacing: 6) {
+                    content()
+                }
+                .padding(.leading, 18)
+            }
+        }
+    }
+
+    // MARK: Private
+
+    @State private var expanded = false
 }

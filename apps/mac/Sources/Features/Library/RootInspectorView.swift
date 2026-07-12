@@ -16,7 +16,7 @@ struct RootInspectorView: View {
 
     var body: some View {
         inspectorContent
-            .inspectorColumnWidth(min: 240, ideal: 310, max: 450)
+            .inspectorColumnWidth(min: 300, ideal: 360, max: 560)
             .onDrop(
                 of: [.fileURL],
                 delegate: FileURLDropDelegate(
@@ -143,7 +143,7 @@ private enum ItemInspectorSection: String, CaseIterable, Identifiable {
         case .annotations: "Annotations"
         case .cite: "Cite"
         case .related: "Related"
-        case .data: "Data"
+        case .data: "Diagnostics"
         }
     }
 

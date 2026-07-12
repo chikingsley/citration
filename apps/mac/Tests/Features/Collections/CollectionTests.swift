@@ -40,6 +40,22 @@ struct CollectionTests {
         try await waitUntil { model.collections.selectedItemCollectionIDs.isEmpty }
     }
 
+    @Test("addItems adds every dragged item to a collection")
+    func addItemsAddsEveryDraggedItem() async throws {
+        let items = [BCItem(title: "One"), BCItem(title: "Two")]
+        let model = makeAppModel(initialItems: items)
+        await model.refreshItems()
+        await model.collections.refresh()
+        model.collections.create(named: "Reading")
+        try await waitUntil { model.collections.all.count == 1 }
+        let collection = try #require(model.collections.all.first)
+
+        model.collections.addItems(ids: items.map(\.id), to: collection)
+        try await waitUntil { model.collections.memberships.count == 2 }
+
+        #expect(Set(model.collections.memberships.map(\.itemID)) == Set(items.map(\.id)))
+    }
+
     @Test("import adds new item to selected collection")
     func importAddsNewItemToSelectedCollection() async throws {
         let tempDirectory = makeTempDirectory()

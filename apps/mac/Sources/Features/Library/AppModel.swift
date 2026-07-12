@@ -31,6 +31,7 @@ final class AppModel {
         self.database = database
         self.connectionManager = connectionManager
         self.store = store
+        self.attachmentStore = attachmentStore
         observedLibraryID = (store as? CitrationLibraryStore)?.initialLibraryID
         self.annotationStore = annotationStore
         self.readerProgressStore = readerProgressStore
@@ -103,6 +104,7 @@ final class AppModel {
     var attachmentDownloadKeys: Set<String> = []
     var itemTypeDefinitions: [ZoteroItemTypeDefinition] = []
     var itemEditingSchemas: [String: ZoteroItemEditingSchema] = [:]
+    var pendingReadableAttachmentChoices: [ReadableAttachmentChoice] = []
 
     let collections: CollectionsModel
     let notes: NotesModel
@@ -117,6 +119,7 @@ final class AppModel {
     let database: CitrationDatabase
     let connectionManager: ZoteroConnectionManager
     let store: any SynchronizedLibraryItemStoring
+    let attachmentStore: any LibraryAttachmentStoring
     let annotationStore: any SynchronizedLibraryAnnotationStoring
     let readerProgressStore: any LibraryReaderProgressStoring
 

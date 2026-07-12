@@ -30,7 +30,9 @@ struct ItemNoteTests {
 
         model.notes.draft = "  Check <related> & linked work  "
         model.notes.addToSelectedItem()
-        try await waitUntil { model.notes.selectedItemNotes.count == 1 }
+        try await waitUntil {
+            model.notes.selectedItemNotes.count == 1 && model.statusMessage == "Added note"
+        }
 
         #expect(model.notes.draft.isEmpty)
         let note = try #require(model.notes.selectedItemNotes.first)

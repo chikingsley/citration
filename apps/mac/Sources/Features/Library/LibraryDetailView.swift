@@ -11,6 +11,7 @@ struct LibraryDetailView: View {
     @Binding var selectedItemIdentities: Set<SynchronizedLibraryItemIdentity>
 
     let onSelectionChange: (Set<SynchronizedLibraryItemIdentity>) -> Void
+    let onOpen: (Set<SynchronizedLibraryItemIdentity>) -> Void
 
     var body: some View {
         if filteredItems.isEmpty {
@@ -26,8 +27,11 @@ struct LibraryDetailView: View {
                 sortOrder: $sortOrder,
                 columnCustomization: $columnCustomization
             ) {
-                TableColumn("Title", value: \.libraryTitle)
-                    .customizationID("title")
+                TableColumn("Title", value: \.libraryTitle) { item in
+                    Text(item.libraryTitle)
+                        .draggable(dragPayload(for: item))
+                }
+                .customizationID("title")
                 TableColumn("Creator", value: \.libraryCreatorSummary)
                     .width(min: 80, ideal: 160, max: 300)
                     .customizationID("creator")
@@ -49,6 +53,21 @@ struct LibraryDetailView: View {
             .onChange(of: selectedItemIdentities) { _, selection in
                 onSelectionChange(selection)
             }
+            .contextMenu(forSelectionType: SynchronizedLibraryItemIdentity.self) { selection in
+                Button("Open", systemImage: "book.pages") {
+                    onOpen(selection)
+                }
+                .disabled(selection.isEmpty)
+            } primaryAction: { selection in
+                onOpen(selection)
+            }
+            .onKeyPress(.return) {
+                guard !selectedItemIdentities.isEmpty else {
+                    return .ignored
+                }
+                onOpen(selectedItemIdentities)
+                return .handled
+            }
         }
     }
 
@@ -60,6 +79,13 @@ struct LibraryDetailView: View {
 
     private var sortedItems: [SynchronizedLibraryItem] {
         filteredItems.sorted(using: sortOrder)
+    }
+
+    private func dragPayload(for item: SynchronizedLibraryItem) -> String {
+        let identities = selectedItemIdentities.contains(item.identity)
+            ? selectedItemIdentities
+            : Set([item.identity])
+        return LibraryItemDragPayload.encode(identities.map(\.appUUID))
     }
 }
 

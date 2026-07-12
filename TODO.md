@@ -101,17 +101,41 @@ Done when Citration is reliable as the primary native Mac interface for the self
 
 Done when an iPad can connect to the same self-hosted library, work offline, search and organize the complete library, read every supported format, create portable Pencil annotations that appear through the Zotero contract, and leave the accepted Mac client green.
 
-## 9. Native iPhone And Android Clients — Later
+## 9. Refine The First-Party App Experience
+
+- [ ] Define and visibly accept the distinct interaction hierarchy for each existing client: Mac remains the library-management and metadata-work surface, while iPad becomes a reading-first library where the document is primary and metadata is supporting information.
+- [ ] Make the Mac inspector compact by default: show populated Zotero-schema fields, offer one Show All Fields disclosure rather than inventing ad hoc fields, summarize creators until an explicit edit mode is entered, and move compatibility internals out of the ordinary Info surface.
+- [ ] Make tag and collection operations legible and consistent, including explicit add controls, tag completion, removal, destructive confirmation for deleting a collection or a library-wide tag, and full-row disclosure targets in advanced diagnostics.
+- [ ] Give the Mac library a primary document action through double-click, Return, File → Open, and the context menu; download remote content with visible progress, open it automatically, and ask only when several readable attachments are genuinely ambiguous.
+- [ ] Support native multi-selection and drag all selected items onto collections or tags with clear destination feedback, synchronized persistence, and an undoable result.
+- [ ] Keep the Library tab non-closable but hide the custom tab strip until at least one document is open; make the reader the main content surface while retaining visible sidebar, inspector, contextual search, and share controls.
+- [ ] Make a single iPad item selection open its preferred readable attachment, downloading with visible inline progress when necessary, presenting a compact chooser for multiple attachments, and using item information as the fallback only when no readable document exists.
+- [ ] Move iPad metadata out of the primary destination and into an intentional Info action or optional inspector without reducing the lossless metadata and editing contract shared with Mac.
+- [ ] Make the iPad PDF reader default to a complete fit-page reading experience and offer explicit, durable display choices for paginated, continuous, fit-width, and other justified iPad layouts.
+- [ ] Build one contextual reader shell across PDF, EPUB, HTML, and text, adapting format-specific controls while keeping navigation, search, progress, sidebars, annotation surfaces, sharing, and immersive chrome coherent on Mac and iPad.
+- [ ] Review the EPUB reader as a reading product rather than only a compatibility surface, including reflow typography, margins, themes, navigation, search, progress, and the surrounding full-screen reader chrome.
+- [ ] Make iPad reading genuinely immersive: allow a distraction-free page, reveal or pin controls intentionally, and surface Pencil tools naturally when Pencil interaction begins without permanently covering the document.
+- [ ] Clear transient active-reading state when a document closes while preserving durable progress for a truthful Continue Reading experience.
+- [ ] Audit the existing Mac enrichment pipeline—DOI, ISBN, arXiv, PDF text extraction, optional OCR, Crossref, OpenLibrary, and diagnostics—and build two deliberate workflows: safe Refresh Metadata with a proposed diff, and an explicitly stronger library-cleanup pass that can replace titles and filenames while retaining a complete rollback snapshot.
+- [ ] Automatically identify and enrich newly imported documents, create or update their compatible parent record, distinguish attachment title from physical filename, and apply a configurable parent-metadata naming template by default.
+- [ ] Evaluate local and hosted read-aloud engines as a separate reader feature with synchronized highlighting and navigation; do not assume Apple speech or a downloadable voice is acceptable until its real quality and distribution behavior are reviewed.
+- [ ] Decide native pull-down, search, filter, sort, reader-dismissal, and inspector gestures through visible iPad review rather than assigning hidden gestures speculatively.
+- [ ] Connect iPad foreground streaming and appropriate refresh behavior so ordinary remote changes trigger authoritative incremental sync without requiring the user to press Sync every time.
+- [ ] Repeat side-by-side visible Mac and iPad acceptance against the real library, then move completed findings to the changelog and leave only genuinely open product work here.
+
+Done when Mac and iPad express their different jobs clearly, opening a library item leads naturally to reading, metadata remains complete but subordinate on iPad, document acquisition feels continuous, and the real applications—not compatibility tests alone—support the accepted experience.
+
+## 10. Native iPhone And Android Clients — Later
 
 - [ ] Design the native iPhone app from the accepted shared core around library search, capture, reading, notes, and selective offline downloads.
 - [ ] Decide the Android client architecture only after the iPad and iPhone interaction and portability requirements are understood.
 
-Do not start until step 8 is accepted.
+Do not start until step 9 is accepted.
 
-## 10. Citration Extensions — Later
+## 11. Citration Extensions — Later
 
 - [ ] Add a namespaced server extension only after a desired feature is proven impossible to represent safely through the standard Zotero API.
 - [ ] Candidate areas include cross-document workspace state, richer EPUB reader state, OCR artifacts, metadata-repair history, and recommendation data.
 - [ ] Require portability and compatibility tests proving ordinary Zotero clients remain unaffected.
 
-Do not start until step 8 is accepted and a concrete feature justifies the extension.
+Do not start until step 9 is accepted and a concrete feature justifies the extension.

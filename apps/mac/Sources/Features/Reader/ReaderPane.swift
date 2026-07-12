@@ -20,6 +20,10 @@ struct ReaderPane: View {
         VStack(spacing: 0) {
             header
             Divider()
+            if attachment.documentFormat == .pdf {
+                pdfControls
+                Divider()
+            }
             readerContent
         }
         .background(Color(nsColor: .windowBackgroundColor))
@@ -38,6 +42,7 @@ struct ReaderPane: View {
     @State private var exportDocument: ReaderExportDocument?
     @State private var exportContentType: UTType = .data
     @State private var exportFileName = "Annotations"
+    @State private var pdfSearchText = ""
 
     private let pdfProxy: PDFViewProxy = .init()
 
@@ -51,6 +56,13 @@ struct ReaderPane: View {
             return "\(progress.location.displayLabel) · \(percent)%"
         }
         return progress.location.displayLabel
+    }
+
+    private var pdfPageLabel: String {
+        guard pdfProxy.currentPageNumber > 0, pdfProxy.pageCount > 0 else {
+            return "— / —"
+        }
+        return "\(pdfProxy.currentPageNumber) / \(pdfProxy.pageCount)"
     }
 
     private var header: some View {
@@ -153,6 +165,77 @@ struct ReaderPane: View {
         .background(.bar)
     }
 
+    private var pdfControls: some View {
+        HStack(spacing: 8) {
+            Button(action: pdfProxy.goBackward) {
+                Image(systemName: "chevron.left")
+            }
+            .disabled(!pdfProxy.canGoBackward)
+            .help("Previous page")
+
+            Text(pdfPageLabel)
+                .font(.caption.monospacedDigit())
+                .foregroundStyle(.secondary)
+                .frame(minWidth: 72)
+
+            Button(action: pdfProxy.goForward) {
+                Image(systemName: "chevron.right")
+            }
+            .disabled(!pdfProxy.canGoForward)
+            .help("Next page")
+
+            Divider()
+                .frame(height: 18)
+
+            Button(action: pdfProxy.zoomOut) {
+                Image(systemName: "minus.magnifyingglass")
+            }
+            .help("Zoom out")
+            Button(action: pdfProxy.zoomIn) {
+                Image(systemName: "plus.magnifyingglass")
+            }
+            .help("Zoom in")
+            Button(action: pdfProxy.fitPage) {
+                Image(systemName: "arrow.up.left.and.arrow.down.right")
+            }
+            .help("Fit page")
+
+            Menu {
+                Button("Continuous Vertical") {
+                    pdfProxy.setLayout(mode: .singlePageContinuous, direction: .vertical)
+                }
+                Button("Single Page") {
+                    pdfProxy.setLayout(mode: .singlePage, direction: .horizontal)
+                }
+                Button("Two Pages") {
+                    pdfProxy.setLayout(mode: .twoUp, direction: .horizontal)
+                }
+                Button("Wrapped Pages") {
+                    pdfProxy.setLayout(mode: .twoUpContinuous, direction: .vertical)
+                }
+            } label: {
+                Image(systemName: "rectangle.split.2x1")
+            }
+            .help("Page layout")
+
+            Spacer()
+
+            TextField("Find in document", text: $pdfSearchText)
+                .textFieldStyle(.roundedBorder)
+                .frame(width: 180)
+                .onSubmit(searchPDF)
+            Button(action: searchPDF) {
+                Image(systemName: "magnifyingglass")
+            }
+            .disabled(pdfSearchText.bcTrimmedNonEmpty == nil)
+            .help("Find in document")
+        }
+        .buttonStyle(.borderless)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 7)
+        .background(.bar)
+    }
+
     @ViewBuilder
     private var readerContent: some View {
         switch attachment.documentFormat {
@@ -202,7 +285,9 @@ struct ReaderPane: View {
             )
         }
     }
+}
 
+private extension ReaderPane {
     private func highlightSelection(color: AnnotationColor, kind: AnnotationKind) {
         guard let selection = pdfProxy.selectionInfo() else {
             reader.reportMissingSelection()
@@ -213,6 +298,13 @@ struct ReaderPane: View {
             color: color,
             kind: kind
         )
+    }
+
+    private func searchPDF() {
+        guard let query = pdfSearchText.bcTrimmedNonEmpty else {
+            return
+        }
+        pdfProxy.find(query)
     }
 
     private func prepareSidecarExport() {

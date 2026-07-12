@@ -10,11 +10,14 @@ struct WorkspaceContentView: View {
     @Binding var selectedItemIdentities: Set<SynchronizedLibraryItemIdentity>
 
     let onSelectionChange: (Set<SynchronizedLibraryItemIdentity>) -> Void
+    let onOpen: (Set<SynchronizedLibraryItemIdentity>) -> Void
 
     var body: some View {
         VStack(spacing: 0) {
-            WorkspaceTabBar(model: model, onDetach: detach)
-            Divider()
+            if !model.documentSessions.isEmpty {
+                WorkspaceTabBar(model: model, onDetach: detach)
+                Divider()
+            }
             workspaceContent
         }
     }
@@ -31,7 +34,8 @@ struct WorkspaceContentView: View {
                 filteredItems: filteredItems,
                 emptyState: emptyState,
                 selectedItemIdentities: $selectedItemIdentities,
-                onSelectionChange: onSelectionChange
+                onSelectionChange: onSelectionChange,
+                onOpen: onOpen
             )
 
         case let .document(attachmentKey):

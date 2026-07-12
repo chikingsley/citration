@@ -37,6 +37,19 @@ struct TaggingTests {
         #expect(model.statusMessage == "Removed tag")
     }
 
+    @Test("drag tagging updates every selected item")
+    func dragTaggingUpdatesEverySelectedItem() async throws {
+        let items = [BCItem(title: "One"), BCItem(title: "Two")]
+        let model = makeAppModel(initialItems: items)
+        await model.refreshItems()
+
+        model.addTag("Review", toItemIDs: items.map(\.id))
+        try await waitUntil { model.items.allSatisfy { $0.tags == ["Review"] } }
+
+        model.removeTagFromLibrary("Review")
+        try await waitUntil { model.items.allSatisfy(\.tags.isEmpty) }
+    }
+
     @Test("metadata enrichment preserves existing tags")
     func metadataEnrichmentPreservesTags() async throws {
         let doi = "10.5555/tagged"

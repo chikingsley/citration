@@ -30,7 +30,14 @@ struct RootView: View {
                 onDropURLs: { urls in
                     dispatchDropImport(urls: urls, mode: .createNewItemPerFile)
                 },
-                onRemoveCollection: removeCollection
+                onRemoveCollection: requestCollectionRemoval,
+                onRemoveTag: { tagPendingRemoval = $0 },
+                onDropItemIDsOnCollection: { ids, collection in
+                    model.collections.addItems(ids: ids, to: collection)
+                },
+                onDropItemIDsOnTag: { ids, tag in
+                    model.addTag(tag, toItemIDs: ids)
+                }
             )
             .onAppear {
                 selectLibrarySource(selectedSource)
@@ -51,16 +58,11 @@ struct RootView: View {
                 filteredItems: filteredItems,
                 emptyState: emptyState,
                 selectedItemIdentities: $selectedItemIdentities,
-                onSelectionChange: syncPrimarySelection(from:)
+                onSelectionChange: syncPrimarySelection(from:),
+                onOpen: openPrimaryDocument(from:)
             )
         }
         .navigationSplitViewStyle(.balanced)
-        .searchable(text: $searchText, placement: .toolbar, prompt: "Search")
-        .searchScopes($searchScope, activation: .onSearchPresentation) {
-            ForEach(SearchScope.allCases, id: \.self) { scope in
-                Text(scope.rawValue).tag(scope)
-            }
-        }
         .toolbar {
             rootToolbar
         }
@@ -96,6 +98,14 @@ struct RootView: View {
         .onDeleteCommand {
             deleteSelection()
         }
+        .modifier(
+            RootConfirmationDialogs(
+                model: model,
+                collectionPendingRemoval: $collectionPendingRemoval,
+                tagPendingRemoval: $tagPendingRemoval,
+                removeCollection: removeCollection
+            )
+        )
         .onAppear {
             syncTableSelection(with: model.selectedItemIdentity)
         }
@@ -135,6 +145,8 @@ struct RootView: View {
     @State private var isAttachDropTargeted = false
     @State private var importDragBorderPhase: CGFloat = 0
     @State private var attachDragBorderPhase: CGFloat = 0
+    @State private var collectionPendingRemoval: LibraryCollection?
+    @State private var tagPendingRemoval: String?
 
     @ObserveInjection private var inject
 
@@ -220,7 +232,34 @@ struct RootView: View {
         ToolbarItem(placement: .status) {
             SyncStatusMenu(model: model)
         }
-        ToolbarItem {
+        if model.selectedWorkspaceTab == .library {
+            ToolbarItem(placement: .navigation) {
+                HStack(spacing: 6) {
+                    TextField("Search", text: $searchText)
+                        .textFieldStyle(.roundedBorder)
+                        .frame(width: 220)
+                    Menu {
+                        Picker("Search Scope", selection: $searchScope) {
+                            ForEach(SearchScope.allCases, id: \.self) { scope in
+                                Text(scope.rawValue).tag(scope)
+                            }
+                        }
+                    } label: {
+                        Image(systemName: "line.3.horizontal.decrease")
+                    }
+                    .help("Search \(searchScope.rawValue.lowercased())")
+                }
+            }
+        }
+        if let shareText {
+            ToolbarItem(placement: .navigation) {
+                ShareLink(item: shareText) {
+                    Image(systemName: "square.and.arrow.up")
+                }
+                .help("Share selected item")
+            }
+        }
+        ToolbarItem(placement: .navigation) {
             Button {
                 inspectorPresented.toggle()
             } label: {
@@ -232,6 +271,18 @@ struct RootView: View {
         }
     }
 
+    private var shareText: String? {
+        guard let item = model.selectedLibraryItem else {
+            return nil
+        }
+        let title = item.bibliographic.title.bcTrimmedNonEmpty ?? "Untitled"
+        let locator = item.projected.fields["url"]?.stringValue?.bcTrimmedNonEmpty
+            ?? item.projected.fields["DOI"]?.stringValue?.bcTrimmedNonEmpty.map { "https://doi.org/\($0)" }
+        return [title, locator].compactMap(\.self).joined(separator: "\n")
+    }
+}
+
+private extension RootView {
     private func scheduleLibrarySearch(immediately: Bool = false) {
         librarySearchTask?.cancel()
         let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -267,6 +318,16 @@ struct RootView: View {
         }
         model.removeItems(ids: selectedItemIdentities.map(\.appUUID))
         selectedItemIdentities.removeAll()
+    }
+
+    private func openPrimaryDocument(from selection: Set<SynchronizedLibraryItemIdentity>) {
+        let identity = model.selectedItemIdentity.flatMap { selection.contains($0) ? $0 : nil }
+            ?? filteredItems.first(where: { selection.contains($0.identity) })?.identity
+            ?? selection.first
+        guard let identity else {
+            return
+        }
+        model.openPrimaryDocument(for: identity)
     }
 
     private func syncPrimarySelection(from selection: Set<SynchronizedLibraryItemIdentity>) {
@@ -336,6 +397,11 @@ struct RootView: View {
             selectedSource = .allItems
         }
         model.collections.remove(collection)
+        collectionPendingRemoval = nil
+    }
+
+    private func requestCollectionRemoval(_ collection: LibraryCollection) {
+        collectionPendingRemoval = collection
     }
 
     private func selectLibrarySource(_ source: LibrarySource?) {

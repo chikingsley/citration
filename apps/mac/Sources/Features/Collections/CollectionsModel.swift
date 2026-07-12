@@ -121,6 +121,26 @@ final class CollectionsModel {
         }
     }
 
+    func addItems(ids: [UUID], to collection: LibraryCollection) {
+        let uniqueIDs = Array(Set(ids))
+        guard !uniqueIDs.isEmpty else {
+            return
+        }
+        Task {
+            do {
+                for id in uniqueIDs {
+                    _ = try await store.addItem(id, to: collection.id)
+                }
+                await refresh()
+                context?.statusMessage = uniqueIDs.count == 1
+                    ? "Added item to \(collection.name)"
+                    : "Added \(uniqueIDs.count) items to \(collection.name)"
+            } catch {
+                context?.statusMessage = "Failed to add items to collection"
+            }
+        }
+    }
+
     /// Recomputes which collections the selected item belongs to.
     func refreshSelectedItemMemberships() {
         guard let selectedItemID = context?.selectedItemID else {
