@@ -56,6 +56,7 @@ struct IPadRootView: View {
                 attachmentKey: restoredAttachmentKey
             )
         }
+        .modifier(IPadForegroundSyncLifecycle(model: model))
         .onChange(of: model.selectedSource) { _, source in
             restoredSourceToken = model.sceneToken(for: source)
         }
@@ -325,6 +326,30 @@ struct IPadRootView: View {
             .buttonStyle(.bordered)
         }
     }
+}
+
+// MARK: - IPadForegroundSyncLifecycle
+
+private struct IPadForegroundSyncLifecycle: ViewModifier {
+    // MARK: Internal
+
+    @Bindable var model: IPadLibraryModel
+
+    func body(content: Content) -> some View {
+        content.onChange(of: scenePhase) { _, phase in
+            Task {
+                if phase == .active {
+                    await model.startAutomaticSynchronization()
+                } else if phase == .background {
+                    await model.stopAutomaticSynchronization()
+                }
+            }
+        }
+    }
+
+    // MARK: Private
+
+    @Environment(\.scenePhase) private var scenePhase
 }
 
 // MARK: - IPadSyncStatusMenu

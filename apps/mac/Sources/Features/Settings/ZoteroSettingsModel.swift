@@ -107,11 +107,11 @@ final class ZoteroSettingsModel {
         do {
             if profile.canWrite {
                 let report = try await connectionManager.synchronize()
-                try await context?.activateLibrary(profile)
+                await context?.refreshLibrary()
                 resultMessage = report.map(Self.summary) ?? "Nothing to synchronize."
             } else {
                 let report = try await connectionManager.pullReadOnly()
-                try await context?.activateLibrary(profile)
+                await context?.refreshLibrary()
                 resultMessage = report.map(Self.summary) ?? "Nothing to synchronize."
             }
             context?.statusMessage = "Synchronization complete"

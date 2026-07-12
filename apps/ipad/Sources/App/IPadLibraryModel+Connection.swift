@@ -13,6 +13,7 @@ extension IPadLibraryModel {
             let profile = try await connectionManager.connect(serverURL: serverURL, apiKey: apiKey)
             _ = try await store.selectLibrary(identity: profile.libraryIdentity, name: profile.displayName)
             await reloadAll()
+            await startAutomaticSynchronization()
             statusMessage = "Connected as \(profile.displayName)"
             return true
         } catch {
@@ -26,6 +27,7 @@ extension IPadLibraryModel {
         defer { isWorking = false }
         do {
             try await connectionManager.useLocalOnly()
+            await stopAutomaticSynchronization()
             _ = try await store.selectLibrary(identity: .init(type: "local", remoteID: 0), name: "Local Library")
             await reloadAll()
             statusMessage = "Using local library"

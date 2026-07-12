@@ -13,6 +13,7 @@ extension AppModel {
         )
         switchObservations(to: libraryID)
         await refreshConnectedFeatures()
+        await startAutomaticSynchronization()
     }
 
     func activateLocalLibrary() async throws {
@@ -26,6 +27,7 @@ extension AppModel {
         )
         switchObservations(to: libraryID)
         await refreshConnectedFeatures()
+        await stopAutomaticSynchronization()
     }
 
     func startLibraryObservation() {
@@ -90,6 +92,7 @@ extension AppModel {
             onChange: { [weak self] snapshot in
                 Task { @MainActor [weak self] in
                     self?.syncStatus = snapshot
+                    self?.scheduleAutomaticSynchronization(for: snapshot)
                 }
             }
         )

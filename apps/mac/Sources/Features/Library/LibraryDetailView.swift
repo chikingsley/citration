@@ -1,6 +1,19 @@
 import CitrationCore
 import SwiftUI
 
+// MARK: - LibraryItemCommand
+
+enum LibraryItemCommand {
+    case addAttachment
+    case addNote
+    case addToCollection(LibraryCollection)
+    case copyBibTeX
+    case moveToTrash
+    case open
+    case revealInFinder
+    case viewOnline
+}
+
 // MARK: - LibraryDetailView
 
 struct LibraryDetailView: View {
@@ -10,8 +23,12 @@ struct LibraryDetailView: View {
     let emptyState: LibraryEmptyState
     @Binding var selectedItemIdentities: Set<SynchronizedLibraryItemIdentity>
 
+    let downloadProgressByItemID: [UUID: Double]
+    let collections: [LibraryCollection]
+
     let onSelectionChange: (Set<SynchronizedLibraryItemIdentity>) -> Void
     let onOpen: (Set<SynchronizedLibraryItemIdentity>) -> Void
+    let onCommand: (LibraryItemCommand, Set<SynchronizedLibraryItemIdentity>) -> Void
 
     var body: some View {
         if filteredItems.isEmpty {
@@ -28,8 +45,16 @@ struct LibraryDetailView: View {
                 columnCustomization: $columnCustomization
             ) {
                 TableColumn("Title", value: \.libraryTitle) { item in
-                    Text(item.libraryTitle)
-                        .draggable(dragPayload(for: item))
+                    HStack(spacing: 8) {
+                        Text(item.libraryTitle)
+                        if let progress = downloadProgressByItemID[item.identity.appUUID] {
+                            ProgressView(value: progress)
+                                .frame(width: 54)
+                            Text(progress, format: .percent.precision(.fractionLength(0)))
+                                .font(.caption.monospacedDigit())
+                                .foregroundStyle(.secondary)
+                        }
+                    }
                 }
                 .customizationID("title")
                 TableColumn("Creator", value: \.libraryCreatorSummary)
@@ -55,7 +80,42 @@ struct LibraryDetailView: View {
             }
             .contextMenu(forSelectionType: SynchronizedLibraryItemIdentity.self) { selection in
                 Button("Open", systemImage: "book.pages") {
-                    onOpen(selection)
+                    onCommand(.open, selection)
+                }
+                .disabled(selection.isEmpty)
+                Divider()
+                Button("View Online", systemImage: "safari") {
+                    onCommand(.viewOnline, selection)
+                }
+                .disabled(selection.count != 1)
+                Button("Reveal in Finder", systemImage: "folder") {
+                    onCommand(.revealInFinder, selection)
+                }
+                .disabled(selection.count != 1)
+                Divider()
+                Button("Add Note", systemImage: "note.text.badge.plus") {
+                    onCommand(.addNote, selection)
+                }
+                .disabled(selection.count != 1)
+                Button("Add Attachment…", systemImage: "paperclip") {
+                    onCommand(.addAttachment, selection)
+                }
+                .disabled(selection.count != 1)
+                Menu("Add to Collection", systemImage: "folder.badge.plus") {
+                    ForEach(collections) { collection in
+                        Button(collection.name) {
+                            onCommand(.addToCollection(collection), selection)
+                        }
+                    }
+                }
+                .disabled(selection.isEmpty || collections.isEmpty)
+                Divider()
+                Button("Copy BibTeX", systemImage: "doc.on.doc") {
+                    onCommand(.copyBibTeX, selection)
+                }
+                .disabled(selection.isEmpty)
+                Button("Move to Trash", systemImage: "trash", role: .destructive) {
+                    onCommand(.moveToTrash, selection)
                 }
                 .disabled(selection.isEmpty)
             } primaryAction: { selection in
@@ -79,13 +139,6 @@ struct LibraryDetailView: View {
 
     private var sortedItems: [SynchronizedLibraryItem] {
         filteredItems.sorted(using: sortOrder)
-    }
-
-    private func dragPayload(for item: SynchronizedLibraryItem) -> String {
-        let identities = selectedItemIdentities.contains(item.identity)
-            ? selectedItemIdentities
-            : Set([item.identity])
-        return LibraryItemDragPayload.encode(identities.map(\.appUUID))
     }
 }
 

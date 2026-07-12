@@ -22,6 +22,9 @@ struct DetachedDocumentView: View {
             onClose: {
                 dismissWindow(value: route)
             },
+            onReturnToLibrary: {
+                dismissWindow(value: route)
+            },
             onDetach: nil
         )
         .frame(minWidth: 720, minHeight: 560)

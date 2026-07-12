@@ -135,11 +135,19 @@ extension AppModel {
             return
         }
         attachmentDownloadKeys.insert(record.itemKey)
+        attachmentDownloadProgressByItemID[itemID] = 0
         statusMessage = "Downloading \(record.filename)…"
         Task { @MainActor in
-            defer { attachmentDownloadKeys.remove(record.itemKey) }
+            defer {
+                attachmentDownloadKeys.remove(record.itemKey)
+                attachmentDownloadProgressByItemID[itemID] = nil
+            }
             do {
-                _ = try await connectionManager.downloadAttachment(itemKey: record.itemKey)
+                _ = try await connectionManager.downloadAttachment(itemKey: record.itemKey) { [weak self] progress in
+                    Task { @MainActor [weak self] in
+                        self?.attachmentDownloadProgressByItemID[itemID] = progress
+                    }
+                }
                 await importer.refreshSelectedItemAttachments()
                 refreshSelectedAttachmentCacheRecords()
                 let attachments = try await attachmentStore.listAttachments(for: itemID)

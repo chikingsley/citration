@@ -46,7 +46,7 @@ struct CitrationApp: App {
             RootView(model: model)
                 .frame(minWidth: 1080, minHeight: 720)
         }
-        .windowToolbarStyle(.unified)
+        .windowToolbarStyle(.unified(showsTitle: false))
         .commands {
             SidebarCommands()
             InspectorCommands()
@@ -75,7 +75,7 @@ struct CitrationApp: App {
                 DetachedDocumentView(model: model, route: route)
             }
         }
-        .windowToolbarStyle(.unified)
+        .windowToolbarStyle(.unified(showsTitle: false))
 
         Settings {
             ApplicationSettingsView(model: model)

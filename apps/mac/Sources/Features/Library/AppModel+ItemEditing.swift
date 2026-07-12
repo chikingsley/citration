@@ -34,15 +34,17 @@ extension AppModel {
             throw ZoteroItemEditingError.schemaMismatch
         }
 
-        let converted = try await store.convertItemType(
+        let summary = try await store.convertItemType(
             identity: identity,
             sourceSchema: sourceSchema,
             targetSchema: targetSchema
         )
         await refreshItems()
+        let converted = await hydrateItemDetail(summary)
+        installItemDetail(converted)
         selectItem(identity: identity)
         statusMessage = "Changed item type to \(targetSchema.itemType.localized)"
-        return selectedLibraryItem ?? converted
+        return converted
     }
 
     func updateCreators(

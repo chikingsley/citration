@@ -13,7 +13,6 @@ struct WorkspaceTabBar: View {
     var body: some View {
         ScrollView(.horizontal) {
             HStack(spacing: 0) {
-                libraryTab
                 ForEach(model.documentSessions) { session in
                     documentTab(session.attachment)
                 }
@@ -25,21 +24,6 @@ struct WorkspaceTabBar: View {
     }
 
     // MARK: Private
-
-    private var libraryTab: some View {
-        Button {
-            model.selectWorkspaceTab(.library)
-        } label: {
-            Label("Library", systemImage: "books.vertical")
-                .frame(minWidth: 92)
-                .padding(.horizontal, 10)
-                .padding(.vertical, 8)
-                .contentShape(.rect)
-        }
-        .buttonStyle(WorkspaceTabButtonStyle(isSelected: model.selectedWorkspaceTab == .library))
-        .accessibilityLabel("Library tab")
-        .accessibilityAddTraits(model.selectedWorkspaceTab == .library ? .isSelected : [])
-    }
 
     private func documentTab(_ attachment: LocalAttachment) -> some View {
         HStack(spacing: 6) {

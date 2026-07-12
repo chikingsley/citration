@@ -192,7 +192,7 @@ struct ItemInfoInspectorSection: View {
     }
 
     private var originalCreatorData: [[String: JSONValue]] {
-        item.projected.fields["creators"]?.arrayValue?.compactMap(\.objectValue) ?? []
+        item.projected.creators.map(creatorData)
     }
 
     private var hasCreatorChanges: Bool {
@@ -245,9 +245,18 @@ private extension ItemInfoInspectorSection {
         drafts = Dictionary(uniqueKeysWithValues: item.projected.fields.compactMap { field, value in
             value.stringValue.map { (field, $0) }
         })
-        creatorDrafts = (item.projected.fields["creators"]?.arrayValue ?? []).compactMap { value in
-            value.objectValue.map(CreatorDraft.init(data:))
+        creatorDrafts = item.projected.creators.map { CreatorDraft(data: creatorData($0)) }
+    }
+
+    private func creatorData(_ creator: ZoteroProjectedCreator) -> [String: JSONValue] {
+        var data: [String: JSONValue] = ["creatorType": .string(creator.creatorType)]
+        if let literal = creator.literalName?.bcTrimmedNonEmpty {
+            data["name"] = .string(literal)
+        } else {
+            data["firstName"] = .string(creator.firstName ?? "")
+            data["lastName"] = .string(creator.lastName ?? "")
         }
+        return data
     }
 
     private func saveChanges() {

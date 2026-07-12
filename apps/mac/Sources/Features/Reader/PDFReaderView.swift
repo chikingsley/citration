@@ -124,6 +124,9 @@ struct PDFReaderView: NSViewRepresentable {
 
     private func loadDocument(in pdfView: PDFView, context: Context) {
         pdfView.document = PDFDocument(url: attachment.localURL)
+        if let document = pdfView.document {
+            proxy.observeSearchNotifications(for: document)
+        }
         proxy.updatePageStatus()
         context.coordinator.loadedURL = attachment.localURL
         context.coordinator.appliedProgressToken = nil
@@ -136,7 +139,7 @@ struct PDFReaderView: NSViewRepresentable {
         guard
             let progress,
             progress.attachmentKey == attachment.objectKey,
-            context.coordinator.appliedProgressToken != token(for: progress),
+            context.coordinator.appliedProgressToken == nil,
             case let .page(pageNumber) = progress.location,
             let document = pdfView.document,
             document.pageCount > 0
@@ -255,9 +258,7 @@ struct PDFAnnotationAnchor: Sendable {
         )
     }
 
-    // MARK: Fileprivate
-
-    fileprivate static func make(
+    static func make(
         page: PDFPage,
         pageIndex: Int,
         primaryRects: [CGRect],
@@ -315,131 +316,4 @@ struct PDFAnnotationAnchor: Sendable {
 struct PDFSelectionInfo: Sendable {
     let text: String
     let anchor: PDFAnnotationAnchor
-}
-
-// MARK: - PDFViewProxy
-
-/// Bridges the SwiftUI header actions to the underlying PDFView so
-/// the highlight menu can read the user's current text selection.
-@Observable
-@MainActor
-final class PDFViewProxy {
-    weak var pdfView: PDFView?
-    private(set) var currentPageNumber = 0
-    private(set) var pageCount = 0
-
-    var canGoBackward: Bool {
-        currentPageNumber > 1
-    }
-
-    var canGoForward: Bool {
-        currentPageNumber > 0 && currentPageNumber < pageCount
-    }
-
-    func goBackward() {
-        pdfView?.goToPreviousPage(nil)
-        updatePageStatus()
-    }
-
-    func goForward() {
-        pdfView?.goToNextPage(nil)
-        updatePageStatus()
-    }
-
-    func zoomOut() {
-        pdfView?.zoomOut(nil)
-    }
-
-    func zoomIn() {
-        pdfView?.zoomIn(nil)
-    }
-
-    func fitPage() {
-        guard let pdfView else {
-            return
-        }
-        pdfView.autoScales = true
-        pdfView.scaleFactor = pdfView.scaleFactorForSizeToFit
-    }
-
-    func setLayout(mode: PDFDisplayMode, direction: PDFDisplayDirection) {
-        pdfView?.displayMode = mode
-        pdfView?.displayDirection = direction
-        fitPage()
-    }
-
-    func find(_ query: String) {
-        guard
-            let document = pdfView?.document,
-            let selection = document.findString(query, withOptions: .caseInsensitive).first
-        else {
-            return
-        }
-        pdfView?.setCurrentSelection(selection, animate: true)
-        pdfView?.go(to: selection)
-        updatePageStatus()
-    }
-
-    func updatePageStatus() {
-        guard
-            let document = pdfView?.document,
-            let page = pdfView?.currentPage
-        else {
-            currentPageNumber = 0
-            pageCount = pdfView?.document?.pageCount ?? 0
-            return
-        }
-        let index = document.index(for: page)
-        currentPageNumber = index == NSNotFound ? 0 : index + 1
-        pageCount = document.pageCount
-    }
-
-    func selectionInfo() -> PDFSelectionInfo? {
-        guard
-            let pdfView,
-            let selection = pdfView.currentSelection,
-            let text = selection.string?.bcTrimmedNonEmpty,
-            let page = selection.pages.first,
-            let document = pdfView.document
-        else {
-            return nil
-        }
-
-        let index = document.index(for: page)
-        let selectedPages = selection.pages
-        guard index != NSNotFound, selectedPages.count <= 2 else {
-            return nil
-        }
-        let selectionsByLine = selection.selectionsByLine()
-        let primaryRects = selectionsByLine.compactMap { line -> CGRect? in
-            guard line.pages.contains(page) else {
-                return nil
-            }
-            let bounds = line.bounds(for: page)
-            return bounds.isEmpty ? nil : bounds
-        }
-        let nextPageRects: [CGRect] = if selectedPages.count == 2 {
-            selectionsByLine.compactMap { line -> CGRect? in
-                let nextPage = selectedPages[1]
-                guard line.pages.contains(nextPage) else {
-                    return nil
-                }
-                let bounds = line.bounds(for: nextPage)
-                return bounds.isEmpty ? nil : bounds
-            }
-        } else {
-            []
-        }
-        guard
-            let anchor = PDFAnnotationAnchor.make(
-                page: page,
-                pageIndex: index,
-                primaryRects: primaryRects,
-                nextPageRects: nextPageRects
-            )
-        else {
-            return nil
-        }
-        return PDFSelectionInfo(text: text, anchor: anchor)
-    }
 }

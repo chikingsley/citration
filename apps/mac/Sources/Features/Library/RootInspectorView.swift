@@ -48,22 +48,74 @@ struct RootInspectorView: View {
 
     // MARK: Private
 
-    @SceneStorage("Citration.ItemInspectorSection") private var selectedSectionRawValue =
-        ItemInspectorSection.info.rawValue
+    @State private var infoExpanded = true
+    @State private var abstractExpanded = false
+    @State private var attachmentsExpanded = true
+    @State private var notesExpanded = false
+    @State private var collectionsExpanded = false
+    @State private var tagsExpanded = false
+    @State private var relatedExpanded = false
+    @State private var advancedExpanded = false
 
     @ViewBuilder
     private var inspectorContent: some View {
-        if let item = model.selectedLibraryItem {
+        if let item = model.selectedLibraryItemDetail {
             VStack(spacing: 0) {
-                sectionPicker
+                inspectorHeader(item)
                 Divider()
                 ScrollView {
                     Form {
-                        selectedContent(item)
+                        DisclosureGroup("Info", isExpanded: $infoExpanded) {
+                            ItemInfoInspectorSection(model: model, item: item)
+                        }
+                        DisclosureGroup("Abstract", isExpanded: $abstractExpanded) {
+                            Text(item.projected.fields["abstractNote"]?.stringValue?.bcTrimmedNonEmpty
+                                ?? "No abstract")
+                                .foregroundStyle(item.projected.fields["abstractNote"] == nil ? .secondary : .primary)
+                                .textSelection(.enabled)
+                        }
+                        DisclosureGroup("Attachments", isExpanded: $attachmentsExpanded) {
+                            ItemAttachmentsInspectorSection(model: model)
+                        }
+                        DisclosureGroup("Notes", isExpanded: $notesExpanded) {
+                            ItemNotesInspectorSection(notes: model.notes)
+                        }
+                        DisclosureGroup("Libraries and Collections", isExpanded: $collectionsExpanded) {
+                            ItemCollectionsInspectorSection(model: model, item: item.bibliographic)
+                        }
+                        DisclosureGroup("Tags", isExpanded: $tagsExpanded) {
+                            ItemTagsInspectorSection(tags: model.tags, item: item.bibliographic)
+                        }
+                        DisclosureGroup("Related", isExpanded: $relatedExpanded) {
+                            ItemRelatedInspectorSection(relationships: model.relationships, model: model)
+                        }
+                        DisclosureGroup("Advanced", isExpanded: $advancedExpanded) {
+                            ItemAnnotationsInspectorSection(model: model)
+                            CitationExportInspectorSection(citation: model.citation)
+                            if model.importer.hasMetadataDiagnostics {
+                                MetadataDiagnosticsInspectorSection(importer: model.importer)
+                            }
+                            LibraryDataInspectorSection(model: model, item: item)
+                        }
                     }
                     .formStyle(.grouped)
                 }
             }
+        } else if let summary = model.selectedLibraryItemSummary {
+            VStack(alignment: .leading, spacing: 12) {
+                Text(summary.title)
+                    .font(.headline)
+                    .lineLimit(2)
+                if !summary.creators.isEmpty {
+                    Text(summary.creators.map(\.displayName).joined(separator: ", "))
+                        .foregroundStyle(.secondary)
+                        .lineLimit(2)
+                }
+                ProgressView("Loading item details…")
+                    .controlSize(.small)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            .padding()
         } else {
             ContentUnavailableView(
                 "No Selection",
@@ -73,89 +125,19 @@ struct RootInspectorView: View {
         }
     }
 
-    private var sectionPicker: some View {
-        Picker("Inspector", selection: $selectedSectionRawValue) {
-            ForEach(ItemInspectorSection.allCases) { section in
-                Label(section.title, systemImage: section.systemImage)
-                    .labelStyle(.iconOnly)
-                    .tag(section.rawValue)
-                    .help(section.title)
+    private func inspectorHeader(_ item: SynchronizedLibraryItem) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(item.title)
+                .font(.headline)
+                .lineLimit(3)
+            if !item.creators.isEmpty {
+                Text(item.creators.map(\.displayName).joined(separator: ", "))
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(2)
             }
         }
-        .pickerStyle(.segmented)
-        .padding(10)
-    }
-
-    @ViewBuilder
-    private func selectedContent(_ item: SynchronizedLibraryItem) -> some View {
-        switch ItemInspectorSection(rawValue: selectedSectionRawValue) ?? .info {
-        case .info:
-            ItemInfoInspectorSection(model: model, item: item)
-            if model.importer.hasMetadataDiagnostics {
-                MetadataDiagnosticsInspectorSection(importer: model.importer)
-            }
-            ItemTagsInspectorSection(tags: model.tags, item: item.bibliographic)
-            ItemCollectionsInspectorSection(model: model, item: item.bibliographic)
-
-        case .attachments:
-            ItemAttachmentsInspectorSection(model: model)
-
-        case .notes:
-            ItemNotesInspectorSection(notes: model.notes)
-
-        case .annotations:
-            ItemAnnotationsInspectorSection(model: model)
-
-        case .cite:
-            CitationExportInspectorSection(citation: model.citation)
-
-        case .related:
-            ItemRelatedInspectorSection(relationships: model.relationships, model: model)
-
-        case .data:
-            LibraryDataInspectorSection(model: model, item: item)
-        }
-    }
-}
-
-// MARK: - ItemInspectorSection
-
-private enum ItemInspectorSection: String, CaseIterable, Identifiable {
-    case info
-    case attachments
-    case notes
-    case annotations
-    case cite
-    case related
-    case data
-
-    // MARK: Internal
-
-    var id: String {
-        rawValue
-    }
-
-    var title: String {
-        switch self {
-        case .info: "Info"
-        case .attachments: "Attachments"
-        case .notes: "Notes"
-        case .annotations: "Annotations"
-        case .cite: "Cite"
-        case .related: "Related"
-        case .data: "Diagnostics"
-        }
-    }
-
-    var systemImage: String {
-        switch self {
-        case .info: "info.circle"
-        case .attachments: "paperclip"
-        case .notes: "note.text"
-        case .annotations: "highlighter"
-        case .cite: "quote.opening"
-        case .related: "point.3.connected.trianglepath.dotted"
-        case .data: "externaldrive.badge.checkmark"
-        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(12)
     }
 }

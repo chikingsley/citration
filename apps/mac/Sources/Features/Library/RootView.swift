@@ -58,8 +58,11 @@ struct RootView: View {
                 filteredItems: filteredItems,
                 emptyState: emptyState,
                 selectedItemIdentities: $selectedItemIdentities,
+                downloadProgressByItemID: model.attachmentDownloadProgressByItemID,
+                collections: model.collections.all,
                 onSelectionChange: syncPrimarySelection(from:),
-                onOpen: openPrimaryDocument(from:)
+                onOpen: openPrimaryDocument(from:),
+                onCommand: handleLibraryCommand(_:selection:)
             )
         }
         .navigationSplitViewStyle(.balanced)
@@ -233,7 +236,7 @@ struct RootView: View {
             SyncStatusMenu(model: model)
         }
         if model.selectedWorkspaceTab == .library {
-            ToolbarItem(placement: .navigation) {
+            ToolbarItem(placement: .secondaryAction) {
                 HStack(spacing: 6) {
                     TextField("Search", text: $searchText)
                         .textFieldStyle(.roundedBorder)
@@ -252,14 +255,14 @@ struct RootView: View {
             }
         }
         if let shareText {
-            ToolbarItem(placement: .navigation) {
+            ToolbarItem(placement: .secondaryAction) {
                 ShareLink(item: shareText) {
                     Image(systemName: "square.and.arrow.up")
                 }
                 .help("Share selected item")
             }
         }
-        ToolbarItem(placement: .navigation) {
+        ToolbarItem(placement: .secondaryAction) {
             Button {
                 inspectorPresented.toggle()
             } label: {
@@ -298,7 +301,7 @@ private extension RootView {
             guard !Task.isCancelled else {
                 return
             }
-            searchResultKeys = Set(model.searchLibraryItemKeys(query: query, field: field))
+            searchResultKeys = await Set(model.searchLibraryItemKeys(query: query, field: field))
         }
     }
 
@@ -320,7 +323,7 @@ private extension RootView {
         selectedItemIdentities.removeAll()
     }
 
-    private func openPrimaryDocument(from selection: Set<SynchronizedLibraryItemIdentity>) {
+    func openPrimaryDocument(from selection: Set<SynchronizedLibraryItemIdentity>) {
         let identity = model.selectedItemIdentity.flatMap { selection.contains($0) ? $0 : nil }
             ?? filteredItems.first(where: { selection.contains($0.identity) })?.identity
             ?? selection.first
@@ -328,6 +331,28 @@ private extension RootView {
             return
         }
         model.openPrimaryDocument(for: identity)
+    }
+
+    func handleLibraryCommand(
+        _ command: LibraryItemCommand,
+        selection: Set<SynchronizedLibraryItemIdentity>
+    ) {
+        let identity = model.selectedItemIdentity.flatMap { selection.contains($0) ? $0 : nil }
+            ?? filteredItems.first(where: { selection.contains($0.identity) })?.identity
+            ?? selection.first
+        switch command {
+        case .addNote:
+            model.selectItem(identity: identity)
+            inspectorPresented = true
+            model.notes.prepareNewNote()
+
+        case .addAttachment:
+            model.selectItem(identity: identity)
+            attachmentImporterPresented = true
+
+        default:
+            model.performLibraryCommand(command, selection: selection)
+        }
     }
 
     private func syncPrimarySelection(from selection: Set<SynchronizedLibraryItemIdentity>) {

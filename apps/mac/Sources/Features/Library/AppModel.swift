@@ -30,6 +30,7 @@ final class AppModel {
     ) {
         self.database = database
         self.connectionManager = connectionManager
+        automaticSyncCoordinator = ForegroundSyncCoordinator(connectionManager: connectionManager)
         self.store = store
         self.attachmentStore = attachmentStore
         observedLibraryID = (store as? CitrationLibraryStore)?.initialLibraryID
@@ -73,6 +74,7 @@ final class AppModel {
 
         Task {
             await zoteroSettings.refresh()
+            await startAutomaticSynchronization()
             await ocrSettings.refreshKeyStatus()
             await openAlexSettings.refreshKeyStatus()
             await collections.refresh()
@@ -102,6 +104,7 @@ final class AppModel {
     var selectedAttachmentCacheRecords: [ZoteroAttachmentCacheRecord] = []
     var syncRecoveryOperationIDs: Set<Int64> = []
     var attachmentDownloadKeys: Set<String> = []
+    var attachmentDownloadProgressByItemID: [UUID: Double] = [:]
     var itemTypeDefinitions: [ZoteroItemTypeDefinition] = []
     var itemEditingSchemas: [String: ZoteroItemEditingSchema] = [:]
     var pendingReadableAttachmentChoices: [ReadableAttachmentChoice] = []
@@ -117,6 +120,7 @@ final class AppModel {
     let ocrSettings: OCRSettingsModel
     let openAlexSettings: OpenAlexSettingsModel
     let database: CitrationDatabase
+    let automaticSyncCoordinator: ForegroundSyncCoordinator
     let connectionManager: ZoteroConnectionManager
     let store: any SynchronizedLibraryItemStoring
     let attachmentStore: any LibraryAttachmentStoring
@@ -129,6 +133,9 @@ final class AppModel {
     @ObservationIgnored var navigationObservation: CitrationDatabaseObservation?
     @ObservationIgnored var syncStatusObservation: CitrationDatabaseObservation?
     @ObservationIgnored var observedLibraryID: Int64?
+    @ObservationIgnored var selectionRefreshTask: Task<Void, Never>?
+    @ObservationIgnored var itemDetailCache: [SynchronizedLibraryItemIdentity: SynchronizedLibraryItem] = [:]
+    @ObservationIgnored var itemDetailCacheOrder: [SynchronizedLibraryItemIdentity] = []
 
     @ObservationIgnored let libraryReader: ReaderModel
 
@@ -152,10 +159,9 @@ final class AppModel {
             selectedItemIdentity?.appUUID
         }
         set {
-            selectedItemIdentity = newValue.flatMap { appUUID in
+            selectItem(identity: newValue.flatMap { appUUID in
                 items.first { $0.identity.appUUID == appUUID }?.identity
-            }
-            refreshSelectedLibraryItemDetail()
+            })
         }
     }
 
@@ -169,27 +175,28 @@ final class AppModel {
         return items.first { $0.identity == selectedItemIdentity }
     }
 
+    var selectedLibraryItemSummary: SynchronizedLibraryItem? {
+        guard let selectedItemIdentity else {
+            return nil
+        }
+        return items.first { $0.identity == selectedItemIdentity }
+    }
+
     var selectedItem: BCItem? {
         selectedLibraryItem?.bibliographic
     }
 
     func refreshItems() async {
         items = await store.listLibraryItems()
+        pruneItemDetailCache(validIdentities: Set(items.map(\.identity)))
         let hasValidSelection = selectedItemIdentity.map { selectedIdentity in
             items.contains { $0.identity == selectedIdentity }
         } ?? false
         if !hasValidSelection {
-            selectedItemIdentity = items.first?.identity
+            selectItem(identity: items.first?.identity)
+        } else {
+            refreshSelectionAfterLibraryReload()
         }
-        refreshSelectedLibraryItemDetail()
-        Task {
-            await citation.renderPreviewForSelection()
-        }
-        await importer.refreshSelectedItemAttachments()
-        refreshSelectedAttachmentCacheRecords()
-        await notes.refreshForSelection()
-        relationships.refreshForSelection()
-        await insights.refreshForSelection()
     }
 
     func addEmptyItem() {
@@ -237,52 +244,27 @@ final class AppModel {
         }
     }
 
-    func selectItem(id: UUID?) {
-        selectItem(identity: id.flatMap { appUUID in
-            items.first { $0.identity.appUUID == appUUID }?.identity
-        })
-    }
-
-    func selectItem(identity: SynchronizedLibraryItemIdentity?) {
-        if selectedItemIdentity != identity {
-            notes.draft = ""
-            citation.clearExport()
-            relationships.clearSelectionDrafts()
-            insights.clearForSelectionChange()
-            importer.clearMetadataDiagnostics()
-        }
-        libraryReader.clearIfSelectionChanged(to: identity?.appUUID)
-        selectedItemIdentity = identity
-        refreshSelectedLibraryItemDetail()
-        Task {
-            await citation.renderPreviewForSelection()
-            await importer.refreshSelectedItemAttachments()
-            refreshSelectedAttachmentCacheRecords()
-            collections.refreshSelectedItemMemberships()
-            await notes.refreshForSelection()
-            relationships.refreshForSelection()
-            await insights.refreshForSelection()
-        }
-    }
-
     func refreshLibrary() async {
         await refreshItems()
     }
 
-    func searchLibraryItemKeys(query: String, field: LibrarySearchField) -> [String] {
+    func searchLibraryItemKeys(query: String, field: LibrarySearchField) async -> [String] {
         guard let observedLibraryID else {
             return []
         }
-        do {
-            return try database.searchLibraryItemKeys(
+        let database = database
+        let keys = await Task.detached {
+            try? database.searchLibraryItemKeys(
                 libraryID: observedLibraryID,
                 query: query,
                 field: field
             )
-        } catch {
+        }.value
+        guard let keys else {
             statusMessage = "Search failed"
             return []
         }
+        return keys
     }
 
     func addItem(_ item: BCItem) async {
@@ -304,35 +286,12 @@ final class AppModel {
         identity: SynchronizedLibraryItemIdentity,
         updates: [ZoteroItemFieldUpdate]
     ) async throws -> SynchronizedLibraryItem {
-        let updated = try await store.updateItemFields(identity: identity, updates: updates)
+        let summary = try await store.updateItemFields(identity: identity, updates: updates)
         await refreshItems()
+        let updated = await hydrateItemDetail(summary)
+        installItemDetail(updated)
         selectItem(identity: identity)
         statusMessage = "Updated item"
-        return selectedLibraryItem ?? updated
-    }
-
-    // MARK: Private
-
-    private func refreshSelectedLibraryItemDetail() {
-        guard
-            let identity = selectedItemIdentity,
-            let summary = items.first(where: { $0.identity == identity }),
-            let projected = try? database.fetchProjectedItem(
-                libraryID: identity.libraryID,
-                key: identity.objectKey
-            )
-        else {
-            selectedLibraryItemDetail = nil
-            return
-        }
-        selectedLibraryItemDetail = SynchronizedLibraryItem(
-            identity: summary.identity,
-            bibliographic: summary.bibliographic,
-            projected: projected,
-            zoteroItemType: summary.zoteroItemType,
-            zoteroDate: summary.zoteroDate,
-            publicationTitle: summary.publicationTitle,
-            parentItemKey: summary.parentItemKey
-        )
+        return updated
     }
 }

@@ -9,8 +9,12 @@ struct WorkspaceContentView: View {
     let emptyState: LibraryEmptyState
     @Binding var selectedItemIdentities: Set<SynchronizedLibraryItemIdentity>
 
+    let downloadProgressByItemID: [UUID: Double]
+    let collections: [LibraryCollection]
+
     let onSelectionChange: (Set<SynchronizedLibraryItemIdentity>) -> Void
     let onOpen: (Set<SynchronizedLibraryItemIdentity>) -> Void
+    let onCommand: (LibraryItemCommand, Set<SynchronizedLibraryItemIdentity>) -> Void
 
     var body: some View {
         VStack(spacing: 0) {
@@ -34,8 +38,11 @@ struct WorkspaceContentView: View {
                 filteredItems: filteredItems,
                 emptyState: emptyState,
                 selectedItemIdentities: $selectedItemIdentities,
+                downloadProgressByItemID: downloadProgressByItemID,
+                collections: collections,
                 onSelectionChange: onSelectionChange,
-                onOpen: onOpen
+                onOpen: onOpen,
+                onCommand: onCommand
             )
 
         case let .document(attachmentKey):
@@ -46,6 +53,9 @@ struct WorkspaceContentView: View {
                     reader: session.reader,
                     onClose: {
                         model.closeDocument(attachmentKey: session.id)
+                    },
+                    onReturnToLibrary: {
+                        model.selectWorkspaceTab(.library)
                     },
                     onDetach: {
                         detach(session.attachment)

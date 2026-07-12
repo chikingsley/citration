@@ -14,6 +14,7 @@ struct ReaderPane: View {
     let item: BCItem?
     let reader: ReaderModel
     let onClose: () -> Void
+    let onReturnToLibrary: () -> Void
     let onDetach: (() -> Void)?
 
     var body: some View {
@@ -67,6 +68,10 @@ struct ReaderPane: View {
 
     private var header: some View {
         HStack(spacing: 10) {
+            Button(action: onReturnToLibrary) {
+                Image(systemName: "chevron.left")
+            }
+            .help("Return to Library")
             Image(systemName: iconName(for: attachment.documentFormat))
                 .foregroundStyle(.secondary)
             VStack(alignment: .leading, spacing: 2) {
@@ -229,6 +234,24 @@ struct ReaderPane: View {
             }
             .disabled(pdfSearchText.bcTrimmedNonEmpty == nil)
             .help("Find in document")
+            Button(action: pdfProxy.findPrevious) {
+                Image(systemName: "chevron.up")
+            }
+            .disabled(pdfProxy.searchResults.isEmpty)
+            .help("Previous match")
+            Button(action: pdfProxy.findNext) {
+                Image(systemName: "chevron.down")
+            }
+            .disabled(pdfProxy.searchResults.isEmpty)
+            .help("Next match")
+            if pdfProxy.isSearching {
+                ProgressView()
+                    .controlSize(.small)
+            } else if !pdfProxy.searchResults.isEmpty {
+                Text("\(pdfProxy.currentSearchResult + 1)/\(pdfProxy.searchResults.count)")
+                    .font(.caption.monospacedDigit())
+                    .foregroundStyle(.secondary)
+            }
         }
         .buttonStyle(.borderless)
         .padding(.horizontal, 12)

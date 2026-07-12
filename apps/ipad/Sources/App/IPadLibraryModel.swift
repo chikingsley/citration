@@ -15,6 +15,7 @@ final class IPadLibraryModel {
         self.database = database
         self.store = store
         self.connectionManager = connectionManager
+        automaticSyncCoordinator = ForegroundSyncCoordinator(connectionManager: connectionManager)
     }
 
     // MARK: Internal
@@ -61,6 +62,7 @@ final class IPadLibraryModel {
     let database: CitrationDatabase
     let store: CitrationLibraryStore
     let connectionManager: ZoteroConnectionManager
+    let automaticSyncCoordinator: ForegroundSyncCoordinator
 
     var selectedItem: SynchronizedLibraryItem? {
         guard let selectedItemIdentity else {
@@ -95,6 +97,7 @@ final class IPadLibraryModel {
     func start() async {
         await reloadAll()
         startObserving()
+        await startAutomaticSynchronization()
     }
 
     func reloadAll() async {
@@ -187,7 +190,9 @@ final class IPadLibraryModel {
         Task {
             do {
                 let libraryID = await store.selectedLibraryID()
-                let keys = try database.searchLibraryItemKeys(libraryID: libraryID, query: query)
+                let keys = try await Task.detached {
+                    try database.searchLibraryItemKeys(libraryID: libraryID, query: query)
+                }.value
                 guard !Task.isCancelled else {
                     return
                 }
@@ -305,6 +310,7 @@ final class IPadLibraryModel {
                 onChange: { [weak self] status in
                     Task { @MainActor in
                         self?.syncStatus = status
+                        self?.scheduleAutomaticSynchronization(for: status)
                     }
                 }
             )
