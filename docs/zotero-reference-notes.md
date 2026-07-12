@@ -161,6 +161,14 @@ Standard Zotero objects remain canonical whenever the protocol can represent the
 
 App-only state may live locally. Cross-device app-only state may use a namespaced Zotero Self-Host extension only when a proven feature cannot round-trip through the standard API. Such extensions must not change ordinary Zotero versions, object bodies, or Desktop behavior.
 
+Reader progress is the first proven protocol gap. Zotero API v3 has no standard object for a PDF viewport, EPUB CFI, MOBI/text locator, or completion fraction. Citration currently stores that state only in the app-owned `reader_state` table. The accepted product decision is one global last-read position per attachment, with the most recently updated device winning. A future namespaced endpoint may synchronize this small versioned locator record, but it must reuse existing server authorization, remain outside ordinary Zotero library versions and object bodies, and leave Zotero Desktop behavior unchanged.
+
+High-fidelity native ink is a second characterized gap. Standard Zotero PDF ink records a page index, paths, width, color, and ordinary annotation identity/version data. That is sufficient for compatible rendering and portable vector geometry, but it does not represent the complete native Pencil editing state such as stable Citration stroke identity, tool/brush choice, per-point force, altitude, azimuth, timing, size, and opacity. Citration therefore keeps ordinary Zotero ink as the interoperable projection while a versioned native representation supplies first-class editing inside Citration.
+
+The local native representation remains in the same app-owned GRDB database and maps every native stroke or operation to its portable Zotero annotation projection. Draw, erase, and Undo are immediate local operations; compatibility projection and upload occur afterward. Imported Zotero ink is preserved exactly and may be upgraded only with properties actually present in its paths/width data. Compatible-client edits and deletions must reconcile back into the native representation.
+
+Cross-device native ink remains later extension work. A future namespaced endpoint may store incremental per-attachment/page stroke operations and reuse the existing Self-Host authorization, storage, and lightweight notification boundary. It must not stream individual Pencil samples, allocate ordinary Zotero library versions for private state, require a Durable Object, or become a second attachment service. Ordinary Zotero ink remains available even when a user stops using Citration, and a portable native sidecar must allow high-fidelity export.
+
 ## Primary References
 
 - [Zotero Web API v3 basics](https://www.zotero.org/support/dev/web_api/v3/basics)
