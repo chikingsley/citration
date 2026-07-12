@@ -13,13 +13,16 @@ struct IPadEPUBReaderView: View {
     let item: SynchronizedLibraryItem
     let record: ZoteroAttachmentCacheRecord
     let url: URL
+    let chromeVisible: Bool
 
     var body: some View {
         @Bindable var state = state
 
         VStack(spacing: 0) {
-            controls
-            Divider()
+            if chromeVisible {
+                controls
+                Divider()
+            }
             content
             if let selection = state.selection {
                 selectionBar(selection)

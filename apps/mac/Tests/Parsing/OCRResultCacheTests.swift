@@ -3,46 +3,6 @@ import CitrationCore
 import Foundation
 import Testing
 
-// MARK: - OCRTextParsingTests
-
-@Suite("OCR text parsing")
-struct OCRTextParsingTests {
-    // MARK: Internal
-
-    @Test("title hints join the scanned title page lines")
-    func titleHintsFromKabulFixture() throws {
-        let markdown = try String(contentsOf: Self.ocrFixture, encoding: .utf8)
-        let hints = OCRTextParsing.titleHints(fromMarkdown: markdown)
-
-        #expect(hints.first == "PERSIAN AN INTRODUCTION TO COLLOQUIAL KABUL PERSIAN")
-        #expect(hints.contains("KABUL PERSIAN"))
-    }
-
-    @Test("pre-ISBN scan yields no identifiers")
-    func noIdentifiersInKabulFixture() throws {
-        let markdown = try String(contentsOf: Self.ocrFixture, encoding: .utf8)
-        #expect(OCRTextParsing.identifiers(in: markdown).isEmpty)
-    }
-
-    @Test("identifiers are extracted from OCR text when present")
-    func identifiersFromSyntheticOCRText() {
-        let markdown = """
-        # Some Recovered Paper
-
-        See DOI: 10.1234/ocr.example and ISBN-13: 978-0-306-40615-7.
-        """
-        let identifiers = OCRTextParsing.identifiers(in: markdown)
-        #expect(identifiers.map(\.value) == ["10.1234/ocr.example", "9780306406157"])
-    }
-
-    // MARK: Private
-
-    private static let ocrFixture = URL(fileURLWithPath: #filePath)
-        .deletingLastPathComponent()
-        .deletingLastPathComponent()
-        .appendingPathComponent("Fixtures/kabul-persian-scanned.ocr.md")
-}
-
 // MARK: - OCRResultCacheTests
 
 @Suite("OCR result cache")

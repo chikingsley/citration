@@ -54,7 +54,7 @@ Run the smallest gate that can falsify the current change, then broaden at integ
 - CitrationCore database, model, decoder, or sync work: run SwiftFormat/SwiftLint and `cd packages/citration-core-swift && swift test --parallel`. Do not regenerate or rebuild the Xcode app unless package integration changed.
 - Project, package dependency, resource, or app wiring changes: regenerate once and run the affected app build/tests.
 - UI changes: build and run the real Mac app, inspect the visible hierarchy and behavior, and run affected application tests. Code shape alone is not UI acceptance.
-- Before each coherent commit and after an architectural boundary: run `just check` or its updated full-repository successor.
+- Before each coherent commit, run the deterministic `just check` build gate plus the functional lane affected by the change. After an architectural boundary, run `just verify`, whose functional and performance sections execute sequentially.
 - Before claiming sync/file/version completion: run the relevant live read-only or disposable-write acceptance against Zotero Self-Host and Zotero Desktop.
 
 Do not repeatedly run full Xcode builds while changing only core database or protocol code. Do not skip the full gate before committing a completed slice.

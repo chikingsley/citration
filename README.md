@@ -48,7 +48,7 @@ Run the current repository checks with:
 just check
 ```
 
-The full gate includes the shared core, CLI, Mac suite, and iPad suite. `just ipad-build` and `just ipad-test` provide focused iPad checks.
+`just check` is the deterministic format, lint, and compilation gate for the shared core, CLI, Mac app, and iPad app. Functional coverage is deliberately sectioned: `just test-core` runs the real core database/file/API-fixture suite sequentially, `just test-mac` runs Mac app integration, `just test-ipad` runs the iPad app and simulator UI suite, and `just test-performance` runs the real 10,000-item SQLite acceptance by itself. `just verify` runs every section in order.
 
 SwiftFormat owns formatting. SwiftLint enforces semantic and safety rules. Lefthook runs both before commits.
 

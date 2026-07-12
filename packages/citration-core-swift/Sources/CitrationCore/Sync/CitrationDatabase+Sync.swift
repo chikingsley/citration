@@ -68,6 +68,9 @@ public extension CitrationDatabase {
         libraryID: Int64
     ) throws {
         try databaseQueue.write { database in
+            let fractionalDateFormatter = ISO8601DateFormatter()
+            fractionalDateFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+            let dateFormatter = ISO8601DateFormatter()
             let statement = try database.cachedStatement(sql: """
             INSERT INTO app_object_identity (
                 library_id, object_kind, object_key, app_uuid, created_at, updated_at
@@ -80,8 +83,18 @@ public extension CitrationDatabase {
                     guard let key = object.key else {
                         continue
                     }
-                    let createdAt = Self.remoteDate("dateAdded", object: object) ?? .now
-                    let updatedAt = Self.remoteDate("dateModified", object: object) ?? createdAt
+                    let createdAt = Self.remoteDate(
+                        "dateAdded",
+                        object: object,
+                        fractionalFormatter: fractionalDateFormatter,
+                        formatter: dateFormatter
+                    ) ?? .now
+                    let updatedAt = Self.remoteDate(
+                        "dateModified",
+                        object: object,
+                        fractionalFormatter: fractionalDateFormatter,
+                        formatter: dateFormatter
+                    ) ?? createdAt
                     try statement.execute(arguments: [
                         libraryID,
                         kind.rawValue,
@@ -254,12 +267,15 @@ public extension CitrationDatabase {
         }
     }
 
-    private static func remoteDate(_ field: String, object: ZoteroRawObject) -> Date? {
+    private static func remoteDate(
+        _ field: String,
+        object: ZoteroRawObject,
+        fractionalFormatter: ISO8601DateFormatter,
+        formatter: ISO8601DateFormatter
+    ) -> Date? {
         guard let value = object.data[field]?.stringValue else {
             return nil
         }
-        let fractional = ISO8601DateFormatter()
-        fractional.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        return fractional.date(from: value) ?? ISO8601DateFormatter().date(from: value)
+        return fractionalFormatter.date(from: value) ?? formatter.date(from: value)
     }
 }

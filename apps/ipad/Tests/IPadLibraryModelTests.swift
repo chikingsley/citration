@@ -52,5 +52,15 @@ struct IPadLibraryModelTests {
         #expect(model.openDocument?.record.itemKey == attachment.objectKey)
         #expect(model.sceneToken(for: model.selectedSource) == "collection:\(collection.id.uuidString)")
         #expect(try database.integrityCheck() == "ok")
+
+        model.closeDocument()
+        model.selectItem(nil)
+        model.selectItem(item.identity)
+        let clock = ContinuousClock()
+        let start = clock.now
+        while model.openDocument == nil, start.duration(to: clock.now) < .seconds(2) {
+            try await Task.sleep(for: .milliseconds(10))
+        }
+        #expect(model.openDocument?.record.itemKey == attachment.objectKey)
     }
 }

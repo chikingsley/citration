@@ -13,8 +13,11 @@ format-lint:
 lint:
     swiftlint lint --config .swiftlint.yml --strict --quiet --cache-path .swiftlint_cache
 
-core-test:
-    cd packages/citration-core-swift && swift test --parallel
+core-build:
+    cd packages/citration-core-swift && swift build
+
+test-core:
+    cd packages/citration-core-swift && swift test --no-parallel --skip LargeLibraryPerformanceTests
 
 cli-build:
     cd tools/citration-cli && swift build --disable-build-manifest-caching
@@ -23,7 +26,7 @@ app-build:
     xcodegen generate
     xcodebuild build -quiet -project Citration.xcodeproj -scheme Citration -destination 'platform=macOS,arch=arm64'
 
-app-test:
+test-mac:
     xcodegen generate
     xcodebuild test -quiet -project Citration.xcodeproj -scheme Citration -destination 'platform=macOS,arch=arm64'
 
@@ -31,8 +34,27 @@ ipad-build:
     xcodegen generate
     xcodebuild build -quiet -project Citration.xcodeproj -scheme CitrationPad -destination 'platform=iOS Simulator,name=iPad Pro 13-inch (M5),OS=26.5'
 
-ipad-test:
+test-ipad:
     xcodegen generate
     xcodebuild test -quiet -project Citration.xcodeproj -scheme CitrationPad -destination 'platform=iOS Simulator,name=iPad Pro 13-inch (M5),OS=26.5'
 
-check: format-lint lint core-test cli-build app-test ipad-test
+test-performance:
+    cd packages/citration-core-swift && swift test --configuration release --no-parallel --filter LargeLibraryPerformanceTests
+
+test-all:
+    just test-core
+    just test-mac
+    just test-ipad
+    just test-performance
+
+check: format-lint lint core-build cli-build app-build ipad-build
+
+verify:
+    just check
+    just test-all
+
+core-test: test-core
+
+app-test: test-mac
+
+ipad-test: test-ipad

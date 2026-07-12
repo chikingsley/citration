@@ -5,19 +5,22 @@ extension IPadLibraryModel {
         selectedSource = source(from: sourceToken)
         selectedItemIdentity = items.first { $0.identity.objectKey == itemKey }?.identity
         await refreshSelection()
-        guard
+        guard let item = selectedItem else {
+            return
+        }
+        if
             !attachmentKey.isEmpty,
-            let item = selectedItem,
             let record = try? database.attachmentCacheRecord(
                 libraryID: item.identity.libraryID,
                 itemKey: attachmentKey
             ),
             let url = record.localURL,
             FileManager.default.fileExists(atPath: url.path)
-        else {
-            return
+        {
+            open(item: item, record: record, url: url)
+        } else {
+            await openPreferredDocumentForSelection()
         }
-        open(item: item, record: record, url: url)
     }
 
     func sceneToken(for source: Source?) -> String {

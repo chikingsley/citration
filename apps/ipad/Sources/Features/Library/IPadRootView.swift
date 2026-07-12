@@ -35,15 +35,23 @@ struct IPadRootView: View {
                     record: document.record,
                     url: document.url
                 )
-                .toolbar {
-                    ToolbarItem(placement: .cancellationAction) {
-                        Button("Close", systemImage: "xmark") {
-                            model.openDocument = nil
-                        }
-                        .keyboardShortcut(.cancelAction)
-                    }
+            }
+        }
+        .confirmationDialog(
+            "Choose a Document",
+            isPresented: documentChoicesPresented,
+            titleVisibility: .visible
+        ) {
+            ForEach(model.pendingDocumentChoices) { record in
+                Button(record.filename) {
+                    model.openDocumentChoice(record)
                 }
             }
+            Button("Cancel", role: .cancel) {
+                model.dismissDocumentChoices()
+            }
+        } message: {
+            Text("This item has more than one readable attachment.")
         }
         .task {
             await model.start()
@@ -69,6 +77,17 @@ struct IPadRootView: View {
     @SceneStorage("citration.source") private var restoredSourceToken = "all"
     @SceneStorage("citration.item") private var restoredItemKey = ""
     @SceneStorage("citration.attachment") private var restoredAttachmentKey = ""
+
+    private var documentChoicesPresented: Binding<Bool> {
+        Binding(
+            get: { !model.pendingDocumentChoices.isEmpty },
+            set: { presented in
+                if !presented {
+                    model.dismissDocumentChoices()
+                }
+            }
+        )
+    }
 
     private var sidebar: some View {
         List(selection: $model.selectedSource) {
@@ -116,18 +135,25 @@ struct IPadRootView: View {
                     get: { model.selectedItemIdentity },
                     set: { model.selectItem($0) }
                 )) { item in
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(item.title)
-                            .font(.headline)
-                            .lineLimit(2)
-                        HStack(spacing: 8) {
-                            Text(item.creators.first?.displayName ?? item.zoteroItemType)
-                            if let year = item.publicationYear {
-                                Text(String(year))
+                    HStack {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(item.title)
+                                .font(.headline)
+                                .lineLimit(2)
+                            HStack(spacing: 8) {
+                                Text(item.creators.first?.displayName ?? item.zoteroItemType)
+                                if let year = item.publicationYear {
+                                    Text(String(year))
+                                }
                             }
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
                         }
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                        Spacer(minLength: 8)
+                        if model.openingItemIdentity == item.identity {
+                            ProgressView()
+                                .controlSize(.small)
+                        }
                     }
                     .tag(item.identity)
                 }
@@ -148,9 +174,9 @@ struct IPadRootView: View {
     @ViewBuilder
     private var detail: some View {
         if let item = model.selectedItem {
-            IPadItemDetailView(model: model, item: item)
+            IPadItemLandingView(model: model, item: item)
         } else {
-            ContentUnavailableView("Select an Item", systemImage: "doc.text.magnifyingglass")
+            ContentUnavailableView("Choose Something to Read", systemImage: "books.vertical")
         }
     }
 
@@ -241,176 +267,5 @@ private struct IPadSyncStatusMenu: View {
             Label(failure.operation, systemImage: "exclamationmark.triangle")
         }
         .disabled(model.recoveringFailureIDs.contains(failure.id))
-    }
-}
-
-// MARK: - IPadItemDetailView
-
-private struct IPadItemDetailView: View {
-    // MARK: Internal
-
-    @Bindable var model: IPadLibraryModel
-
-    let item: SynchronizedLibraryItem
-
-    var body: some View {
-        List {
-            Section {
-                Text(item.title)
-                    .font(.title2.weight(.semibold))
-                if !item.creators.isEmpty {
-                    Text(item.creators.map(\.displayName).joined(separator: ", "))
-                        .foregroundStyle(.secondary)
-                }
-                LabeledContent("Type", value: item.zoteroItemType)
-                if !item.zoteroDate.isEmpty {
-                    LabeledContent("Date", value: item.zoteroDate)
-                }
-                if !item.publicationTitle.isEmpty {
-                    LabeledContent("Publication", value: item.publicationTitle)
-                }
-                if !item.projected.abstractNote.isEmpty {
-                    Text(item.projected.abstractNote)
-                }
-                metadata("DOI", item.projected.doi)
-                metadata("ISBN", item.projected.isbn)
-                metadata("ISSN", item.projected.issn)
-                metadata("URL", item.projected.url)
-                metadata("Language", item.projected.language)
-                metadata("Rights", item.projected.rights)
-                metadata("Extra", item.projected.extra)
-            }
-            Section("Documents") {
-                if model.attachmentRecords.isEmpty {
-                    Text("No attachments")
-                        .foregroundStyle(.secondary)
-                } else {
-                    ForEach(model.attachmentRecords) { record in
-                        HStack {
-                            Label(record.filename, systemImage: documentIcon(record))
-                            Spacer()
-                            attachmentAction(record)
-                        }
-                    }
-                }
-            }
-            if !item.tags.isEmpty {
-                Section("Tags") {
-                    Text(item.tags.joined(separator: ", "))
-                }
-            }
-            Section("Notes") {
-                if model.selectedNotes.isEmpty {
-                    Text("No notes")
-                        .foregroundStyle(.secondary)
-                } else {
-                    ForEach(model.selectedNotes) { note in
-                        VStack(alignment: .leading, spacing: 8) {
-                            IPadNoteHTMLView(html: note.html)
-                                .frame(minHeight: 88, idealHeight: 140, maxHeight: 220)
-                            HStack {
-                                Text(note.updatedAt, style: .date)
-                                Spacer()
-                                Text("v\(note.version)")
-                                    .monospacedDigit()
-                            }
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                        }
-                    }
-                }
-            }
-        }
-        .navigationTitle("Item")
-        .navigationBarTitleDisplayMode(.inline)
-    }
-
-    // MARK: Private
-
-    @ViewBuilder
-    private func metadata(_ label: String, _ value: String) -> some View {
-        if !value.isEmpty {
-            LabeledContent(label, value: value)
-        }
-    }
-
-    @ViewBuilder
-    private func attachmentAction(_ record: ZoteroAttachmentCacheRecord) -> some View {
-        switch record.cacheState {
-        case .downloaded:
-            if let localURL = record.localURL {
-                Button("Open") {
-                    model.open(item: item, record: record, url: localURL)
-                }
-            }
-
-        case .downloading:
-            ProgressView()
-
-        case .notDownloaded,
-             .stale,
-             .failed:
-            Button(record.cacheState == .failed ? "Retry" : "Download") {
-                Task { await model.download(record) }
-            }
-            .disabled(model.isWorking)
-        }
-    }
-
-    private func documentIcon(_ record: ZoteroAttachmentCacheRecord) -> String {
-        switch DocumentFormat.infer(fileName: record.filename, contentType: record.contentType) {
-        case .pdf: "doc.richtext"
-        case .epub: "book.closed"
-        case .html: "globe"
-        case .plainText: "doc.plaintext"
-        default: "doc"
-        }
-    }
-}
-
-// MARK: - IPadDocumentView
-
-private struct IPadDocumentView: View {
-    @Bindable var model: IPadLibraryModel
-
-    let item: SynchronizedLibraryItem
-    let record: ZoteroAttachmentCacheRecord
-    let url: URL
-
-    var body: some View {
-        switch DocumentFormat.infer(fileName: url.lastPathComponent, contentType: record.contentType) {
-        case .pdf:
-            IPadPDFReaderView(model: model, item: item, record: record, url: url)
-
-        case .plainText:
-            IPadPlainTextReaderView(model: model, item: item, record: record, url: url)
-
-        case .epub,
-             .html:
-            if DocumentFormat.infer(fileName: url.lastPathComponent, contentType: record.contentType) == .epub {
-                IPadEPUBReaderView(model: model, item: item, record: record, url: url)
-            } else {
-                IPadWebDocumentView(
-                    url: url,
-                    format: .html,
-                    progress: model.readerProgress,
-                    onProgress: { offset, fraction in
-                        model.updateTextProgress(
-                            item: item,
-                            record: record,
-                            textOffset: offset,
-                            fractionComplete: fraction
-                        )
-                    }
-                )
-                .navigationTitle(record.filename)
-                .task(id: record.itemKey) {
-                    await model.openReader(item: item, record: record)
-                }
-            }
-
-        default:
-            ContentUnavailableView("Unsupported Document", systemImage: "doc.questionmark")
-        }
     }
 }

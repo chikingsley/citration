@@ -108,7 +108,14 @@ public extension CitrationLibraryStore {
                 arguments: [libraryID]
             )
             let projectionData = try LibraryItemProjectionData.fetch(libraryID: libraryID, database: database)
-            return try rows.map { try Self.decodeLibraryItem(row: $0, projectionData: projectionData) }
+            let dateFormatter = ISO8601DateFormatter()
+            return try rows.map {
+                try Self.decodeLibraryItem(
+                    row: $0,
+                    projectionData: projectionData,
+                    dateFormatter: dateFormatter
+                )
+            }
         }
     }
 
@@ -163,7 +170,8 @@ public extension CitrationLibraryStore {
 
     private static func decodeLibraryItem(
         row: Row,
-        projectionData: LibraryItemProjectionData
+        projectionData: LibraryItemProjectionData,
+        dateFormatter: ISO8601DateFormatter
     ) throws -> SynchronizedLibraryItem {
         let libraryID: Int64 = row["library_id"]
         let key: String = row["item_key"]
@@ -179,7 +187,8 @@ public extension CitrationLibraryStore {
             id: id,
             identifiers: projectedIdentifiers,
             creators: projectedCreators,
-            tags: projectedTags
+            tags: projectedTags,
+            dateFormatter: dateFormatter
         )
         let projected = makeProjectedItem(
             row: row,
@@ -209,7 +218,8 @@ public extension CitrationLibraryStore {
         id: UUID,
         identifiers: [ZoteroProjectedIdentifier],
         creators: [ZoteroProjectedCreator],
-        tags: [ZoteroProjectedTag]
+        tags: [ZoteroProjectedTag],
+        dateFormatter: ISO8601DateFormatter
     ) -> BCItem {
         BCItem(
             id: id,
@@ -225,8 +235,8 @@ public extension CitrationLibraryStore {
             },
             publicationYear: publicationYear(from: row["date_text"]),
             tags: tags.map(\.value),
-            createdAt: parseDate(row["date_added"]) ?? .distantPast,
-            updatedAt: parseDate(row["date_modified"]) ?? .distantPast
+            createdAt: parseDate(row["date_added"], using: dateFormatter) ?? .distantPast,
+            updatedAt: parseDate(row["date_modified"], using: dateFormatter) ?? .distantPast
         )
     }
 
@@ -298,6 +308,13 @@ public extension CitrationLibraryStore {
 
     internal static func parseDate(_ value: String?) -> Date? {
         value.flatMap { ISO8601DateFormatter().date(from: $0) }
+    }
+
+    private static func parseDate(
+        _ value: String?,
+        using formatter: ISO8601DateFormatter
+    ) -> Date? {
+        value.flatMap(formatter.date(from:))
     }
 }
 

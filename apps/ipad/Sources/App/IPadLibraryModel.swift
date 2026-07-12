@@ -49,6 +49,8 @@ final class IPadLibraryModel {
     var isWorking = false
     var settingsPresented = false
     var openDocument: OpenDocument?
+    var pendingDocumentChoices: [ZoteroAttachmentCacheRecord] = []
+    var openingItemIdentity: SynchronizedLibraryItemIdentity?
     var readerAnnotations: [SynchronizedLibraryAnnotation] = []
     var readerProgress: ReaderProgress?
     var recoveringFailureIDs: Set<Int64> = []
@@ -125,14 +127,58 @@ final class IPadLibraryModel {
     }
 
     func selectItem(_ identity: SynchronizedLibraryItemIdentity?) {
+        selectionTask?.cancel()
         selectedItemIdentity = identity
-        Task { await refreshSelection() }
+        pendingDocumentChoices = []
+        guard let identity else {
+            openingItemIdentity = nil
+            attachmentRecords = []
+            selectedNotes = []
+            return
+        }
+        openingItemIdentity = identity
+        selectionTask = Task {
+            await refreshSelection()
+            guard !Task.isCancelled, selectedItemIdentity == identity else {
+                return
+            }
+            await openPreferredDocumentForSelection()
+            if selectedItemIdentity == identity {
+                openingItemIdentity = nil
+            }
+        }
     }
 
     func open(item: SynchronizedLibraryItem, record: ZoteroAttachmentCacheRecord, url: URL) {
         readerAnnotations = []
         readerProgress = nil
         openDocument = OpenDocument(item: item, record: record, url: url)
+    }
+
+    func openDocumentChoice(_ record: ZoteroAttachmentCacheRecord) {
+        pendingDocumentChoices = []
+        guard let item = selectedItem else {
+            return
+        }
+        openingItemIdentity = item.identity
+        Task {
+            await openOrDownload(record, for: item)
+            if selectedItemIdentity == item.identity {
+                openingItemIdentity = nil
+            }
+        }
+    }
+
+    func dismissDocumentChoices() {
+        pendingDocumentChoices = []
+        openingItemIdentity = nil
+    }
+
+    func closeDocument() {
+        openDocument = nil
+        readerAnnotations = []
+        readerProgress = nil
+        statusMessage = "Ready"
     }
 
     func updateSearch() {
@@ -178,9 +224,31 @@ final class IPadLibraryModel {
         selectedNotes = await (try? store.listSynchronizedNotes(itemID: selectedItem.identity.appUUID)) ?? []
     }
 
+    func openPreferredDocumentForSelection() async {
+        guard let item = selectedItem else {
+            return
+        }
+        let readable = attachmentRecords
+            .filter { DocumentFormat.infer(fileName: $0.filename, contentType: $0.contentType).isSupportedInApp }
+            .sorted(by: compareReadableAttachments)
+        switch readable.count {
+        case 0:
+            statusMessage = "No readable document attached"
+
+        case 1:
+            if let record = readable.first {
+                await openOrDownload(record, for: item)
+            }
+
+        default:
+            pendingDocumentChoices = readable
+        }
+    }
+
     // MARK: Private
 
     private var searchTask: Task<Void, Never>?
+    private var selectionTask: Task<Void, Never>?
     private var itemObservation: CitrationDatabaseObservation?
     private var syncObservation: CitrationDatabaseObservation?
 
@@ -191,6 +259,44 @@ final class IPadLibraryModel {
                 .map(\.itemID)
         )
         return items.filter { itemIDs.contains($0.identity.appUUID) }
+    }
+
+    private func openOrDownload(
+        _ record: ZoteroAttachmentCacheRecord,
+        for item: SynchronizedLibraryItem
+    ) async {
+        if
+            let url = record.localURL,
+            FileManager.default.fileExists(atPath: url.path)
+        {
+            open(item: item, record: record, url: url)
+            return
+        }
+        await download(record)
+        guard
+            selectedItemIdentity == item.identity,
+            let refreshed = attachmentRecords.first(where: { $0.itemKey == record.itemKey }),
+            let url = refreshed.localURL,
+            FileManager.default.fileExists(atPath: url.path)
+        else {
+            return
+        }
+        open(item: item, record: refreshed, url: url)
+    }
+
+    private func compareReadableAttachments(
+        _ lhs: ZoteroAttachmentCacheRecord,
+        _ rhs: ZoteroAttachmentCacheRecord
+    ) -> Bool {
+        let leftFormat = DocumentFormat.infer(fileName: lhs.filename, contentType: lhs.contentType)
+        let rightFormat = DocumentFormat.infer(fileName: rhs.filename, contentType: rhs.contentType)
+        let priority: [DocumentFormat: Int] = [.pdf: 0, .epub: 1, .html: 2, .plainText: 3]
+        let left = priority[leftFormat] ?? Int.max
+        let right = priority[rightFormat] ?? Int.max
+        if left == right {
+            return lhs.filename.localizedCaseInsensitiveCompare(rhs.filename) == .orderedAscending
+        }
+        return left < right
     }
 
     private func startObserving() {
