@@ -1,0 +1,48 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "zotero-selfhost-compatibility",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-07-09",
+  "compatibility_flags": ["nodejs_compat"],
+  "base_dir": ".",
+  "vars": {
+    "DEPLOYMENT_MODE": "compatibility-test"
+  },
+  "observability": {
+    "enabled": true
+  },
+  "secrets": {
+    "required": [
+      "COMPATIBILITY_TEST_ADMIN_TOKEN",
+      "COMPATIBILITY_TEST_API_KEY",
+      "FILE_URL_SIGNING_SECRET"
+    ]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "zotero-selfhost-compatibility-db",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "ATTACHMENTS",
+      "bucket_name": "zotero-selfhost-compatibility-attachments"
+    }
+  ],
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "STREAM_HUB",
+        "class_name": "ZoteroStreamHub"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "v1-stream-hub",
+      "new_sqlite_classes": ["ZoteroStreamHub"]
+    }
+  ]
+}

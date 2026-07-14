@@ -1,0 +1,118 @@
+{
+  "name": "zotero-selfhost-server",
+  "version": "0.1.3",
+  "description": "Zotero-compatible self-hosted sync server for Cloudflare Workers, D1, R2, and Durable Objects",
+  "author": "Simon Peacock",
+  "license": "MIT",
+  "homepage": "https://github.com/chikingsley/zotero-selfhost#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/chikingsley/zotero-selfhost.git"
+  },
+  "bugs": {
+    "url": "https://github.com/chikingsley/zotero-selfhost/issues"
+  },
+  "keywords": [
+    "zotero",
+    "self-hosted",
+    "cloudflare-workers",
+    "d1",
+    "r2",
+    "sync-server"
+  ],
+  "type": "module",
+  "module": "src/index.ts",
+  "bin": {
+    "zotero-selfhost": "dist/cli/zotero-selfhost.mjs"
+  },
+  "bundledDependencies": [
+    "bsdiff-wasm"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "files": [
+    "dist/cli",
+    "migrations",
+    "src",
+    "biome.jsonc",
+    "tsconfig.json",
+    "wrangler.compatibility.jsonc",
+    "wrangler.jsonc"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build:cli": "bun cli/build/bundle.ts",
+    "clean:cli": "bun cli/build/bundle.ts --clean",
+    "cli": "bun cli/src/index.ts",
+    "dev": "bun run db:migrations:apply:local && wrangler dev",
+    "dev:compatibility": "mkdir -p .wrangler/compatibility && CI=1 wrangler d1 migrations apply DB --local --cwd .wrangler/compatibility --config ../../wrangler.compatibility.jsonc && wrangler dev --cwd .wrangler/compatibility --config ../../wrangler.compatibility.jsonc",
+    "deploy": "bun run db:migrations:apply && wrangler deploy",
+    "deploy:compatibility": "wrangler d1 migrations apply DB --remote --config wrangler.compatibility.jsonc && wrangler deploy --config wrangler.compatibility.jsonc",
+    "deploy:worker": "wrangler deploy",
+    "deploy:dry-run": "wrangler deploy --dry-run",
+    "db:migrations:apply": "wrangler d1 migrations apply DB --remote",
+    "db:migrations:apply:local": "CI=1 wrangler d1 migrations apply DB --local",
+    "db:migrations:list": "wrangler d1 migrations list DB --remote",
+    "cf:types": "wrangler types",
+    "cf:types:check": "wrangler types --check",
+    "cf:whoami": "wrangler whoami",
+    "compat:setup": "bun compatibility/oracle.ts setup",
+    "compat:status": "bun compatibility/oracle.ts status",
+    "compat:check-upstream": "bun compatibility/oracle.ts check-upstream",
+    "compat:update": "bun compatibility/oracle.ts update",
+    "smoke:desktop": "bun tests/live/desktop-smoke.ts",
+    "smoke:direct-upload": "bun tests/live/direct-upload-smoke.ts",
+    "prepack": "bun run build:cli && bun cli/build/package.ts prepack",
+    "postpack": "bun cli/build/package.ts postpack && bun run clean:cli",
+    "typecheck": "bun run cf:types && tsc --noEmit",
+    "typecheck:cli": "tsc --ignoreConfig --noEmit --strict --noImplicitAny false --noUncheckedIndexedAccess false --target ESNext --module Preserve --moduleResolution bundler --allowImportingTsExtensions --types bun,node cli/build/*.ts cli/src/*.ts cli/src/**/*.ts cli/tests/*.ts",
+    "typecheck:compat": "tsc --ignoreConfig --noEmit --strict --target ESNext --module Preserve --moduleResolution bundler --types bun,node compatibility/oracle.ts compatibility/run-zotero-tests.ts",
+    "typecheck:live": "tsc --ignoreConfig --noEmit --strict --noImplicitAny false --noUncheckedIndexedAccess false --target ESNext --module Preserve --moduleResolution bundler --allowImportingTsExtensions --types bun,node tests/live/*.ts",
+    "test": "bun run test:runtime",
+    "test:runtime": "FILE_URL_SIGNING_SECRET=runtime-file-url-signing-secret R2_ACCESS_KEY_ID=runtime-r2-access-key-id R2_ACCOUNT_ID=0123456789abcdef0123456789abcdef R2_SECRET_ACCESS_KEY=runtime-r2-secret-access-key vitest run --maxWorkers=1",
+    "test:oracle:smoke": "bun compatibility/run-zotero-tests.ts --target candidate -- -v 3 general,version",
+    "test:oracle": "bun compatibility/run-zotero-tests.ts --target candidate -- -v 3 -t 240000",
+    "test:package": "bun run build:cli && node dist/cli/zotero-selfhost.mjs --help && npm pack --dry-run --json >/dev/null",
+    "test:cli": "node --test cli/tests/*.test.ts",
+    "test:watch": "FILE_URL_SIGNING_SECRET=runtime-file-url-signing-secret R2_ACCESS_KEY_ID=runtime-r2-access-key-id R2_ACCOUNT_ID=0123456789abcdef0123456789abcdef R2_SECRET_ACCESS_KEY=runtime-r2-secret-access-key vitest",
+    "check": "ultracite check && biome check --config-path biome.jsonc compatibility/oracle.ts compatibility/run-zotero-tests.ts compatibility/fulltext-state-adapter.mjs compatibility/fulltext-state-loader.mjs compatibility/fulltext-state-register.mjs && bun run typecheck && bun run typecheck:cli && bun run typecheck:compat && bun run typecheck:live && bun run test:runtime && bun run test:cli && bun run test:package",
+    "fix": "ultracite fix"
+  },
+  "dependencies": {
+    "@hono/zod-openapi": "^1.4.0",
+    "aws4fetch": "^1.0.20",
+    "bsdiff-wasm": "^0.1.4",
+    "hono": "^4.12.28",
+    "wrangler": "^4.110.0",
+    "xdelta3-wasm": "^1.0.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.5.2",
+    "@cloudflare/vitest-pool-workers": "^0.18.4",
+    "@types/bun": "latest",
+    "@types/node": "^26.1.1",
+    "typescript": "^7.0.2",
+    "ultracite": "7.9.3",
+    "vitest": "^4.1.10"
+  },
+  "cloudflare": {
+    "bindings": {
+      "ATTACHMENTS": {
+        "description": "R2 bucket for Zotero stored-file attachments and legacy md5/filename storage objects."
+      },
+      "DB": {
+        "description": "D1 database for Zotero metadata, sync versions, API keys, groups, settings, full-text index state, and file metadata."
+      },
+      "FILE_URL_SIGNING_SECRET": {
+        "description": "Server-only secret for short-lived attachment URLs. The setup CLI generates and uploads it automatically."
+      }
+    }
+  },
+  "patchedDependencies": {
+    "bsdiff-wasm@0.1.4": "src/vendor/bsdiff-wasm/cloudflare-worker.patch"
+  }
+}

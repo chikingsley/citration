@@ -1,0 +1,28 @@
+# local secrets
+.env
+.env.*
+.dev.vars
+.dev.vars.*
+!.env.example
+!.env.*.example
+!.dev.vars.example
+
+# dependencies
+node_modules
+
+# build output
+dist
+out
+coverage
+
+# caches/logs
+.cache
+.wrangler
+*.tsbuildinfo
+*.log
+.package.json.prepack
+.bsdiff-wasm-test.prepack
+*.tgz
+
+# macOS
+.DS_Store

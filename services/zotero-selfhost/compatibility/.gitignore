@@ -1,0 +1,3 @@
+*.local.json
+*.secret.json
+vendor/

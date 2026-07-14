@@ -1,0 +1,144 @@
+# Changelog
+
+## Unreleased
+
+- Fixed Zotero Desktop's 100-key reconciliation request against D1 by chunking item-key lookups below the database's bound-parameter ceiling. Added a Workers-runtime regression test for the exact `itemKey=...&includeTrashed=1` request shape discovered by the live disposable Desktop peer drill.
+- Rewrote the public README around installation, Desktop connection, migration, commands, architecture, testing, recovery, and support; rewrote the compatibility harness guide around ownership and safety; renamed its dated candidate report to verification history; and clarified the locally authored compatibility-mode runtime test. Added the cross-agent `AGENTS.md` convention plus a portable Agent Skills deployment workflow, and removed the unused Gitleaks configuration.
+- Consolidated the CLI into one command-oriented tree, promoted verified D1/R2 recovery to explicit `admin` CLI commands, made CLI packaging remove its entire generated directory, and moved the ignored pinned Zotero checkout under the compatibility harness with a weekly non-mutating upstream-pin check. Replaced the unexplained root patch directory with documented `bsdiff-wasm` Worker vendor support and explicit removal criteria.
+- Flattened the deployable Worker package from `server/` into the repository root so local development, CI, npm publishing, and the Deploy to Cloudflare button share one project root.
+
+## 0.1.3 - 2026-07-10
+
+- Chose a future first-party iPhone and iPad application as the mobile product direction, with self-hosted synchronization, offline reading, annotations, and metadata enrichment as the intended foundation instead of making a maintained fork of Zotero's mobile app the product dependency.
+- Passed the disposable Zotero Desktop smoke against the isolated compatibility deployment with the compatibility WebSocket configured in the temporary profile. The Desktop round-tripped metadata, a trashed note, full text, and a zipped attachment while an authenticated live subscription received the committed `topicUpdated` notification.
+- Moved the deployment, import, profile migration, recovery, and acceptance CLI plus its tests and operational scripts to authored TypeScript. npm package preparation now bundles that source into one ignored, executable `.mjs` artifact so `npx`, `bunx`, `pnpx`, and `yarn dlx` retain plain Node runtime compatibility without keeping generated JavaScript as source.
+- Deployed a destructive-test-only compatibility Worker with isolated D1 and R2 resources, ran the complete pinned Zotero v3 oracle, and measured 451 passing tests, 22 upstream-pending tests, and no application failures. Added a test-only loader that maps Zotero.org's four direct DynamoDB full-text state operations to the candidate's authenticated D1 adapter without modifying the pinned upstream checkout or assertions.
+- Added Workers-runtime streaming coverage for invalid-key rejection, revoked-key subscription removal, socket responsiveness after revocation, reconnect/resubscribe notification delivery, and hibernated WebSocket survival across an explicitly forced Durable Object eviction.
+- Verified that the Deploy to Cloudflare `server/` subdirectory is self-contained by installing only that directory from its lockfile and completing a clean Wrangler deployment dry run with the expected D1, R2, and Durable Object bindings.
+- Cut over `zotero.peacockery.studio` to the final `zotero-selfhost` Worker, `zotero-selfhost-db` D1 database, `zotero-selfhost-attachments` R2 bucket, and `ZoteroStreamHub` Durable Object while retaining the legacy stack for rollback.
+- Backed up and migrated the legacy D1/R2 data, verified the D1 export and imported rows, and verified copied R2 attachment bytes, ZIP structure, and hashes.
+- Verified disposable Zotero Desktop A -> B -> A metadata and attachment convergence through both the fallback Workers URL and production custom domain, with acceptance records and temporary device keys removed afterward.
+- Fixed live Desktop attachment downloads by preserving redirect metadata and exposing the required Zotero file headers through CORS.
+- Made Desktop automation wait for propagated Worker secrets and use native macOS focus and clipboard operations for reliable Zotero 9 UI execution.
+- Completed the first authenticated, non-writing production import inventory: 414 Zotero.org items and 10 collections, 61 verifiable stored files, 113 stored-file records without retrievable source bytes, 164 full-text records, 48 settings, and one three-item disposable target smoke tree.
+- Changed import planning so attachment metadata whose source bytes are already unavailable is preserved and reported separately instead of blocking every otherwise verifiable file from migration.
+- Confirmed the default local Zotero storage also has no file bytes for those 113 unavailable cloud attachments; 103 matching key directories are empty and the other 10 are absent.
+- Added a versioned local recovery manifest that hashes reviewed archive files during planning and again before upload without modifying Zotero.org or the active Desktop profile.
+- Restored and verified the 4.6 GB books archive from `gmk-server`, resolved 108 attachment records to reviewed archive files, and completed a second dry run with 169 verifiable stored files and 5 metadata-only records remaining.
+- Added a shared direct-R2 attachment transfer mode: one presigned PUT below 64 MiB and independently retryable multipart PUTs from 64 MiB upward, followed by Worker-side completion/size verification and the existing Zotero registration step. Kept stock Zotero's form-POST endpoint as a transport compatibility edge because R2 does not support presigned HTML form POST.
+- Added bucket-scoped R2 signing credentials to setup/onboarding and covered direct single and multipart importer behavior without passing file bytes through the Worker.
+- Made the self-host installation owner unlimited at the Zotero protocol quota layer so attachment capacity is governed by the owner's R2 account instead of Zotero's hosted-service 300 MB default.
+- Preserved valid newline, tab, and carriage-return whitespace in Zotero object strings while continuing to strip invalid control characters.
+- Corrected importer resume and verification for compressed Zotero attachments by comparing the protocol file header to the uncompressed item MD5 while retaining the separately calculated ZIP-object MD5 in import state.
+- Marked importer object writes as Zotero-client reconciliation so explicit source `dateModified` timestamps survive corrective merge passes.
+- Excluded server-managed item `dateModified` from cross-server equality verification while continuing to compare every substantive item field.
+- Canonicalized null unavailable-attachment `md5` and `mtime` fields to absent values when reading Zotero.org, matching the self-host API representation.
+- Made item deletion abort queued multipart uploads and remove attachment-upload state, full-text rows, and R2 objects that no remaining attachment references.
+- Completed and verified the production personal-library import at source version 1394: 10 collections, 414 items, 169 attachment files (including 108 reviewed archive recoveries), 48 settings, and 164 full-text records. Five explicitly accepted unavailable attachments remain metadata-only.
+- Passed live production direct-upload smoke tests for both a 16-byte single PUT and a 104,857,601-byte multipart object, with disposable records removed.
+- Fixed Node 24 profile backup creation by preventing `Array.map` indexes from being passed to `path.basename` as suffix arguments.
+- Made Zotero 9 Run JavaScript automation wait for the embedded editor, assign and verify the loader through its accessibility value, and click Zotero's Run button directly instead of relying on foreground keyboard focus.
+- Backed up and migrated the real Desktop profile to the production custom domain, then completed its first full personal-library and attachment sync.
+- Standardized production smoke tooling on `SELFHOST_API_KEY`, removed the obsolete test-key variable, and consolidated the live installation to one owner key plus one Desktop device key.
+- Added cross-platform native Zotero Desktop onboarding through the stock login-session flow, including a self-hosted owner authorization page and the dry-run-first `connect` command. Existing-profile migration retains the backed-up JavaScript runner as a fallback rather than using it for normal device onboarding.
+- Routed login-session reads and writes through a primary-consistent D1 session so browser authorization can immediately observe a session created by Zotero across separate Worker requests.
+- Deployed and passed the production native-login smoke test, including an existing Zotero.org user-ID override, owner-authorized device-key creation, native polling response, key scope/label verification, and disposable-key cleanup.
+- Added npm package metadata, removed bundled dependency test fixtures from release archives, and added GitHub CI and trusted-publishing workflows.
+- Added repeatable D1 and R2 recovery tooling, restored a current production export into an isolated D1 database, and verified all 20 tables and 1,917 rows. Copied all 169 attachment objects (2,503,237,682 bytes) into a retained backup bucket, restored that backup into a disposable bucket, verified every key and byte size plus stable single-part ETags, and removed only the disposable restore resources afterward.
+- Completed the live Zotero Desktop rollback and re-cutover drill. Restored the original profile backup, verified the `simonpeacocks` Zotero.org account and a clean sync with 414 items and 10 collections, migrated the profile back to self-host identity `simon`, completed another clean sync, and matched the Desktop counts to the production API. Updated Run JavaScript automation for Zotero 9's changed accessibility tree with a native focused-editor paste and Command-R fallback whose success remains gated by the operation result and completed full sync.
+- Consolidated D1 library creation, version reads, atomic version reservations, and write-precondition guards into one typed domain helper shared by item, collection, search, setting, full-text, and deletion stores. Removed 103 duplicated lines, added the 81-line shared helper for a net reduction of 22 lines, and left one implementation of each version query while preserving each store's existing user-creation and write semantics. The deployment dry run remains successful at 1,352.07 KiB uncompressed and 252.49 KiB gzip; this structural refactor does not add D1 queries to mutation paths.
+- Split the former 2,640-line mixed D1 compatibility store into a 572-line facade over focused group, item, and attachment/R2 persistence modules. Consolidated group role validation and parsing inside the group store, kept library-version reservations shared, and preserved the existing route-facing store contract and SQL statement sequences.
+- Replaced the 4,694-line compatibility support implementation with a 27-line stable barrel over focused authorization, file-signing, pagination, response, item-read, item-validation, item-write, metadata, group/key, settings/search, and deletion modules. Consolidated duplicated user/group item and full-text routes into one 313-line registrar while retaining the original three-line user and group registration files in their existing Hono import positions, then added symmetric group item/full-text runtime coverage for the shared branch.
+- Moved destructive compatibility reset SQL and fake password credential resolution out of the production storage and key-store interfaces into explicitly named, deployment-mode-guarded test adapters. Consolidated repeated library authorization, pagination parsing, and streaming notification headers without adding ignored diagnostics.
+- Re-measured the completed simplification pass through the real local Worker/D1 path: seven representative item mutations each executed 29 D1 statements with a 23 ms median, all 24 Workers-runtime tests passed, and the Wrangler deployment dry run remained successful at 1,352.20 KiB uncompressed and 254.77 KiB gzip.
+- Serialized Workers-runtime test files because nine concurrent workerd migration pools were slower on the development machine and could trip short protocol timeouts under resource contention; the isolated suite now completes deterministically in about 20 seconds.
+
+- Added dry-run-first, resumable Zotero.org personal-library import with object key preservation, personal user-URI rewriting, source stability checks, and attachment MD5 verification.
+- Added verified-import-gated Zotero Desktop profile backup, migration, first full merge sync, and explicit rollback with a pre-rollback safety copy.
+- Added a production-auth A -> B -> A disposable Zotero Desktop acceptance harness and Node-level CLI migration tests.
+- Added final `zotero-selfhost` Worker/D1/R2 naming, explicit production versus compatibility Wrangler configurations, and removed production root-password and signing-secret fallbacks.
+- Added atomic one-time owner bootstrap, owner API-key authorization, existing-deployment owner migration, and Cloudflare-authenticated temporary-token recovery without resetting library data.
+- Added the publishable `zotero-selfhost` CLI with `setup` and `recover` commands shared by npm, Bun, pnpm, and Yarn package runners.
+- Added Zotero-protocol streaming through the hibernating `ZoteroStreamHub` Durable Object, including authenticated subscriptions and publication of committed mutation notifications.
+- Added Workers-runtime coverage for bootstrap, recovery, owner-key administration, and WebSocket event delivery, plus npm package dry-run validation with the patched bsdiff runtime bundled for non-Bun installs.
+- Added Cloudflare Workers Vitest coverage with isolated D1/R2 bindings, real migrations, Worker entrypoint dispatch, sync-version characterization, and an attachment storage round trip.
+- Added real `workerd` fixture coverage for the bundled bsdiff, xdelta, and vcdiff patch engines. Patched `bsdiff-wasm`'s generated loader to accept a statically imported compiled WASM module instead of selecting its Node-only `process.binding()` path in Workers. Removed redundant Wrangler additional-module discovery, eliminating the duplicate-WASM warnings and unrelated dependency files from the deployment bundle.
+- Added a reproducible Zotero oracle lock plus setup, status, update, smoke, and full-suite commands without copying upstream tests into the local Vitest suite.
+- Removed the duplicated in-memory server and domain stores; local development and compatibility tests now use the Worker runtime with D1/R2.
+- Updated multi-content Atom JSON serialization to the field order required by the current pinned Zotero oracle.
+- Added object API create-by-PUT compatibility for user/group items, collections, and saved searches.
+- Added object trash-state normalization for item, collection, and saved-search writes.
+- Documented object API compatibility status in docs/object-compatibility.md.
+- Documented repo tooling defaults for Bun, Wrangler, Hono, Zod, Ultracite, and Biome.
+- Added group metadata read/update/search compatibility, metadata-version tracking, top-level Atom group JSON, and D1 persistence for group description/url/image metadata.
+- Documented group compatibility status in docs/group-compatibility.md.
+- Added API-key permission enforcement for core user/group route guards, user note-list filtering, user-library mutation writes, and anonymous/keyed user group listing.
+- Documented permission compatibility status in docs/permission-compatibility.md.
+- Added `If-Modified-Since-Version` 304 handling for item, collection, tag, search, and settings list endpoints.
+- Documented version compatibility status in docs/version-compatibility.md.
+- Added Zotero API/schema response headers and schema-aware item field visibility for `lastRead`, Android clients, and legacy original-publication fields.
+- Documented schema compatibility status in docs/schema-compatibility.md.
+- Added item creator-summary metadata for JSON and Atom responses.
+- Added schema 41 item-type/creator-type mappings and Zotero-style creator write validation for item POST/PUT/PATCH.
+- Documented creator compatibility status in docs/creator-compatibility.md.
+- Added annotation write normalization, validation, text truncation, default color handling, immutable type checks, and old-schema invalidProp markers.
+- Added annotation parent validation requiring existing PDF, EPUB, or HTML attachment parents for user and group item writes.
+- Documented annotation compatibility status in docs/annotation-compatibility.md.
+- Added item Atom selection for `format=atom` and Atom `Accept` headers, feed self links, multi-content `content=bib,json`, and item-list HEAD headers.
+- Documented Atom compatibility status in docs/atom-compatibility.md.
+- Documented storage-admin compatibility status in docs/storage-admin-compatibility.md.
+- Added local TTS compatibility routes with deterministic voice metadata, credit responses, speak redirects, and placeholder WAV audio.
+- Documented TTS compatibility status in docs/tts-compatibility.md.
+- Added item Atom `content=csljson` and `content=json` support for cache/helper compatibility.
+- Documented general and cache compatibility status in docs/general-cache-compatibility.md.
+- Added shared query pagination, next-link headers, sorting, and expanded quick-search behavior for common list endpoints.
+- Documented query parameter compatibility status in docs/query-parameter-compatibility.md.
+- Added Worker-native item export, bibliography/citation include/content rendering, and local web-translation compatibility shims.
+- Documented export, bibliography, and translation compatibility status in docs/export-translation-compatibility.md.
+- Added local Zotero debug notification headers for item mutations, key group-access changes, group lifecycle changes, and group member changes.
+- Documented notification compatibility status in docs/notification-compatibility.md.
+- Added local D1 and memory `/keys/sessions` browser login-session create, poll, cancel, info, and complete flow.
+- Added D1 and memory API key metadata handling plus Zotero-compatible key info, create, update, and delete routes.
+- Documented API key compatibility status in docs/key-compatibility.md.
+- Added D1 and memory full-text content storage, full-text sync routes, and direct full-text query integration.
+- Documented full-text compatibility status in docs/fulltext-compatibility.md.
+- Added item and collection relation validation plus same-library reverse item relation synchronization.
+- Documented relation compatibility status in docs/relation-compatibility.md.
+- Added note-size validation and user/group item children routes.
+- Added Zotero-style note title extraction for item Atom titles and title sorting without mutating note HTML.
+- Documented note and child-item compatibility status in docs/note-compatibility.md.
+- Added mapping metadata routes and stricter Zotero-compatible item templates for attachments, annotations, and computerProgram fields.
+- Documented mapping compatibility status in docs/mapping-compatibility.md.
+- Added minimal Atom XML and HEAD response support for saved-search and tag compatibility routes.
+- Added no-log cleanup of lastPageIndex settings when attachment/item keys are deleted.
+- Added deleted-sync logging for tag delete operations.
+- Added Zotero-compatible deleted-sync routes, item DELETE routes, D1 sync_log deleted reads, and memory delete-log recording.
+- Documented deleted-sync compatibility status in docs/deleted-compatibility.md.
+- Added Zotero-compatible saved-search persistence, CRUD routes, write reports, keys/versions formats, validation, and legacy schema invalidProp handling.
+- Documented saved-search compatibility status in docs/search-compatibility.md.
+
+- Added Zotero-compatible tag listing, filtering, validation, scoped tag routes, and delete-tag mutation behavior.
+- Documented tag compatibility status in docs/tag-compatibility.md.
+- Added Zotero-compatible settings storage and routes for user and group libraries.
+- Added D1 settings schema, shared library-version integration, setting validation, large integer preservation, and group admin-only settings guards.
+- Documented settings compatibility status in docs/settings-compatibility.md.
+- Added repo planning docs for the full Zotero-compatible server path.
+- Added compatibility and references structure.
+- Moved raw upstream/reference inputs under `references/`.
+- Reserved `server/` for the new compatible server implementation.
+- Scaffolded `server/` as a Bun Cloudflare Worker package with Hono/OpenAPIHono, Zod, Wrangler, Vitest, Ultracite, and Biome.
+- Added initial `/health` and `/openapi.json` Worker routes plus smoke tests.
+- Added a compatibility runner for Zotero's official remote API tests.
+- Added initial v3 test classification in `compatibility/mvp-test-map.md`.
+- Added explicit user/group partial-upload `PATCH` route guards and Worker-side `bsdiff` patch application.
+- Added Worker-side `xdelta` and `vcdiff` partial-upload patch application via `xdelta3-wasm`.
+- Switched xdelta patching to a Worker-native static `.wasm` import path.
+- Added a concrete official `dataserver` reference-stack runbook covering required services, PHP config, MySQL reset order, object storage, and remote test config.
+- Added base user/group collection create, list, and get compatibility routes backed by D1 or in-memory local state.
+- Fixed D1 collection parent validation to use async collection existence checks.
+- Added missing collection-key validation for item creation and user/group collection item-list routes.
+- Derived collection `meta.numItems` from item JSON membership for memory and D1 stores.
+- Added user/group collection deletion with recursive descendant handling.
+- Added user/group item `PATCH` and `PUT` routes for collection membership updates, including missing collection validation and child-item assignment rejection.
+- Added `If-Unmodified-Since-Version` checks for recursive collection deletion.
+- Added collection move cycle-breaking when a collection is moved under one of its descendants.
