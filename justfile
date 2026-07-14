@@ -47,7 +47,26 @@ test-all:
     just test-ipad
     just test-performance
 
-check: format-lint lint core-build cli-build app-build ipad-build
+check-apple: format-lint lint core-build cli-build app-build ipad-build
+
+check-zotero:
+    cd services/zotero-selfhost && bun install --frozen-lockfile && bun run check
+
+check:
+    just check-apple
+    just check-zotero
+
+zotero-deploy-dry-run:
+    cd services/zotero-selfhost && bun run deploy:dry-run
+
+zotero-sync-status:
+    ./tools/sync-zotero-selfhost.sh status
+
+zotero-pull:
+    ./tools/sync-zotero-selfhost.sh pull
+
+zotero-push:
+    ./tools/sync-zotero-selfhost.sh push
 
 verify:
     just check

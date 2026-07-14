@@ -23,6 +23,7 @@ apps/mac/                              current native macOS app
 apps/ipad/                             native adaptive iPadOS app
 apps/shared/                           reader and document code shared by Mac and iPad
 packages/citration-core-swift/         shared Apple-native domain, database, sync, and reader logic
+services/zotero-selfhost/              compatible Cloudflare Worker, CLI, migrations, and tests
 tools/citration-cli/                   development and migration utilities
 docs/                                  product direction and Zotero compatibility evidence
 ```
@@ -48,7 +49,9 @@ Run the current repository checks with:
 just check
 ```
 
-`just check` is the deterministic format, lint, and compilation gate for the shared core, CLI, Mac app, and iPad app. Functional coverage is deliberately sectioned: `just test-core` runs the real core database/file/API-fixture suite sequentially, `just test-mac` runs Mac app integration, `just test-ipad` runs the iPad app and simulator UI suite, and `just test-performance` runs the real 10,000-item SQLite acceptance by itself. `just verify` runs every section in order.
+`just check` is the deterministic format, lint, compilation, and service gate for the shared core, CLI, Mac app, iPad app, and the co-located Zotero Self-Host server. `just check-apple` and `just check-zotero` run those boundaries separately. Functional Apple coverage is deliberately sectioned: `just test-core` runs the real core database/file/API-fixture suite sequentially, `just test-mac` runs Mac app integration, `just test-ipad` runs the iPad app and simulator UI suite, and `just test-performance` runs the real 10,000-item SQLite acceptance by itself. `just verify` runs every section in order.
+
+The standalone [`chikingsley/zotero-selfhost`](https://github.com/chikingsley/zotero-selfhost) repository remains the public package, release, and independent CI surface. Its source is maintained as a Git subtree rather than a manually copied fork. Run `just zotero-sync-status` before backend work, `just zotero-pull` to import standalone changes, and `just zotero-push` to publish monorepo service changes back to the standalone repository.
 
 SwiftFormat owns formatting. SwiftLint enforces semantic and safety rules. Lefthook runs both before commits.
 

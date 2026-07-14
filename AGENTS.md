@@ -13,6 +13,7 @@ Steps 1 through 8 in `TODO.md` are accepted. Preserve the native Mac and iPad cl
 - There is no Sign in with Apple, RevenueCat, subscription, billing, or Citration account in the current product.
 - The local source of truth is one app-owned SQLite database accessed through GRDB.
 - Preserve raw Zotero JSON, unknown fields, item types, creator roles, versions, settings, and annotation positions even when the UI does not yet understand them.
+- `services/zotero-selfhost` is the co-located canonical backend source. Keep it synchronized with the independently publishable `chikingsley/zotero-selfhost` subtree; do not create a second server implementation or manually copy files between repositories.
 - The permanent Mac interaction model is a non-closable Library tab, document tabs beside it, detachable document windows, a source sidebar, and a contextual inspector.
 - Keep the accepted Mac and iPad clients green. Do not begin the iPhone/Android or extension steps without a new explicit product decision.
 
@@ -54,7 +55,7 @@ Run the smallest gate that can falsify the current change, then broaden at integ
 - CitrationCore database, model, decoder, or sync work: run SwiftFormat/SwiftLint and `cd packages/citration-core-swift && swift test --parallel`. Do not regenerate or rebuild the Xcode app unless package integration changed.
 - Project, package dependency, resource, or app wiring changes: regenerate once and run the affected app build/tests.
 - UI changes: build and run the real Mac app, inspect the visible hierarchy and behavior, and run affected application tests. Code shape alone is not UI acceptance.
-- Before each coherent commit, run the deterministic `just check` build gate plus the functional lane affected by the change. After an architectural boundary, run `just verify`, whose functional and performance sections execute sequentially.
+- Before each coherent commit, run the deterministic `just check` build gate plus the functional lane affected by the change. `just check` includes both the Apple targets and `services/zotero-selfhost`; use the narrower `just check-apple` or `just check-zotero` only while iterating. After an architectural boundary, run `just verify`, whose functional and performance sections execute sequentially.
 - Before claiming sync/file/version completion: run the relevant live read-only or disposable-write acceptance against Zotero Self-Host and Zotero Desktop.
 
 Do not repeatedly run full Xcode builds while changing only core database or protocol code. Do not skip the full gate before committing a completed slice.
@@ -80,6 +81,7 @@ Step 5 replaced the temporary Mac shell with the agreed permanent structure. Ste
 - `TODO.md` is canonical. Check work off only when its stated evidence is complete.
 - At a coherent commit boundary, move the completed result into `CHANGELOG.md` and remove completed implementation detail from the active TODO so it stays readable.
 - Commit bounded, reviewable slices. Preserve unrelated user changes and never use destructive Git cleanup.
+- Before changing `services/zotero-selfhost`, run `just zotero-sync-status`. Pull standalone changes before editing, then use `just zotero-push` after the integrated commit is accepted so the standalone package and CI do not drift.
 - State exactly what is implemented, tested locally, live-verified, committed, and pushed. Those are different states.
 - If a test or migration fails, preserve the failing evidence and repair the root cause. Do not weaken the test or redefine completion.
 

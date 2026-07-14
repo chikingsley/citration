@@ -61,7 +61,7 @@ An infinite canvas is deliberately deferred. If a later product decision adds on
 
 ## Settled Architecture
 
-Zotero Self-Host Server is the canonical remote library. Citration does not reimplement D1/R2 synchronization, version allocation, groups, attachments, authentication, streaming, or tombstones in another service.
+Zotero Self-Host Server is the canonical remote library. Its independently publishable Worker, CLI, migrations, and compatibility suite are co-located in this repository under `services/zotero-selfhost` and synchronized to the standalone `chikingsley/zotero-selfhost` release repository. Citration does not reimplement D1/R2 synchronization, version allocation, groups, attachments, authentication, streaming, or tombstones in another service.
 
 CitrationCore owns the native client implementation: the Zotero API transport, object decoding, SQLite persistence, synchronization engine, attachment cache, metadata services, citation services, and reader-domain models. The accepted Mac and iPad targets consume that shared Swift package and provide platform-specific interface and reader code; the later iPhone target will use the same boundary.
 
