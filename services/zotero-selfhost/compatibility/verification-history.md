@@ -2,6 +2,12 @@
 
 This file records dated results from specific source revisions and deployments. It is not an automatically generated statement about the current branch; use the linked GitHub Actions badges and rerun the relevant command when current evidence is required.
 
+## 2026-08-31 upstream oracle refresh
+
+The pinned Zotero `dataserver` oracle advanced from `9b640674` to `476ed12c`. The tracked Zotero schema digest remained `cb40cf538b7f21adbd51cf3b6d783b12f0d2c106af25e44365b51d2edeabbe1e`.
+
+The focused weekly-equivalent `general,version` smoke passed `30/30`, and the updated `item` slice passed `112/112` against an isolated local Workers D1/R2 candidate. The complete local suite reported `450 passing`, `32 upstream-pending`, and two environment-only file failures in three minutes. One local-file assertion requires an HTTPS storage hostname, and one legacy-file assertion requires direct S3 credentials; the application-level filename-path and `lastRead` assertions passed.
+
 ## 2026-07-10 source checkpoint
 
 Source commit `7993087` passed `bun run check` with 24 Workers-runtime tests and 9 Node-compatible CLI tests. Its manually dispatched weekly workflow also materialized the pinned Zotero checkout, passed the 30-test upstream `general,version` smoke against an isolated local Worker, and confirmed that the tracked upstream ref still matched the lock.

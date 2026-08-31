@@ -243,6 +243,9 @@ export const getCanonicalFeedHref = (
 export const isAndroidClient = (c: Context<{ Bindings: Bindings }>) =>
   (c.req.header("User-Agent") ?? "").toLowerCase().includes("android");
 
+const isLegacyDesktopClient = (c: Context<{ Bindings: Bindings }>) =>
+  /Gecko\/\d+ Zotero\/[78]\./u.test(c.req.header("User-Agent") ?? "");
+
 export const isEPUBAnnotationPosition = (value: unknown): boolean => {
   try {
     const parsed = typeof value === "string" ? JSON.parse(value) : value;
@@ -273,7 +276,11 @@ export const shapeItemForSchemaRequest = <
     ? ((item as { meta?: unknown }).meta as Record<string, unknown>)
     : {};
   const meta = { ...existingMeta };
-  if (isAndroidClient(c) || (schemaVersion !== null && schemaVersion < 42)) {
+  if (
+    (schemaVersion !== null && schemaVersion < 42) ||
+    (isAndroidClient(c) && (schemaVersion ?? 0) < 44) ||
+    isLegacyDesktopClient(c)
+  ) {
     delete data.lastRead;
   }
   if (schemaVersion !== null && schemaVersion <= 29) {

@@ -1,10 +1,10 @@
 {
   "repository": "https://github.com/zotero/dataserver.git",
   "ref": "refs/heads/master",
-  "commit": "9b640674e94f1817513799fe82124be041b303b2",
+  "commit": "476ed12c18cbd431170346702882d091710f5f61",
   "schema": {
     "url": "https://api.zotero.org/schema",
     "sha256": "cb40cf538b7f21adbd51cf3b6d783b12f0d2c106af25e44365b51d2edeabbe1e"
   },
-  "updatedAt": "2026-07-09"
+  "updatedAt": "2026-08-31"
 }

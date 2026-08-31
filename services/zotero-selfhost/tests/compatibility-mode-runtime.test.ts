@@ -150,6 +150,96 @@ describe("Zotero compatibility bootstrap", () => {
     expect(fetchedBody.data.tags[0].tag).toBe("CC");
   });
 
+  it("matches current stored-file and last-read client compatibility", async () => {
+    const setup = await request("/test/setup?u=1&u2=2", {
+      body: " ",
+      headers: { Authorization: compatibilityAdminAuth },
+      method: "POST",
+    });
+    const setupBody = (await setup.json()) as {
+      user1: { apiKey: string };
+    };
+    const authorization = `Bearer ${setupBody.user1.apiKey}`;
+
+    for (const filename of [
+      "D:/Foo/Bar/test.pdf",
+      "C:\\Users\\reader\\test.pdf",
+      "\\\\server\\share\\test.pdf",
+      "\\\\?\\C:\\Users\\reader\\test.pdf",
+    ]) {
+      const rejected = await request("/users/1/items", {
+        body: JSON.stringify([
+          { filename, itemType: "attachment", linkMode: "imported_file" },
+        ]),
+        headers: {
+          Authorization: authorization,
+          "Content-Type": "application/json",
+        },
+        method: "POST",
+      });
+      expect(rejected.status).toBe(200);
+      expect(
+        (
+          (await rejected.json()) as {
+            failed: Record<string, { message: string }>;
+          }
+        ).failed["0"]?.message
+      ).toBe(
+        `Stored-file filename '${filename}' cannot contain a directory path`
+      );
+    }
+
+    const create = await request("/users/1/items", {
+      body: JSON.stringify([
+        {
+          filename: "Sutton - 2.4 \\AA resolution.pdf",
+          itemType: "attachment",
+          lastRead: 1_674_668_111,
+          linkMode: "imported_file",
+        },
+      ]),
+      headers: {
+        Authorization: authorization,
+        "Content-Type": "application/json",
+      },
+      method: "POST",
+    });
+    expect(create.status).toBe(200);
+    const createBody = (await create.json()) as {
+      success: Record<string, string>;
+    };
+    const itemKey = createBody.success["0"];
+    expect(itemKey).toBeTruthy();
+
+    const readLastRead = async (schemaVersion: string, userAgent: string) => {
+      const response = await request(`/users/1/items/${itemKey}`, {
+        headers: {
+          Authorization: authorization,
+          "User-Agent": userAgent,
+          "Zotero-Schema-Version": schemaVersion,
+        },
+      });
+      expect(response.status).toBe(200);
+      return (await response.json()) as { data: Record<string, unknown> };
+    };
+
+    expect(
+      (await readLastRead("44", "Mozilla/5.0 (Linux; Android 14) Zotero/1.0"))
+        .data.lastRead
+    ).toBe(1_674_668_111);
+    expect(
+      (await readLastRead("42", "Mozilla/5.0 (Linux; Android 14) Zotero/1.0"))
+        .data
+    ).not.toHaveProperty("lastRead");
+    expect(
+      (await readLastRead("42", "Mozilla/5.0 Gecko/20100101 Zotero/8.0.2")).data
+    ).not.toHaveProperty("lastRead");
+    expect(
+      (await readLastRead("42", "Mozilla/5.0 Gecko/20100101 Zotero/9.0.1")).data
+        .lastRead
+    ).toBe(1_674_668_111);
+  });
+
   it("reconciles a full Zotero Desktop batch of 100 item keys", async () => {
     const setup = await request("/test/setup?u=1&u2=2", {
       body: " ",

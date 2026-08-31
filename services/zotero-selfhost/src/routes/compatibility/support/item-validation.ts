@@ -180,6 +180,19 @@ export const validateAttachmentForWrite = (
     linkMode === "imported_file" ||
     linkMode === "imported_url" ||
     linkMode === "embedded_image";
+  const filename = data.filename;
+  if (
+    allowsStorage &&
+    typeof filename === "string" &&
+    (filename.includes("/") ||
+      /^[a-zA-Z]:[\\/]/u.test(filename) ||
+      filename.startsWith("\\\\"))
+  ) {
+    return {
+      code: 400,
+      message: `Stored-file filename '${filename}' cannot contain a directory path`,
+    };
+  }
   if (!allowsStorage) {
     if (data.md5) {
       return {
